@@ -9,5 +9,6 @@
 #define SRC_CONEXION_H_
 
 int crear_server(char*,char*,int);
+void ejemplo();
 
 #endif /* SRC_CONEXION_H_ */

@@ -29,7 +29,7 @@ all: mongoStore
 mongoStore: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc  -o "mongoStore" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -L"/home/utnso/Documentos/tp-2021-1c-Cebollitas-subcampeon/Shared/Debug" -o "mongoStore" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

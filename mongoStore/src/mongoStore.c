@@ -11,7 +11,7 @@
 #include "mongoStore.h"
 
 int main(void) {
-	/*ejemplo(); FUNCION DE EJEMPLO DE conexion.c (no hace nada)*/
-	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+	ejemplo(); //FUNCION DE EJEMPLO DE conexion.c (no hace nada)
+	//puts("!!!Hello World!!!"); prints !!!Hello World!!!
 	return EXIT_SUCCESS;
 }
