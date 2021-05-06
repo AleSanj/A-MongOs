@@ -13,7 +13,7 @@
 #include <conexion.h>
 
 int main(void) {
-	crear_server("6667",5);
+	crear_server("6667","127.0.0.1",5);
 	//ejemplo();
 	return EXIT_SUCCESS;
 }

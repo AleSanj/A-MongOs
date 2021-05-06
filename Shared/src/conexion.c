@@ -57,9 +57,9 @@ int crear_server(char* puerto,char* ip,int backlog){
 	 */
 	/* Necesitamos un socket que escuche las conecciones entrantes */
 	int listenningSocket;
-	puts("Llegue");
+
 	listenningSocket = socket(serverInfo->ai_family, serverInfo->ai_socktype, serverInfo->ai_protocol);
-	puts("Estoy esperando pija 2");
+
 	/*
 	 * 	Perfecto, ya tengo un archivo que puedo utilizar para analizar las conexiones entrantes. Pero... ¿Por donde?
 	 *
@@ -77,7 +77,7 @@ int crear_server(char* puerto,char* ip,int backlog){
 	 * 	Solo me queda decirle que vaya y escuche!
 	 *
 	 */
-	puts("Estoy esperando pija");
+
 	listen(listenningSocket, backlog);		// IMPORTANTE: listen() es una syscall BLOQUEANTE.
 
 	/*
