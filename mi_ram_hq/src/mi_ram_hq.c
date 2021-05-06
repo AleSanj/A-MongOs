@@ -10,8 +10,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <conexion.h>
 
 int main(void) {
-	puts("!!!Hello World!!!"); /* prints !!!Hello World!!! */
+	crear_server("6667",5);
+	//ejemplo();
 	return EXIT_SUCCESS;
 }
