@@ -24,14 +24,16 @@ struct Tripulante
 	int id;
 	char* estado;
 	char* Tarea;
-	int posicion [1][1];
+	int posicionX;
+	int posicionY;
 
 };
- struct Tripulante* tripulanteCreate(int id, int posicion[1][1])
+ struct Tripulante* tripulanteCreate(int id, int posicionX,int posicionY)
  {
 	struct Tripulante* devolverTripulante;
 	devolverTripulante->id=id;
-	devolverTripulante->posicion[0][0]= posicion[0][0];
+	devolverTripulante->posicionX= posicionX;
+	devolverTripulante->posicionY=posicionY;
 	devolverTripulante->estado="";
 	return devolverTripulante ;
  }

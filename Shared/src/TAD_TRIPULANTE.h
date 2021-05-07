@@ -21,13 +21,14 @@ typedef struct
 	int id;
 	char* estado;
 	char* Tarea;
-	int posicion [1][1];
+	int posicionX;
+	int posicionY;
 
 }Tripulante;
 
-struct Tripulante* tripulanteCreate(int id, int posicion[1][1]);
+Tripulante* tripulanteCreate(int id, int posicionX,int posicionY);
 
-void mostrarTripulante(int idPatota, struct Tripulante* tripulante);
+void mostrarTripulante(int idPatota, Tripulante* tripulante);
 
 
 

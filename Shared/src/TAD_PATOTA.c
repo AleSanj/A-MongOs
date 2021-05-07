@@ -32,14 +32,14 @@ void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 	{
 		if(list_is_empty(listaTripulantes)!= true)
 		{
-			struct Tripulante* agregar =tripulanteCreate(i+1,(void*)list_remove(listaTripulantes,i));
+			Tripulante* agregar =tripulanteCreate(i+1,(void*)list_remove(listaTripulantes,i),(void*)list_remove(listaTripulantes,i+1));
 			list_add(patota->tripulacion,  agregar );
 
 		}
 		else
 		{
-			int pos [1][1]={{0},{0}};
-			struct Tripulante* agregar =tripulanteCreate(i+1,(void*)list_remove(listaTripulantes,i));
+			int pos =0;
+			Tripulante* agregar =tripulanteCreate(i+1,pos,pos);
 			list_add(patota->tripulacion,  agregar );
 		};
 		i++;
@@ -47,7 +47,7 @@ void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 }
 struct Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas )
 {
-	struct Patota* devolverPatota ;
+	Patota* devolverPatota ;
 	devolverPatota->id=id;
 	devolverPatota->tarea=tareas;
 	agregarTripulantes(cantTripulantes,devolverPatota,listaTripulantes );
