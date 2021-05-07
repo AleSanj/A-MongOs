@@ -39,7 +39,7 @@ void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 		else
 		{
 			int pos [1][1]={{0},{0}};
-			struct Tripulante* agregar =tripulanteCreate(i+1,(void*)list_remove(listaTripulantes,i));
+			struct Tripulante* agregar =tripulanteCreate(i+1,pos);
 			list_add(patota->tripulacion,  agregar );
 		};
 		i++;
