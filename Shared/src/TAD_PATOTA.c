@@ -38,8 +38,13 @@ void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 		}
 		else
 		{
+<<<<<<< HEAD
 			int pos =0;
 			Tripulante* agregar =tripulanteCreate(i+1,pos,pos);
+=======
+			int pos [1][1]={{0},{0}};
+			struct Tripulante* agregar =tripulanteCreate(i+1,pos);
+>>>>>>> ec98f94176061a9d44e616bf10fde8c2c20f2ddc
 			list_add(patota->tripulacion,  agregar );
 		};
 		i++;
