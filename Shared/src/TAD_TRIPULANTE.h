@@ -15,16 +15,19 @@
 #include <commons/bitarray.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <stdint.h>
 
 typedef struct
 {
-	int id;
+	uint8_t id;
+	uint32_t estado_length;
 	char* estado;
+	uint32_t Tarea_length;
 	char* Tarea;
-	int posicionX;
-	int posicionY;
+	uint8_t posicionX;
+	uint8_t posicionY;
 
-}Tripulante;
+} Tripulante;
 
 Tripulante* tripulanteCreate(int id, int posicionX,int posicionY);
 

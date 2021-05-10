@@ -86,7 +86,7 @@ int esperar_cliente(int socket_server){
 
 }
 
-void terminar_servidor(int socket){
-	close(socket_cliente());
+void terminar_servidor(int socket_cliente){
+	close(socket_cliente);
 }
 

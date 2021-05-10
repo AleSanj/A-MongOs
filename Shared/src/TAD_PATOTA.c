@@ -4,7 +4,7 @@
  *  Created on: 6 may. 2021
  *      Author: utnso
  */
-
+/*
 #ifndef TAD_PATOTA
 #include "TAD_PATOTA.h"
 #include <stdio.h>
@@ -60,4 +60,4 @@ struct Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes
 };
 
 
-#endif
+#endif*/

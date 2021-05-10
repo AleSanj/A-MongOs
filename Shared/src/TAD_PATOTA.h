@@ -4,7 +4,7 @@
  *  Created on: 6 may. 2021
  *      Author: utnso
  */
-
+/*
 #ifndef SRC_TAD_PATOTA_H_
 #define SRC_TAD_PATOTA_H_
 
@@ -36,4 +36,4 @@ struct Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes
 
 #endif /* SRC_TAD_PATOTAS_H_ */
 
-#endif /* SRC_TAD_PATOTA_H_ */
+/*#endif /* SRC_TAD_PATOTA_H_ */

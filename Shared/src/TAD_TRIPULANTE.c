@@ -18,17 +18,23 @@
 #include <commons/collections/list.h>
 #include <commons/collections/queue.h>
 #include <commons/temporal.h>
-
+#include <stdint.h>
 struct Tripulante
 {
-	int id;
+	//El estado_length al igual q tarea los pusimos con mati
+	//porque hay que guardar el sizeof del char estado y tarea en
+	//algun lugar para despues mandarselo al buffer (MIRAR DOC DE SERIALIZACION)
+	uint8_t id;
+	uint32_t estado_length;
 	char* estado;
+	uint32_t Tarea_length;
 	char* Tarea;
-	int posicionX;
-	int posicionY;
+	uint8_t posicionX;
+	uint8_t posicionY;
 
 };
- struct Tripulante* tripulanteCreate(int id, int posicionX,int posicionY)
+
+ struct Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
  {
 	struct Tripulante* devolverTripulante;
 	devolverTripulante->id=id;
@@ -38,7 +44,7 @@ struct Tripulante
 	return devolverTripulante ;
  }
 
- void mostrarTripulante(int idPatota, struct Tripulante* tripulante)
+ void mostrarTripulante(uint8_t idPatota, struct Tripulante* tripulante)
  {
 
  	printf ("Patota: %i Tripulante: %i Estado: %s ",idPatota,tripulante->id,tripulante->estado);
