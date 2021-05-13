@@ -4,7 +4,7 @@
  *  Created on: 6 may. 2021
  *      Author: utnso
  */
-/*
+
 #ifndef TAD_PATOTA
 #include "TAD_PATOTA.h"
 #include <stdio.h>
@@ -20,44 +20,41 @@
 
 struct Patota
 {
-	int id;
-	t_list* tripulacion ;
-	char* tarea;
+	uint8_t id;
+    Tripulante* tripulacion[10] ;
+	char* tareas;
+	uint32_t tareas_length;
 };
 
 void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 {
-	int i=0;
+	uint8_t i=0;
 	while (i < cantidad)
 	{
 		if(list_is_empty(listaTripulantes)!= true)
 		{
-			Tripulante* agregar =tripulanteCreate(i+1,(void*)list_remove(listaTripulantes,i),(void*)list_remove(listaTripulantes,i+1));
-			list_add(patota->tripulacion,  agregar );
-
+			Tripulante* agregar=malloc(sizeof(Tripulante*));
+			agregar =tripulanteCreate(i+1,(uint8_t)list_remove(listaTripulantes,i*2),(uint8_t)list_remove(listaTripulantes,i*2+1));
+			patota->tripulacion[i] =  agregar;
 		}
 		else
 		{
-<<<<<<< HEAD
-			int pos =0;
+			uint8_t pos =0;
 			Tripulante* agregar =tripulanteCreate(i+1,pos,pos);
-=======
-			int pos [1][1]={{0},{0}};
-			struct Tripulante* agregar =tripulanteCreate(i+1,pos);
->>>>>>> ec98f94176061a9d44e616bf10fde8c2c20f2ddc
-			list_add(patota->tripulacion,  agregar );
+			patota->tripulacion[i]= agregar;
 		};
 		i++;
 	};
 }
 struct Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas )
 {
-	Patota* devolverPatota ;
+
+	Patota* devolverPatota=malloc(sizeof(Patota*)) ;
 	devolverPatota->id=id;
-	devolverPatota->tarea=tareas;
+	devolverPatota->tareas=tareas;
 	agregarTripulantes(cantTripulantes,devolverPatota,listaTripulantes );
 	return devolverPatota;
 };
 
 
-#endif*/
+#endif

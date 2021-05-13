@@ -9,7 +9,9 @@
 #include "serializacion.h"
 
 #include "TAD_TRIPULANTE.h"
+#include "TAD_PATOTA.h"
 #define TRIPULANTE 1
+#define PATOTA 1
 
 typedef struct {
     uint32_t size; // Tamaño del payload
@@ -68,7 +70,7 @@ void serializar_tripulante(Tripulante* unTripulante, int socket){
 
 	// Armamos el stream a enviar
 	void* a_enviar = malloc(buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
-	int offset = 0;
+	offset = 0;
 
 	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
 
@@ -108,6 +110,69 @@ Tripulante* deserializar_tripulante(t_buffer* buffer) {
 
     return unTripulante;
 }
+void serializar_patota( Patota* unaPatota, int socket)
+{
+	t_buffer* buffer=malloc(sizeof(t_buffer));
+	buffer->size=sizeof(uint8_t) //id patota
+			    +sizeof(Tripulante)*10 //array de tripulantes VER ESTO
+				+strelen(unaPatota->tareas)+1;
+	void* stream=malloc(buffer->size);
+	int offset=0;
+	memcpy(stream+offset,&(unaPatota->id),sizeof(uint8_t));
+	offset+=sizeof(uint8_t);
+	memcpy(stream+offset,&(unaPatota->tripulacion),sizeof(Tripulante)*10);
+	offset+=sizeof(Tripulante)*10;
+	memcpy(stream+offset,&(unaPatota->tareas_length), sizeof(uint32_t));
+	offset+=sizeof(uint32_t);
+	memcpy(stream+offset,&(unaPatota->tareas),strlen(unaPatota->tareas)+1);
+
+	buffer->stream=stream;
+	free(unaPatota->tareas);//esto?? no me borraria las tareas para siempre?? lol
+
+	//bueno pa vamo mandar el paquete
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+
+	//Definimos codigo de operacion PATOTA
+	paquete->codigo_operacion= PATOTA;
+	paquete->buffer=buffer;
+
+	//armamos el stream a enviar
+	void* a_enviar=malloc(buffer->size+sizeof(uint8_t)+sizeof(uint32_t));
+    offset=0;
+	memcpy(a_enviar+offset,&(paquete->codigo_operacion),sizeof(uint8_t));
+	offset+=sizeof(uint8_t);
+	memcpy(a_enviar+offset,&(paquete->buffer->size),sizeof(uint32_t));
+	offset+=sizeof(uint32_t);
+	memcpy(a_enviar+offset,&(paquete->buffer->stream),paquete->buffer->size);
+
+	//ahora si enviamos todo
+	send(socket,a_enviar, buffer->size+sizeof(uint8_t)+sizeof(uint32_t),0);
+
+	//LIBERAR MEMOREA EVITAR MEMORY LEAK
+	free(a_enviar);
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free (paquete);
+
+}
+Patota* deserializarPatota(t_buffer* buffer)
+{
+	Patota* patota=malloc(sizeof(Patota));
+	void*stream=buffer->stream;
+	//Deserealizamos campo por campo mviendonos en el buffer
+
+	memcpy(&(patota->id),stream,sizeof(uint8_t));
+	stream+=sizeof(uint8_t);
+	memcpy(&(patota->tripulacion),stream,sizeof(Tripulante)*10);
+	stream+=sizeof(Tripulante)*10;
+	memcpy(&(patota->tareas_length),stream,sizeof(uint32_t));
+	stream+=sizeof(uint32_t);
+	patota->tareas=malloc(patota->tareas_length);
+	memcpy(&(patota->tareas),stream,patota->tareas_length);
+
+	return patota;
+}
+
 
 // FUNCION PARA EL MAIN PARA RECIBIR UN PAQUETE adaptarla cuando se necesite!!!
 /*

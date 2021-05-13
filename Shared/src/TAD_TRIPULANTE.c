@@ -34,17 +34,17 @@ struct Tripulante
 
 };
 
- struct Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
+ Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
  {
-	struct Tripulante* devolverTripulante;
+	Tripulante* devolverTripulante;
 	devolverTripulante->id=id;
 	devolverTripulante->posicionX= posicionX;
 	devolverTripulante->posicionY=posicionY;
-	devolverTripulante->estado="";
+	devolverTripulante->estado="New";
 	return devolverTripulante ;
  }
 
- void mostrarTripulante(uint8_t idPatota, struct Tripulante* tripulante)
+ void mostrarTripulante(uint8_t idPatota, Tripulante* tripulante)
  {
 
  	printf ("Patota: %i Tripulante: %i Estado: %s ",idPatota,tripulante->id,tripulante->estado);

@@ -29,9 +29,9 @@ typedef struct
 
 } Tripulante;
 
-Tripulante* tripulanteCreate(int id, int posicionX,int posicionY);
+Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY);
 
-void mostrarTripulante(int idPatota, Tripulante* tripulante);
+void mostrarTripulante(uint8_t idPatota, Tripulante* tripulante);
 
 
 
