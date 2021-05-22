@@ -13,10 +13,10 @@
 #define TRIPULANTE 1
 #define PATOTA 1
 
-typedef struct {
+ struct t_buffer {
     uint32_t size; // Tamaño del payload
     void* stream; // Payload
-} t_buffer;
+};
 
 
 typedef struct {
@@ -37,6 +37,8 @@ void serializar_tripulante(Tripulante* unTripulante, int socket){
 
 	memcpy(stream + offset, &unTripulante->id, sizeof(uint8_t));
 	offset += sizeof(uint8_t);
+	memcpy(stream+offset,&(unTripulante->idPatota),sizeof(uint8_t));
+	offset += sizeof(uint8_t);
 	memcpy(stream + offset, &unTripulante->posicionX, sizeof(uint8_t));
 	offset += sizeof(uint8_t);
 	memcpy(stream + offset, &unTripulante->posicionY, sizeof(uint8_t));
@@ -49,6 +51,8 @@ void serializar_tripulante(Tripulante* unTripulante, int socket){
 	memcpy(stream + offset, &unTripulante->Tarea_length, sizeof(uint32_t));
 	offset += sizeof(uint32_t);
 	memcpy(stream + offset, unTripulante->Tarea, strlen(unTripulante->Tarea) + 1);
+	offset +=strlen(unTripulante->Tarea) + 1;
+	memcpy(stream + offset,&(unTripulante->hilo), sizeof(pthread_t));
 	// No tiene sentido seguir calculando el desplazamiento, ya ocupamos el buffer completo
 
 	buffer->stream = stream;
@@ -93,6 +97,8 @@ Tripulante* deserializar_tripulante(t_buffer* buffer) {
     // Deserializamos los campos que tenemos en el buffer
     memcpy(&(unTripulante->id), stream, sizeof(uint8_t));
     stream += sizeof(uint8_t);
+    memcpy(&(unTripulante->idPatota), stream, sizeof(uint8_t));
+    stream += sizeof(uint8_t);
     memcpy(&(unTripulante->posicionX), stream, sizeof(uint8_t));
     stream += sizeof(uint8_t);
     memcpy(&(unTripulante->posicionY), stream, sizeof(uint8_t));
@@ -107,6 +113,8 @@ Tripulante* deserializar_tripulante(t_buffer* buffer) {
     stream += sizeof(uint32_t);
     unTripulante->Tarea = malloc(unTripulante->Tarea_length);
     memcpy(unTripulante->Tarea, stream, unTripulante->Tarea_length);
+    stream+=sizeof(uint32_t);
+    memcpy(unTripulante->hilo,stream,sizeof(pthread_t));
 
     return unTripulante;
 }

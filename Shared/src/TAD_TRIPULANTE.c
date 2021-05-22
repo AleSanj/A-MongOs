@@ -19,18 +19,21 @@
 #include <commons/collections/queue.h>
 #include <commons/temporal.h>
 #include <stdint.h>
+#include <pthread.h>
 struct Tripulante
 {
 	//El estado_length al igual q tarea los pusimos con mati
 	//porque hay que guardar el sizeof del char estado y tarea en
 	//algun lugar para despues mandarselo al buffer (MIRAR DOC DE SERIALIZACION)
 	uint8_t id;
+	uint8_t idPatota;
 	uint32_t estado_length;
 	char* estado;
 	uint32_t Tarea_length;
 	char* Tarea;
 	uint8_t posicionX;
 	uint8_t posicionY;
+	pthread_t hilo;
 
 };
 

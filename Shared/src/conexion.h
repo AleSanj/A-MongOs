@@ -11,5 +11,8 @@
 int crear_server(char*,char*,int);
 int esperar_cliente(int);
 void ejemplo();
+int crear_conexion(char* ip, char* puerto);
+void liberar_conexion(int socket_cliente);
+
 
 #endif /* SRC_CONEXION_H_ */

@@ -20,12 +20,14 @@
 typedef struct
 {
 	uint8_t id;
+	uint8_t idPatota;
 	uint32_t estado_length;
 	char* estado;
 	uint32_t Tarea_length;
 	char* Tarea;
 	uint8_t posicionX;
 	uint8_t posicionY;
+	pthread_t hilo;
 
 } Tripulante;
 
