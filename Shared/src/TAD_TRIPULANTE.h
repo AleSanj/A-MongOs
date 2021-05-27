@@ -29,11 +29,11 @@ typedef struct
 	uint8_t posicionY;
 	pthread_t hilo;
 
-} Tripulante;
+} t_tripulante;
 
-Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY);
+t_tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY);
 
-void mostrarTripulante(uint8_t idPatota, Tripulante* tripulante);
+void mostrarTripulante(uint8_t idPatota, t_tripulante* tripulante);
 
 
 

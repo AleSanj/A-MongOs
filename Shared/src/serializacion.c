@@ -11,7 +11,7 @@
 #include "TAD_TRIPULANTE.h"
 #include "TAD_PATOTA.h"
 #define TRIPULANTE 1
-#define PATOTA 1
+#define PATOTA 2
 
  struct t_buffer {
     uint32_t size; // Tamaño del payload
@@ -19,13 +19,13 @@
 };
 
 
-typedef struct {
+struct t_paquete{
     uint8_t codigo_operacion;
     t_buffer* buffer;
-} t_paquete;
+};
 
 
-void serializar_tripulante(Tripulante* unTripulante, int socket){
+void serializar_tripulante(t_tripulante* unTripulante, int socket){
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
 	buffer->size = sizeof(uint8_t) * 3 // Id, posx, posy
@@ -90,8 +90,8 @@ void serializar_tripulante(Tripulante* unTripulante, int socket){
 }
 
 //ESTA FUNCION DESPUES TENEMOS QUE LLAMARLA EN NUESTRO MAIN (VER DOCUMENTACION DE SERIALIZACION)
-Tripulante* deserializar_tripulante(t_buffer* buffer) {
-	Tripulante* unTripulante = malloc(sizeof(Tripulante));
+t_tripulante* deserializar_tripulante(t_buffer* buffer) {
+	t_tripulante* unTripulante = malloc(sizeof(t_tripulante));
 
     void* stream = buffer->stream;
     // Deserializamos los campos que tenemos en el buffer
@@ -122,14 +122,14 @@ void serializar_patota( Patota* unaPatota, int socket)
 {
 	t_buffer* buffer=malloc(sizeof(t_buffer));
 	buffer->size=sizeof(uint8_t) //id patota
-			    +sizeof(Tripulante)*10 //array de tripulantes VER ESTO
+			    +sizeof(t_tripulante)*10 //array de tripulantes VER ESTO
 				+strelen(unaPatota->tareas)+1;
 	void* stream=malloc(buffer->size);
 	int offset=0;
 	memcpy(stream+offset,&(unaPatota->id),sizeof(uint8_t));
 	offset+=sizeof(uint8_t);
-	memcpy(stream+offset,&(unaPatota->tripulacion),sizeof(Tripulante)*10);
-	offset+=sizeof(Tripulante)*10;
+	memcpy(stream+offset,&(unaPatota->tripulacion),sizeof(t_tripulante)*10);
+	offset+=sizeof(t_tripulante)*10;
 	memcpy(stream+offset,&(unaPatota->tareas_length), sizeof(uint32_t));
 	offset+=sizeof(uint32_t);
 	memcpy(stream+offset,&(unaPatota->tareas),strlen(unaPatota->tareas)+1);
@@ -171,8 +171,8 @@ Patota* deserializarPatota(t_buffer* buffer)
 
 	memcpy(&(patota->id),stream,sizeof(uint8_t));
 	stream+=sizeof(uint8_t);
-	memcpy(&(patota->tripulacion),stream,sizeof(Tripulante)*10);
-	stream+=sizeof(Tripulante)*10;
+	memcpy(&(patota->tripulacion),stream,sizeof(t_tripulante)*10);
+	stream+=sizeof(t_tripulante)*10;
 	memcpy(&(patota->tareas_length),stream,sizeof(uint32_t));
 	stream+=sizeof(uint32_t);
 	patota->tareas=malloc(patota->tareas_length);

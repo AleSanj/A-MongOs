@@ -20,7 +20,7 @@
 #include <commons/temporal.h>
 #include <stdint.h>
 #include <pthread.h>
-struct Tripulante
+struct t_tripulante
 {
 	//El estado_length al igual q tarea los pusimos con mati
 	//porque hay que guardar el sizeof del char estado y tarea en
@@ -37,9 +37,9 @@ struct Tripulante
 
 };
 
- Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
+t_tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
  {
-	Tripulante* devolverTripulante;
+	t_tripulante* devolverTripulante;
 	devolverTripulante->id=id;
 	devolverTripulante->posicionX= posicionX;
 	devolverTripulante->posicionY=posicionY;

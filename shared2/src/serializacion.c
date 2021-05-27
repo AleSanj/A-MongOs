@@ -11,7 +11,8 @@
 #include "TAD_TRIPULANTE.h"
 #include "TAD_PATOTA.h"
 #define TRIPULANTE 1
-#define PATOTA 1
+#define PATOTA 2
+#define STRING 3
 
  struct t_buffer {
     uint32_t size; // Tamaño del payload
