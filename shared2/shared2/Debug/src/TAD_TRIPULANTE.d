@@ -1,3 +1,0 @@
-src/TAD_TRIPULANTE.o: ../src/TAD_TRIPULANTE.c ../src/TAD_TRIPULANTE.h
-
-../src/TAD_TRIPULANTE.h:
