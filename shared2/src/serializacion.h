@@ -9,6 +9,8 @@
 #define SRC_SERIALIZACION_H_
 #include "TAD_TRIPULANTE.h"
 #include "TAD_PATOTA.h"
+
+
 typedef struct {
     uint32_t size; // Tamaño del payload
     void* stream; // Payload
@@ -25,6 +27,21 @@ typedef struct
 	uint8_t posX;
 	uint8_t posY;
 }id_and_pos;
+
+typedef struct
+{
+	uint32_t idTripulante;
+	uint32_t estado_length;
+	char estado;
+}cambio_estado;
+
+typedef struct
+{
+	uint8_t idPatota;
+	uint8_t cantTripulantes;
+	FILE* Tareas;
+}inicio_patota;
+
 
 
 void serializar_tripulante(Tripulante* unTripulante, int socket);

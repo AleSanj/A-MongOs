@@ -7,7 +7,6 @@
 
 
 #include "serializacion.h"
-
 #include "TAD_TRIPULANTE.h"
 #include "TAD_PATOTA.h"
 #define TRIPULANTE 1
@@ -16,8 +15,11 @@
 #define PEDIRTAREA 4
 #define ENVIOTAREA 5
 #define ACTUALIZAR_POS 6
+#define INICIOPATOTA 7
+#define ELIMINAR_TRIPULANTE 8
+#define ACTUALIZAR_ESTADO 9
 
- struct t_buffer {
+struct t_buffer {
     uint32_t size; // Tamaño del payload
     void* stream; // Payload
 };
@@ -33,6 +35,12 @@ struct id_and_pos
 	uint8_t idTripulante;
 	uint8_t posX;
 	uint8_t posY;
+};
+
+struct iniciar_patota {
+	uint8_t idPatota;
+	uint8_t cantTripulantes;
+	FILE* Tareas;
 };
 
 void serializar_tripulante(Tripulante* unTripulante, int socket){
@@ -193,6 +201,12 @@ Patota* deserializarPatota(t_buffer* buffer)
 
 void serializar_tarea_patota( tareasPatota tareaPatota, int socket)
 {
+	// Lo que deberia enviar es el id de la patota, el FILE con las tareas y la cant de tripulantes
+	// Para eso ya creamos el TAD Inicio_patota
+	// POR FAVOR CAMBIALE EL NOMBRE POR ALGO MAS CLARO, HAY 3 QUE SON CASI IGUALES
+	// POR FAVOR CAMBIALE EL NOMBRE POR ALGO MAS CLARO, HAY 3 QUE SON CASI IGUALES
+	// POR FAVOR CAMBIALE EL NOMBRE POR ALGO MAS CLARO, HAY 3 QUE SON CASI IGUALES
+	// POR FAVOR CAMBIALE EL NOMBRE POR ALGO MAS CLARO, HAY 3 QUE SON CASI IGUALES
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
 		buffer->size = sizeof(uint8_t)  // Id
@@ -385,7 +399,126 @@ void serializar_id_and_pos(id_and_pos pos, int socket)
 
 }
 
+Patota* deserializar_id_and_pos(t_buffer* buffer)
+{
+	id_and_pos* id_and_pos = malloc(sizeof(id_and_pos));
+	void*stream=buffer->stream;
+	//Deserealizamos campo por campo mviendonos en el buffer
 
+	memcpy(&(id_and_pos -> idTripulante),stream,sizeof(uint8_t));
+	stream+=sizeof(uint8_t);
+	memcpy(&(id_and_pos->posX),stream,sizeof(uint8_t));
+	stream+=sizeof(uint8_t);
+	memcpy(&(id_and_pos->posY),stream,sizeof(uint8_t));
+
+	return id_and_pos;
+}
+
+
+
+
+void serializar_eliminar_tripulante(int idTripulante, int socket)
+{
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+
+	buffer->size = sizeof(uint32_t);// Id
+	void* stream = malloc(buffer->size);
+	memcpy(stream,&idTripulante,sizeof(uint8_t));
+	buffer->stream=stream;
+
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+
+
+	//CODIGO DE OPERACION 1 = UN TRIUPLANTE
+		paquete->codigo_operacion = ELIMINAR_TRIPULANTE; // Podemos usar una constante por operación
+		paquete->buffer = buffer; // Nuestro buffer de antes.
+
+				// Armamos el stream a enviar
+	    void* a_enviar = malloc(buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
+		int offset = 0;
+
+	   memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
+
+	   send(socket, a_enviar, buffer->size + sizeof(uint8_t) + sizeof(uint32_t), 0);
+
+		// No nos olvidamos de liberar la memoria que ya no usaremos
+		free(a_enviar);
+		free(paquete->buffer->stream);
+		free(paquete->buffer);
+		free(paquete);
+
+}
+
+int deserializar_eliminar_tripulante(t_buffer* buffer)
+{
+	uint32_t idTripulante = malloc(sizeof(uint32_t));
+	//Deserealizamos campo por campo mviendonos en el buffer
+
+	memcpy(&(idTripulante),buffer->stream,sizeof(uint32_t));
+
+	return idTripulante;
+}
+
+
+void serializar_cambio_estado(cambio_estado estado, int socket)
+{
+	t_buffer* buffer = malloc(sizeof(t_buffer));
+
+	buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + strlen(estado->estado) + 1 //Id y estado nuevo
+	void* stream = malloc(buffer->size);
+	int offset = 0; // Desplazamiento
+	memcpy(stream+offset,&estado->idTripulante,sizeof(uint32_t));
+	offset+=sizeof(uint32_t);
+	memcpy(stream+offset,&estado->estado_length,sizeof(uint32_t));
+	offset+=sizeof(uint32_t);
+	memcpy(stream+offset,&estado->estado,strlen(estado->estado));
+	buffer->stream=stream;
+
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+
+
+	//CODIGO DE OPERACION 1 = UN TRIUPLANTE
+	paquete->codigo_operacion = ACTUALIZAR_ESTADO; // Podemos usar una constante por operación
+	paquete->buffer = buffer; // Nuestro buffer de antes.
+
+	// Armamos el stream a enviar
+	void* a_enviar = malloc(buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
+				offset = 0;
+
+	memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
+
+	send(socket, a_enviar, buffer->size + sizeof(uint8_t) + sizeof(uint32_t), 0);
+
+				// No nos olvidamos de liberar la memoria que ya no usaremos
+	free(a_enviar);
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+	free(paquete);
+
+}
+
+cambio_estado* deserializar_cambio_estado(t_buffer* buffer)
+{
+	cambio_estado* cambio_estado = malloc(sizeof(cambio_estado));
+	void*stream=buffer->stream;
+	//Deserealizamos campo por campo mviendonos en el buffer
+
+	memcpy(&(cambio_estado -> idTripulante),stream,sizeof(uint32_t));
+	stream+=sizeof(uint32_t);
+	memcpy(&(cambio_estado -> estado_length),stream,sizeof(uint32_t));
+	stream+=sizeof(uint32_t);
+	memcpy(&(cambio_estado->estado),stream,strlen(cambio_estado->estado));
+
+	return cambio_estado;
+}
+
+
+
+
+/*
+inicio_patota deserializar_inicio_patota(t_buffer* buffer){
+
+}*/
 // FUNCION PARA EL MAIN PARA RECIBIR UN PAQUETE adaptarla cuando se necesite!!!
 /*
  * t_paquete* paquete = malloc(sizeof(t_paquete));
