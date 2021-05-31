@@ -332,10 +332,21 @@ int hacerConsola() {
 			//PD ESTE MANEJO DE STRINS TE TOCA A VOS PILAR
 			char* tarea = string_substring_from(linea, 16);
 			int cantidad;
-			for (int i = 0; i < string_length(linea); i++) {
-				if (linea[i] < 58 && linea[i] > 47) {
-					cantidad = linea[i] - 47;
-				}
+
+			// DEFINIR CANTIDAD
+			int i = 0;
+			while (isDigit(tarea[i])==true){
+				i++;
+			}
+
+			char* cant="";
+			for(int k=0; k<i ; k++){
+				cant = cant && tarea[k];
+			}
+
+			cantidad=(int)cant;
+
+	}
 			}
 			//AHORA SI PA INICIAMOS LA PATOTA
 			Patota* pato = iniciarPatota(cantidad, 0, NULL, tarea);
@@ -420,11 +431,22 @@ int hacerConsola() {
 			// FIJATE QUE SOLO SIRVE SI ES DE UN DIGIITO VAS A TENER QUE DIVIDIR EL ESTRING EN EL ESPACIO
 			// Y FIJARTE SI EL SUBSTRING TIENE 1 O 2 CARACTERES
 			int idTripulante;
-			for (int i = 0; i < string_length(linea); i++) {
-				if (linea[i] < 58 && linea[i] > 47) {
-					idTripulante = linea[i] - 47;
-				}
+
+			char* tripulanteId = string_substring_from(linea, 20);
+
+			int i = 0;
+			while (isDigit(tripulanteId[i])==true){
+				i++;
 			}
+
+			char* id="";
+			for(int k=0; k<i ; k++){
+				id = id && tripulanteId[k];
+			}
+
+			idTripulante=(int)id;
+
+
 			//envio a MIRAM QUE BORREEL TRIPULANTE DEL MAPA
 
 		}
