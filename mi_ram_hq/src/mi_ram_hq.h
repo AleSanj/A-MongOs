@@ -15,8 +15,8 @@
 #include <nivel-gui/tad_nivel.h>
 #include <curses.h>
 #include <sys/socket.h>
-#include "TAD_TRIPULANTE.h"
-#include "TAD_PATOTA.h"
+#include <TAD_TRIPULANTE.h>
+#include <TAD_PATOTA.h>
 #include <commons/collections/list.h>
 #include <pthread.h>
 #include <conexion.h>
@@ -31,10 +31,8 @@
 #define ENVIOTAREA 5
 #define ACTUALIZAR_POS 6
 #define INICIOPATOTA 7
-
-void dibujarTripulante(Tripulante*,NIVEL*);
-int crear_mapa();
-
+#define ELIMINAR_TRIPULANTE 8
+#define ACTUALIZAR_ESTADO 9
 
 typedef struct
 {
@@ -51,5 +49,14 @@ typedef struct
    uint32_t* prox_tarea;
    uint32_t* puntero_pcb;
 }TCB;
+
+void dibujarTripulante(Tripulante*);
+int crear_mapa();
+//void administrar_cliente(id_and_pos,NIVEL);
+TCB* crearTCB(Tripulante*, uint32_t*);
+void administrar_cliente(int);
+char intAChar(int);
+
+
 
 #endif /* MI_RAM_HQ_H_ */
