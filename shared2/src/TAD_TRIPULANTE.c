@@ -40,6 +40,7 @@ struct Tripulante
 	char* Tarea;
 	uint8_t posicionX;
 	uint8_t posicionY;
+	int espera;
 	pthread_t hilo;
 
 };
@@ -54,10 +55,10 @@ struct Tripulante
 	return devolverTripulante ;
  }
 
- void mostrarTripulante(uint8_t idPatota, Tripulante* tripulante)
+ void mostrarTripulante(Tripulante* tripulante)
  {
 
- 	printf ("Patota: %i Tripulante: %i Estado: %s ",idPatota,tripulante->id,tripulante->estado);
+ 	printf ("Patota: %i Tripulante: %i Estado: %s ",tripulante->idPatota,tripulante->id,tripulante->estado);
  }
 
 #endif

@@ -1,19 +1,19 @@
 src/Discord.o: ../src/Discord.c \
- /home/utnso/workspace/shared2/src/TAD_TRIPULANTE.h \
- /home/utnso/workspace/shared2/src/TAD_PATOTA.h \
- /home/utnso/workspace/shared2/src/TAD_TRIPULANTE.h \
- /home/utnso/workspace/shared2/src/serializacion.h \
- /home/utnso/workspace/shared2/src/TAD_PATOTA.h \
- /home/utnso/workspace/shared2/src/conexion.h
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_TRIPULANTE.h \
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_PATOTA.h \
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_TRIPULANTE.h \
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/serializacion.h \
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_PATOTA.h \
+ /home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/conexion.h
 
-/home/utnso/workspace/shared2/src/TAD_TRIPULANTE.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_TRIPULANTE.h:
 
-/home/utnso/workspace/shared2/src/TAD_PATOTA.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_PATOTA.h:
 
-/home/utnso/workspace/shared2/src/TAD_TRIPULANTE.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_TRIPULANTE.h:
 
-/home/utnso/workspace/shared2/src/serializacion.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/serializacion.h:
 
-/home/utnso/workspace/shared2/src/TAD_PATOTA.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/TAD_PATOTA.h:
 
-/home/utnso/workspace/shared2/src/conexion.h:
+/home/utnso/tp-2021-1c-Cebollitas-subcampeon/shared2/src/conexion.h:

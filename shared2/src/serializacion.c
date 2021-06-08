@@ -11,14 +11,21 @@
 #include "TAD_PATOTA.h"
 #define TRIPULANTE 1
 #define PATOTA 2
-#define TAREASPATOTA 3
+#define INICIAR_PATOTA 3
 #define PEDIRTAREA 4
 #define ENVIOTAREA 5
 #define ACTUALIZAR_POS 6
 #define INICIOPATOTA 7
 #define ELIMINAR_TRIPULANTE 8
 #define ACTUALIZAR_ESTADO 9
+#define SABOTAJE 10
 
+struct cambio_estado
+{
+	uint32_t idTripulante;
+	uint32_t estado_length;
+	char* estado;
+};
 struct t_buffer {
     uint32_t size; // Tamaño del payload
     void* stream; // Payload
@@ -199,7 +206,7 @@ Patota* deserializarPatota(t_buffer* buffer)
 	return patota;
 }
 
-void serializar_tarea_patota( tareasPatota tareaPatota, int socket)
+void serializar_iniciar_patota( iniciar_patota* tareaPatota, int socket)
 {
 	// Lo que deberia enviar es el id de la patota, el FILE con las tareas y la cant de tripulantes
 	// Para eso ya creamos el TAD Inicio_patota
@@ -211,23 +218,23 @@ void serializar_tarea_patota( tareasPatota tareaPatota, int socket)
 
 		buffer->size = sizeof(uint8_t)  // Id
 					 + sizeof(uint32_t)//longitud de tarea
-		             + (strlen(tareaPatota.tareas)) + 1; // Tarea
+		             + sizeof(FILE*); // Tarea
 		             // La longitud del string nombre. Le sumamos 1 para enviar tambien el caracter centinela '\0'. Esto se podría obviar, pero entonces deberíamos agregar el centinela en el receptor.
 
 		void* stream = malloc(buffer->size);
 		int offset = 0; // Desplazamiento
-		memcpy(stream+offset,&(tareaPatota.id),sizeof(uint8_t));
+		memcpy(stream+offset,&(tareaPatota->idPatota),sizeof(uint8_t));
 		offset+=sizeof(uint8_t);
-		memcpy(stream+offset,&tareaPatota.tareas_length,sizeof(uint32_t));
+		memcpy(stream+offset,&tareaPatota->cantTripulantes,sizeof(uint8_t));
 		offset+=sizeof(uint32_t);
-		memcpy(stream+offset,tareaPatota.tareas,strlen(tareaPatota.tareas)+1);
+		memcpy(stream+offset,tareaPatota->Tareas,sizeof(FILE*));
 
 		buffer->stream=stream;
 		t_paquete* paquete = malloc(sizeof(t_paquete));
 
 
 			//CODIGO DE OPERACION 1 = UN TRIUPLANTE
-			paquete->codigo_operacion = TAREASPATOTA; // Podemos usar una constante por operación
+			paquete->codigo_operacion = INICIAR_PATOTA; // Podemos usar una constante por operación
 			paquete->buffer = buffer; // Nuestro buffer de antes.
 
 			// Armamos el stream a enviar
@@ -246,18 +253,17 @@ void serializar_tarea_patota( tareasPatota tareaPatota, int socket)
 
 
 }
-tareasPatota* deserializar_tareas_patota(t_buffer* buffer)
+iniciar_patota* deserializar_iniciar_patota(t_buffer* buffer)
 {
-	tareasPatota* tareas=malloc(sizeof(tareasPatota));
+	iniciar_patota* tareas=malloc(sizeof(tareasPatota));
 
 	void* stream=buffer->stream;
 
-	memcpy(&(tareas->id),stream,sizeof(uint8_t));
+	memcpy(&(tareas->idPatota),stream,sizeof(uint8_t));
 	stream+=sizeof(uint8_t);
-	memcpy(&(tareas->tareas_length),stream,sizeof(uint32_t));
-	stream+=sizeof(uint32_t);
-	tareas->tareas=malloc(tareas->tareas_length);
-	memcpy(tareas->tareas,stream,tareas->tareas_length);
+	memcpy(&(tareas->cantTripulantes),stream,sizeof(uint8_t));
+	stream+=sizeof(uint8_t);
+	memcpy(&(tareas->Tareas),stream,sizeof(FILE*));
 
 	return tareas;
 
@@ -464,14 +470,14 @@ void serializar_cambio_estado(cambio_estado estado, int socket)
 {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
-	buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + strlen(estado->estado) + 1 //Id y estado nuevo
+	buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + strlen(estado.estado) + 1; //Id y estado nuevo
 	void* stream = malloc(buffer->size);
 	int offset = 0; // Desplazamiento
-	memcpy(stream+offset,&estado->idTripulante,sizeof(uint32_t));
+	memcpy(stream+offset,&estado.idTripulante,sizeof(uint32_t));
 	offset+=sizeof(uint32_t);
-	memcpy(stream+offset,&estado->estado_length,sizeof(uint32_t));
+	memcpy(stream+offset,&estado.estado_length,sizeof(uint32_t));
 	offset+=sizeof(uint32_t);
-	memcpy(stream+offset,&estado->estado,strlen(estado->estado));
+	memcpy(stream+offset,&estado.estado,strlen(estado.estado));
 	buffer->stream=stream;
 
 	t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -507,12 +513,61 @@ cambio_estado* deserializar_cambio_estado(t_buffer* buffer)
 	stream+=sizeof(uint32_t);
 	memcpy(&(cambio_estado -> estado_length),stream,sizeof(uint32_t));
 	stream+=sizeof(uint32_t);
+	cambio_estado->estado=malloc(cambio_estado->estado_length);
 	memcpy(&(cambio_estado->estado),stream,strlen(cambio_estado->estado));
 
 	return cambio_estado;
 }
 
+void serializar_sabotaje(char* sabotaje, int socket)
+{
+	t_buffer* buffer = malloc(sizeof(t_buffer));
 
+	buffer->size = sizeof(uint32_t)+strlen(sabotaje)+1;
+	uint32_t tamano= strlen(sabotaje)+1;
+
+	void* stream = malloc(buffer->size);
+	int offset = 0; // Desplazamiento
+	memcpy(stream+offset,&tamano,sizeof(uint32_t));
+	offset+=sizeof(uint32_t);
+	memcpy(stream+offset,sabotaje,strlen(sabotaje)+1);
+	buffer->stream=stream;
+	free(sabotaje);
+	t_paquete* paquete = malloc(sizeof(t_paquete));
+
+
+				//CODIGO DE OPERACION 1 = UN TRIUPLANTE
+	paquete->codigo_operacion = SABOTAJE; // Podemos usar una constante por operación
+	paquete->buffer = buffer; // Nuestro buffer de antes.
+
+				// Armamos el stream a enviar
+	void* a_enviar = malloc(buffer->size + sizeof(uint8_t) + sizeof(uint32_t));
+	offset = 0;
+
+    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
+
+	send(socket, a_enviar, buffer->size + sizeof(uint8_t) + sizeof(uint32_t), 0);
+
+				// No nos olvidamos de liberar la memoria que ya no usaremos
+	free(a_enviar);
+	free(paquete->buffer->stream);
+	free(paquete->buffer);
+				free(paquete);
+
+}
+
+char* deserializar_sabotaje(t_buffer* buffer)
+{
+	uint32_t* tamano=malloc(sizeof(uint32_t));
+	void* stream= buffer->stream;
+
+	memcpy(&(tamano),stream,sizeof(uint32_t));
+	stream+=sizeof(uint32_t);
+	char* sabotaje=malloc((int)tamano);
+	memcpy(sabotaje,stream,(int)tamano);
+	return sabotaje;
+
+}
 
 
 /*

@@ -33,13 +33,14 @@ typedef struct
 	char* Tarea;
 	uint8_t posicionX;
 	uint8_t posicionY;
+	int espera;
 	pthread_t hilo;
 
 } Tripulante;
 
 Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY);
 
-void mostrarTripulante(uint8_t idPatota, Tripulante* tripulante);
+void mostrarTripulante(Tripulante* tripulante);
 
 
 
