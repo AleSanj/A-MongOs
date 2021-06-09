@@ -27,9 +27,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.exe.debug.1817800123" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.exe.debug">
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.exe.debug.option.optimization.level.537861341" name="Optimization Level" superClass="gnu.c.compiler.exe.debug.option.optimization.level" useByScannerDiscovery="false" valueType="enumerated"/>
 								<option id="gnu.c.compiler.exe.debug.option.debugging.level.296110420" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" useByScannerDiscovery="false" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.include.paths.353277739" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath">
-									<listOptionValue builtIn="false" value="/home/utnso/Documentos/tp-2021-1c-Cebollitas-subcampeon/shared2/src"/>
-								</option>
+								<option id="gnu.c.compiler.option.include.paths.353277739" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" useByScannerDiscovery="false" valueType="includePath"/>
 								<option id="gnu.c.compiler.option.dialect.std.1434497709" name="Language standard" superClass="gnu.c.compiler.option.dialect.std" useByScannerDiscovery="true" value="gnu.c.compiler.dialect.default" valueType="enumerated"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1107293085" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -40,7 +38,7 @@
 									<listOptionValue builtIn="false" value="nivel-gui"/>
 									<listOptionValue builtIn="false" value="ncurses"/>
 								</option>
-								<option id="gnu.c.link.option.paths.1413792917" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false" valueType="libPaths"/>
+								<option id="gnu.c.link.option.paths.1413792917" name="Library search path (-L)" superClass="gnu.c.link.option.paths" useByScannerDiscovery="false"/>
 								<option id="gnu.c.link.option.shared.1745461596" name="Shared (-shared)" superClass="gnu.c.link.option.shared" useByScannerDiscovery="false" value="false" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1772677765" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>

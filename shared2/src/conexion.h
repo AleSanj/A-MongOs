@@ -8,11 +8,11 @@
 #ifndef SRC_CONEXION_H_
 #define SRC_CONEXION_H_
 
-int crear_server(char*,char*,int);
-int esperar_cliente(int);
+int crear_server(char*,char*);
+int esperar_cliente(int,int);
 void ejemplo();
-int crear_conexion(char* ip, char* puerto);
-void liberar_conexion(int socket_cliente);
+int crear_conexion(char*, char*);
+void liberar_conexion(int);
 
 
 #endif /* SRC_CONEXION_H_ */

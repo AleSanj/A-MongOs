@@ -14,26 +14,48 @@
 #define ASSERT_CREATE(nivel, id, err)
 
 NIVEL* nivel;
+t_config* config;
+
+int tamMemoria;
+char* esquemaMemoria;
+int tamPagina;
+int tamSwap;
+char* path_swap;
+char* alg_remplazo;
+char* crit_seleccion;
+int puerto;
+int memoria;
 
 int main(void) {
 	int socketCliente, socketServer;
 	bool terminar;
-	Tripulante* tripulante = {8 ,5 ,10 ,'Nuevo' ,32 ,'Tarea' ,10 ,15};
+
+	config = config_create("./src/mi_ram_hq.config");
+	tamMemoria = config_get_string_value(config, "TAMANIO_MEMORIA");
+	esquemaMemoria = config_get_int_value(config, "ESQUEMA_MEMORIA");
+	tamPagina = config_get_int_value(config, "TAMANIO_PAGINA");
+	tamSwap = config_get_int_value(config, "TAMANIO_SWAP");
+	path_swap = config_get_string_value(config, "PATH_SWAP");
+	alg_remplazo = config_get_int_value(config, "ALGORITMO_REEMPLAZO");
+	crit_seleccion = config_get_string_value(config, "CRITERIO_SELECCION");
+	puerto = config_get_int_value(config, "PUERTO");
+
+	memoria = malloc(tamMemoria);
+
 	nivel = crear_mapa();
 
-	socketServer = crear_server("6667","127.0.0.1",5);
+	socketServer = crear_server(intAChar(puerto),"127.0.0.1");
 	while(1){
-		socketCliente = esperar_cliente(socketServer);
+		socketCliente = esperar_cliente(socketServer,5);
 		pthread_t hiloCliente;
-		pthread_create(hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
+		pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
 		pthread_join(hiloCliente,NULL);
 
-
-		terminar_servidor(socketServer);
 
 
 	}
 
+	terminar_servidor(socketServer);
 	//crear_personajes(nivel, patota);
 	return EXIT_SUCCESS;
 }
@@ -88,6 +110,7 @@ int procesar_archivo(FILE* archivoTareas){
 }
 
 void administrar_cliente(int socketCliente){
+	printf("El hilo fue creado correctamente\n");
 
 	t_paquete* paquete = malloc(sizeof(t_paquete));
 	paquete->buffer = malloc(sizeof(t_buffer));
@@ -105,8 +128,8 @@ void administrar_cliente(int socketCliente){
 
 	switch(paquete->codigo_operacion) {
 		case INICIOPATOTA:;
-			Patota* nuevaPatota;
-			nuevaPatota = deserializar_tareas_patota(paquete->buffer);
+			iniciar_patota* nuevaPatota;
+			nuevaPatota = deserializar_iniciar_patota(paquete->buffer);
 	    	PCB* pcb;
 	    	pcb ->	pid = nuevaPatota -> idPatota;
 	    	uint32_t* tareas = procesar_archivo(nuevaPatota -> Tareas);

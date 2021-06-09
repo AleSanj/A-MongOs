@@ -25,7 +25,7 @@ void ejemplo(){
 }
 
 
-int crear_server(char* puerto,char* ip,int backlog){
+int crear_server(char* puerto,char* ip){
 
 
 	struct addrinfo hints;
@@ -59,14 +59,14 @@ int crear_server(char* puerto,char* ip,int backlog){
 
 	bind(listenningSocket,serverInfo->ai_addr, serverInfo->ai_addrlen);
 	freeaddrinfo(serverInfo);
-
-	listen(listenningSocket, backlog);
-
-	freeaddrinfo(serverInfo);
+	printf("Servidor creado, esperando clientes\n");
 	return listenningSocket;
 }
 
-int esperar_cliente(int socket_server){
+int esperar_cliente(int socket_server, int backlog){
+
+		listen(socket_server, backlog);
+
 		struct sockaddr_in addr;
 		socklen_t addrlen = sizeof(addr);
 
@@ -86,8 +86,8 @@ int esperar_cliente(int socket_server){
 
 }
 
-void terminar_servidor(int socket_cliente){
-	close(socket_cliente);
+void terminar_servidor(int socket_server){
+	close(socket_server);
 }
 int crear_conexion(char* ip, char* puerto)
 {

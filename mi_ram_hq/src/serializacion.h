@@ -32,7 +32,7 @@ typedef struct
 {
 	uint32_t idTripulante;
 	uint32_t estado_length;
-	char estado;
+	char* estado;
 }cambio_estado;
 
 typedef struct
@@ -40,7 +40,7 @@ typedef struct
 	uint8_t idPatota;
 	uint8_t cantTripulantes;
 	FILE* Tareas;
-}inicio_patota;
+}iniciar_patota;
 
 
 
@@ -48,13 +48,17 @@ void serializar_tripulante(Tripulante* unTripulante, int socket);
 Tripulante* deserializar_tripulante(t_buffer* buffer);
 void serializar_patota( Patota* unaPatota, int socket);
 Patota* deserializarPatota(t_buffer* buffer);
-void serializar_tarea_patota( tareasPatota tareaPatota, int socket);
-tareasPatota* deserializar_tareas_patota(t_buffer* buffer);
+void serializar_iniciar_patota( iniciar_patota* tareaPatota, int socket);
+iniciar_patota* deserializar_iniciar_patota(t_buffer* buffer);
 void serializar_tarea_tripulante( tareaTripulante tareaTrip, int socket);
 tareaTripulante* deserializar_tarea_tripulante(t_buffer* buffer);
 void serializar_tarea(char* tarea, int socket);
 char* deserializar_tarea(t_buffer* buffer);
 void serializar_id_and_pos(id_and_pos pos, int socket);
+void serializar_cambio_estado(cambio_estado estado, int socket);
+void serializar_eliminar_tripulante(int idTripulante, int socket);
+void serializar_sabotaje(char* sabotaje, int socket);
+char* deserializar_sabotaje(t_buffer* buffer);
 
 
 

@@ -15,12 +15,13 @@
 #include <nivel-gui/tad_nivel.h>
 #include <curses.h>
 #include <sys/socket.h>
-#include <TAD_TRIPULANTE.h>
-#include <TAD_PATOTA.h>
+#include "TAD_TRIPULANTE.h"
+#include "TAD_PATOTA.h"
 #include <commons/collections/list.h>
 #include <pthread.h>
-#include <conexion.h>
-#include <serializacion.h>
+#include "conexion.h"
+#include "serializacion.h"
+#include <commons/config.h>
 
 #define PUERTOPREDETERMINADO 6667
 
@@ -33,6 +34,10 @@
 #define INICIOPATOTA 7
 #define ELIMINAR_TRIPULANTE 8
 #define ACTUALIZAR_ESTADO 9
+
+
+pthread_mutex_t mutex_lista_restaurantes;
+
 
 typedef struct
 {
