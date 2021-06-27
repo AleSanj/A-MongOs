@@ -23,34 +23,37 @@ int tamSwap;
 char* path_swap;
 char* alg_remplazo;
 char* crit_seleccion;
-int puerto;
+char* puerto;
 int memoria;
 
 int main(void) {
 	int socketCliente, socketServer;
 	bool terminar;
 
-	config = config_create("./src/mi_ram_hq.config");
-	tamMemoria = config_get_string_value(config, "TAMANIO_MEMORIA");
-	esquemaMemoria = config_get_int_value(config, "ESQUEMA_MEMORIA");
+	config = config_create("/home/utnso/Documentos/tp-2021-1c-Cebollitas-subcampeon/mi_ram_hq/src/mi_ram_hq.config");
+	tamMemoria = config_get_int_value(config, "TAMANIO_MEMORIA");
+	esquemaMemoria = config_get_string_value(config, "ESQUEMA_MEMORIA");
 	tamPagina = config_get_int_value(config, "TAMANIO_PAGINA");
 	tamSwap = config_get_int_value(config, "TAMANIO_SWAP");
 	path_swap = config_get_string_value(config, "PATH_SWAP");
-	alg_remplazo = config_get_int_value(config, "ALGORITMO_REEMPLAZO");
+	alg_remplazo = config_get_string_value(config, "ALGORITMO_REEMPLAZO");
 	crit_seleccion = config_get_string_value(config, "CRITERIO_SELECCION");
-	puerto = config_get_int_value(config, "PUERTO");
+	puerto = config_get_string_value(config, "PUERTO");
 
 	memoria = malloc(tamMemoria);
 
 	nivel = crear_mapa();
 
-	socketServer = crear_server(intAChar(puerto),"127.0.0.1");
+	socketServer = crear_server(puerto,"127.0.0.1");
 	while(1){
+		socketCliente = -1;
 		socketCliente = esperar_cliente(socketServer,5);
-		pthread_t hiloCliente;
-		pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
-		pthread_join(hiloCliente,NULL);
-
+		printf("Me canse de esperar \n");
+		if(socketCliente != -1){
+			pthread_t hiloCliente;
+			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
+			pthread_join(hiloCliente,NULL);
+		}
 
 
 	}
@@ -120,19 +123,24 @@ void administrar_cliente(int socketCliente){
 
 	// Después ya podemos recibir el buffer. Primero su tamaño seguido del contenido
 	recv(socketCliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
+	printf("Size a allocar: %d \n", paquete->buffer->size);
+
+
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	recv(socketCliente, paquete->buffer->stream, paquete->buffer->size, 0);
 
 	// Ahora en función del código recibido procedemos a deserializar el resto
-
+	printf("Recibi todo bien, codigo de operacion: %d\n", paquete->codigo_operacion);
 
 	switch(paquete->codigo_operacion) {
-		case INICIOPATOTA:;
+		case INICIAR_PATOTA:;
+			printf("Inicio una patota /n");
 			iniciar_patota* nuevaPatota;
 			nuevaPatota = deserializar_iniciar_patota(paquete->buffer);
-	    	PCB* pcb;
-	    	pcb ->	pid = nuevaPatota -> idPatota;
-	    	uint32_t* tareas = procesar_archivo(nuevaPatota -> Tareas);
+	    	printf("ID de la patota: %d \n",nuevaPatota -> idPatota);
+			//PCB* pcb;
+	    	//pcb ->	pid = nuevaPatota -> idPatota;
+	    	/*uint32_t* tareas = procesar_archivo(nuevaPatota -> Tareas);
 	    	pcb -> tareas = tareas;
 	    	//Guardar PCB en memoria
 	    	uint32_t* punteroPCB;
@@ -144,19 +152,28 @@ void administrar_cliente(int socketCliente){
 	    		Tripulante* tripulante;
 	    		tripulante = deserializar_tripulante(paquete->buffer);
 	    		iniciar_tripulante(tripulante, pcb);
-	    	}
+	    	}*/
 	    	break;
 		case ACTUALIZAR_POS:;
-
-			id_and_pos* nuevaPos;
+			printf("Me pidio moverlo en el mapa \n");
+			/*id_and_pos* nuevaPos;
 			nuevaPos = deserializar_id_and_pos(paquete->buffer);
-			actualizarPosicion(nuevaPos, nivel);
+			actualizarPosicion(nuevaPos, nivel);*/
 			break;
 		case PEDIRTAREA:
+			printf("Me pidio una tarea \n");
 			break;
 		case ELIMINAR_TRIPULANTE:
+			printf("Eliminar tripulante \n");
 			break;
 		case ACTUALIZAR_ESTADO:
+			printf("Me pidio actualizar estado \n");
+			break;
+		case TRIPULANTE:
+			printf("Me mando un tripulante nuevo \n");
+			break;
+		default:
+			printf("No tengo registrado ese case \n");
 			break;
 
 	}
