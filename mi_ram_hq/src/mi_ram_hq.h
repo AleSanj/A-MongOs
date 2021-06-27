@@ -27,13 +27,14 @@
 
 #define TRIPULANTE 1
 #define PATOTA 2
-#define TAREASPATOTA 3
+#define INICIAR_PATOTA 3
 #define PEDIRTAREA 4
 #define ENVIOTAREA 5
 #define ACTUALIZAR_POS 6
 #define INICIOPATOTA 7
 #define ELIMINAR_TRIPULANTE 8
 #define ACTUALIZAR_ESTADO 9
+#define SABOTAJE 10
 
 
 pthread_mutex_t mutex_lista_restaurantes;
