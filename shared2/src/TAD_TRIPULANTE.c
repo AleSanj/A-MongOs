@@ -35,6 +35,7 @@ struct Tripulante
 	uint8_t id;
 	uint8_t idPatota;
 	uint32_t estado_length;
+	_Bool vida;
 	char* estado;
 	uint32_t Tarea_length;
 	char* Tarea;
@@ -45,15 +46,18 @@ struct Tripulante
 
 };
 
- Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY)
+Tripulante* tripulanteCreate(uint8_t id,uint8_t idPa, uint8_t posicionX,uint8_t posicionY)
  {
-	Tripulante* devolverTripulante;
+	Tripulante* devolverTripulante=malloc(sizeof(Tripulante));
 	devolverTripulante->id=id;
+	devolverTripulante->idPatota=idPa;
 	devolverTripulante->posicionX= posicionX;
 	devolverTripulante->posicionY=posicionY;
+	devolverTripulante->vida=true;
 	devolverTripulante->estado="New";
 	return devolverTripulante ;
  }
+
 
  void mostrarTripulante(Tripulante* tripulante)
  {

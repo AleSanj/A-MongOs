@@ -136,7 +136,7 @@ void obtener_parametros_tarea(Tripulante* t, int* posX, int* posY)
 		t->espera=string_to_int(parametros[3]);
 	}
 }
-
+Tripulante str;
 void elimiarTripulante(Tripulante* tripulante,int socketMiRam,int socketMongo)
 {
 	serializar_eliminar_tripulante(tripulante->id,socketMiRam);

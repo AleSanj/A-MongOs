@@ -52,7 +52,8 @@ struct iniciar_patota {
 
 void serializar_tripulante(Tripulante* unTripulante, int socket){
 	t_buffer* buffer = malloc(sizeof(t_buffer));
-
+	unTripulante->estado_length=strlen(unTripulante->estado)+1;
+	unTripulante->Tarea_length=strlen(unTripulante->Tarea)+1;
 	buffer->size = sizeof(uint8_t) * 3 // Id, posx, posy
 	             + strlen(unTripulante->Tarea) + 1 // Tarea
 	             + strlen(unTripulante->estado) + 1; // La longitud del string nombre. Le sumamos 1 para enviar tambien el caracter centinela '\0'. Esto se podría obviar, pero entonces deberíamos agregar el centinela en el receptor.
@@ -218,7 +219,7 @@ void serializar_iniciar_patota( iniciar_patota* tareaPatota, int socket)
 
 		buffer->size = sizeof(uint8_t)  // Id
 					 + sizeof(uint32_t)//longitud de tarea
-		             + sizeof(FILE*); // Tarea
+		             + sizeof(FILE); // Tarea
 		             // La longitud del string nombre. Le sumamos 1 para enviar tambien el caracter centinela '\0'. Esto se podría obviar, pero entonces deberíamos agregar el centinela en el receptor.
 
 		void* stream = malloc(buffer->size);
@@ -227,7 +228,7 @@ void serializar_iniciar_patota( iniciar_patota* tareaPatota, int socket)
 		offset+=sizeof(uint8_t);
 		memcpy(stream+offset,&tareaPatota->cantTripulantes,sizeof(uint8_t));
 		offset+=sizeof(uint32_t);
-		memcpy(stream+offset,tareaPatota->Tareas,sizeof(FILE*));
+		memcpy(stream+offset,tareaPatota->Tareas,sizeof(FILE));
 
 		buffer->stream=stream;
 		t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -269,7 +270,7 @@ iniciar_patota* deserializar_iniciar_patota(t_buffer* buffer)
 
 
 }
-void serializar_tarea_tripulante( tareaTripulante tareaTrip, int socket)
+void serializar_tarea_tripulante( Tripulante* tareaTrip, int socket)
 {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
@@ -277,9 +278,9 @@ void serializar_tarea_tripulante( tareaTripulante tareaTrip, int socket)
 
 	void* stream = malloc(buffer->size);
 	int offset = 0; // Desplazamiento
-	memcpy(stream + offset, &tareaTrip.idTripulante, sizeof(uint8_t));
+	memcpy(stream + offset, &tareaTrip->id, sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(stream+offset,&tareaTrip.idPatota, sizeof(uint8_t));
+	memcpy(stream+offset,&tareaTrip->idPatota, sizeof(uint8_t));
 
 	buffer->stream=stream;
 	t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -368,18 +369,18 @@ char* deserializar_tarea(t_buffer* buffer)
 
 }
 
-void serializar_id_and_pos(id_and_pos pos, int socket)
+void serializar_id_and_pos(Tripulante* pos, int socket)
 {
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
 	buffer->size = sizeof(uint8_t) * 3 ;// Id, posx, posy
 	void* stream = malloc(buffer->size);
 	int offset = 0; // Desplazamiento
-	memcpy(stream+offset,&pos.idTripulante,sizeof(uint8_t));
+	memcpy(stream+offset,&pos->id,sizeof(uint8_t));
 	offset+=sizeof(uint8_t);
-	memcpy(stream+offset,&pos.posX,sizeof(uint8_t));
+	memcpy(stream+offset,&pos->posicionX,sizeof(uint8_t));
 	offset+=sizeof(uint8_t);
-	memcpy(stream+offset,&pos.posY,sizeof(uint8_t));
+	memcpy(stream+offset,&pos->posicionY,sizeof(uint8_t));
 	buffer->stream=stream;
 
 	t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -405,7 +406,7 @@ void serializar_id_and_pos(id_and_pos pos, int socket)
 
 }
 
-Patota* deserializar_id_and_pos(t_buffer* buffer)
+id_and_pos* deserializar_id_and_pos(t_buffer* buffer)
 {
 	id_and_pos* id_and_pos = malloc(sizeof(id_and_pos));
 	void*stream=buffer->stream;
@@ -466,18 +467,20 @@ int deserializar_eliminar_tripulante(t_buffer* buffer)
 }
 
 
-void serializar_cambio_estado(cambio_estado estado, int socket)
+void serializar_cambio_estado(Tripulante* estado, int socket)
 {
+
+	estado->estado_length=strlen(estado->estado)+1;
 	t_buffer* buffer = malloc(sizeof(t_buffer));
 
-	buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + strlen(estado.estado) + 1; //Id y estado nuevo
+	buffer->size = sizeof(uint32_t) + sizeof(uint32_t) + strlen(estado->estado) + 1; //Id y estado nuevo
 	void* stream = malloc(buffer->size);
 	int offset = 0; // Desplazamiento
-	memcpy(stream+offset,&estado.idTripulante,sizeof(uint32_t));
+	memcpy(stream+offset,&estado->id,sizeof(uint32_t));
 	offset+=sizeof(uint32_t);
-	memcpy(stream+offset,&estado.estado_length,sizeof(uint32_t));
+	memcpy(stream+offset,&estado->estado_length,sizeof(uint32_t));
 	offset+=sizeof(uint32_t);
-	memcpy(stream+offset,&estado.estado,strlen(estado.estado));
+	memcpy(stream+offset,&estado->estado,strlen(estado->estado)+1);
 	buffer->stream=stream;
 
 	t_paquete* paquete = malloc(sizeof(t_paquete));
@@ -568,6 +571,22 @@ char* deserializar_sabotaje(t_buffer* buffer)
 	return sabotaje;
 
 }
+/*
+
+void* serializar_generar_recurso(Tripulante* trip, int socket)
+{
+
+}
+
+void* serializar_consumir_recurso(Tripulante* trip, int socket)
+{
+
+}
+void* actualizar_bitacora(Tripulante*trip, int socket)
+{
+
+}
+*/
 
 
 /*
