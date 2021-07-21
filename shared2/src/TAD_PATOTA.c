@@ -32,36 +32,33 @@ struct Patota
 	uint32_t tareas_length;
 };
 
-void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes,uint8_t tripu)
+void agregarTripulantes(int cantidad, Patota* patota ,t_list* listaTripulantes)
 {
 	uint8_t i=0;
 	while (i < cantidad)
 	{
 		if(list_is_empty(listaTripulantes)!= true)
 		{
-		tripu++;
-		int pos_x= (int)list_remove(listaTripulantes,NULL);
-		int pos_y=  (int)list_remove(listaTripulantes,NULL);
-		 patota->tripulacion[i]=tripulanteCreate(tripu,patota->id,(uint8_t)pos_x, (uint8_t)pos_y);
-
+			Tripulante* agregar=malloc(sizeof(Tripulante*));
+			agregar =(void*)tripulanteCreate(i+1,(uint8_t)list_remove(listaTripulantes,i*2),(uint8_t)list_remove(listaTripulantes,i*2+1));
+			patota->tripulacion[i] =  agregar;
 		}
 		else
 		{
-			tripu++;
 			uint8_t pos =0;
-			patota->tripulacion[i] =tripulanteCreate(tripu,patota->id,pos,pos);
-
+			Tripulante* agregar =tripulanteCreate(i+1,pos,pos);
+			patota->tripulacion[i]= agregar;
 		};
 		i++;
 	};
 }
- Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas, uint8_t tripu )
+ Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas )
 {
 
-	Patota* devolverPatota=malloc(sizeof(Patota)) ;
+	Patota* devolverPatota=malloc(sizeof(Patota*)) ;
 	devolverPatota->id=id;
 	devolverPatota->tareas=tareas;
-	agregarTripulantes(cantTripulantes,devolverPatota,listaTripulantes,tripu );
+	agregarTripulantes(cantTripulantes,devolverPatota,listaTripulantes );
 	return devolverPatota;
 };
 

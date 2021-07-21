@@ -8,34 +8,17 @@
 #ifndef MI_RAM_HQ_H_
 #define MI_RAM_HQ_H_
 
-
-#include <stdio.h>
-#include <stdlib.h>
 #include <nivel-gui/nivel-gui.h>
 #include <nivel-gui/tad_nivel.h>
 #include <curses.h>
-#include <sys/socket.h>
-#include "TAD_TRIPULANTE.h"
-#include "TAD_PATOTA.h"
 #include <commons/collections/list.h>
 #include <pthread.h>
-#include "conexion.h"
-#include "serializacion.h"
+#include <conexion.c>
+#include <serializacion.c>
 #include <commons/config.h>
+#include "funcionesMemoria.h"
 
 #define PUERTOPREDETERMINADO 6667
-
-#define TRIPULANTE 1
-#define PATOTA 2
-#define INICIAR_PATOTA 3
-#define PEDIRTAREA 4
-#define ENVIOTAREA 5
-#define ACTUALIZAR_POS 6
-#define INICIOPATOTA 7
-#define ELIMINAR_TRIPULANTE 8
-#define ACTUALIZAR_ESTADO 9
-#define SABOTAJE 10
-
 
 pthread_mutex_t mutex_lista_restaurantes;
 
@@ -63,6 +46,26 @@ TCB* crearTCB(Tripulante*, uint32_t*);
 void administrar_cliente(int);
 char intAChar(int);
 
+NIVEL* nivel;
+t_config* config;
 
+int tamMemoria;
+char* esquemaMemoria;
+int tamPagina;
+int tamSwap;
+char* path_swap;
+char* alg_remplazo;
+char* crit_seleccion;
+char* puerto;
+void *memoria;
+void* memoriaSwap;
+int *bitarrayMemoria;
+int *bitarraySwap;
+int cantidadPaginas;
+char *algoritmoReemplazo;
+int tipoDeGuardado;
+
+#define BESTFIT 1
+#define FIRSTFIT 2
 
 #endif /* MI_RAM_HQ_H_ */

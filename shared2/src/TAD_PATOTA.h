@@ -36,8 +36,8 @@ typedef struct
 }Patota;
 
 
-void agregarTripulantes(int cantidad,Patota* patota ,t_list* listaTripulantes, uint8_t t);
- Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas, uint8_t t );
+void agregarTripulantes(int cantidad,Patota* patota ,t_list* listaTripulantes);
+ Patota* iniciarPatota(int cantTripulantes,int id,t_list* listaTripulantes, char* tareas );
 
 
 #endif

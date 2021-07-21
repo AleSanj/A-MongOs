@@ -29,7 +29,6 @@ typedef struct
 	uint8_t idPatota;
 	uint32_t estado_length;
 	char* estado;
-	_Bool vida;
 	uint32_t Tarea_length;
 	char* Tarea;
 	uint8_t posicionX;
@@ -39,7 +38,7 @@ typedef struct
 
 } Tripulante;
 
-Tripulante* tripulanteCreate(uint8_t id, uint8_t idPa, uint8_t posicionX,uint8_t posicionY);
+Tripulante* tripulanteCreate(uint8_t id, uint8_t posicionX,uint8_t posicionY);
 
 void mostrarTripulante(Tripulante* tripulante);
 
