@@ -33,6 +33,35 @@ int encontrarFrameEnSwapDisponible(){
     return i;
 }
 
+void guaradar_en_memoria_general(char* modo,void* payload,int idElemento,int tamPayload,uint32_t pid,char tipo){
+
+	if (strcmp(modo,"PAGINACION")==1){
+		guardar_en_memoria_paginacion(payload, idElemento, tamPayload, pid, tipo);
+
+	}else if(strcmp(modo,"SEGMENTACION")==1){
+		guardar_en_memoria_segmentacion( payload, idElemento, tamPayload, pid, tipo,tipoDeGuardado);
+	}
+
+}
+void* buscar_en_memoria_general(char* modo,void* idElementoABuscar,int PID, char tipo){
+	if (strcmp(modo,"PAGINACION")==1){
+			buscar_en_memoria_paginacion( idElementoABuscar, PID,  tipo);
+
+		}else if(strcmp(modo,"SEGMENTACION")==1){
+			buscar_de_memoria_segmentacion( idElementoABuscar,  tipo);
+		}
+
+}
+void *borrar_de_memoria_general(char* modo,int idElemento, int idPatota, char tipo){
+	if (strcmp(modo,"PAGINACION")==1){
+			borrar_de_memoria_paginacion( idElemento, idPatota,  tipo);
+
+			}else if(strcmp(modo,"SEGMENTACION")==1){
+				buscar_de_memoria_segmentacion( idElemento,tipo);
+			}
+
+}
+
 void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,uint32_t pid,char tipo){
     int indicePaginaCorrespondiente;
     int indiceTablaCorrespondiente;
@@ -267,19 +296,6 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,uint32_t pid,ch
     }
 
     list_add(listaElementos,nuevoElemento);
-    /*memcpy(memoria,payload, tamPayload/2);
-    printf("Memoria: %d \n", memoria);
-    printf("memoria + 500: %d \n", memoria+500);
-    payload += tamPayload/2;
-    memcpy(memoria+200,payload, tamPayload/2);
-    void* payloadRecompuesto = malloc(tamPayload);
-    printf("payloadRecompuesto puntero inicial: %d\n", payloadRecompuesto);
-    memcpy(payloadRecompuesto,memoria, tamPayload/2);
-    memcpy((payloadRecompuesto+tamPayload/2),memoria+200, tamPayload/2);
-    tripulante_struct *payloadMegaCasteado = malloc(tamPayload);
-    payloadMegaCasteado = payloadRecompuesto;
-    printf("puntero payload recompuesto: %d\n",payloadRecompuesto);
-    printf("Pos X del payload recompuesto: %d \n",payloadMegaCasteado->posx);*/
 }
 
 
@@ -323,13 +339,6 @@ bool filtrarPorTipo(void* elemento){
     elementoEnLista_struct *comparador = elemento;
     return comparador->tipo == tipoUniversal;
 }
-/*
-void guardar_en_memoria_paginacion(void* payload){
-    if(list_is_empty(listaDePaginas)==1){
-
-    }
-}
-*/
 
 void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePaginas,int indiceDeLaPaginaATraer,int PID){
     paginaParaReemplazar_struct *paginaAReemplazar = malloc(sizeof(paginaParaReemplazar_struct));
@@ -632,6 +641,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                 }
                 if (list_is_empty(listaDeEspaciosLibres) == 1){
                     //aca va la compactacion
+                	compactacion();
 
                 }
                 else{

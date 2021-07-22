@@ -49,7 +49,7 @@ int main(void) {
 
 //--------------- MOMENTANEO ------------
 		int respuesta;
-		t_paquete* paquete_recibido = recibir_paquete(socketCliente, &respuesta);
+		t_paquete* paquete_recibido = recibir_paquete(socketCliente, &respuesta); // @suppress("Type cannot be resolved")
 
 		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
 			puts("No se pudo recibir correctamente el paquete");
