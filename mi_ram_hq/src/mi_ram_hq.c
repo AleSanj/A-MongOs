@@ -35,82 +35,33 @@ int main(void) {
 	}
 
 	memoria = malloc(tamMemoria);
-	memoriaSwap = malloc(tamSwap);
-//	nivel = crear_mapa();
+	listaElementos = list_create();
+
+	if (strcmp(esquemaMemoria,"PAGINACION")==1){
+		memoriaSwap = malloc(tamSwap);
+		cantidadPaginas = tamMemoria / tamPagina;
+		cantidadPaginasSwap = tamSwap / tamPagina;
+		bitarrayMemoria = calloc(cantidadPaginas, sizeof(int));
+		bitarraySwap = calloc(cantidadPaginasSwap, sizeof(int));
+		listaDeTablasDePaginas = list_create();
+		tablaDeFrames = queue_create();
+		punteroReemplazo = 0;
+
+	}else if (strcmp(esquemaMemoria,"SEGMENTACION")==1){
+		listaSegmentos = list_create();
+
+	}
+	nivel = crear_mapa();
 
 	socketServer = crear_server(puerto);
 	while (1) {
 		socketCliente = esperar_cliente(socketServer, 5);
 		if (socketCliente == -1)
 			continue;
-//			pthread_t hiloCliente;
-//			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
-//			pthread_join(hiloCliente,NULL);
+			pthread_t hiloCliente;
+			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
+			pthread_join(hiloCliente,NULL);
 
-//--------------- MOMENTANEO ------------
-		int respuesta;
-		t_paquete* paquete_recibido = recibir_paquete(socketCliente, &respuesta); // @suppress("Type cannot be resolved")
-
-		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
-			puts("No se pudo recibir correctamente el paquete");
-			liberar_conexion(socketCliente);
-			eliminar_paquete(paquete_recibido);
-			continue;
-		}
-
-		printf("PAQUETE DE TIPO %d RECIBIDO\n",paquete_recibido->codigo_operacion);
-
-		switch (paquete_recibido->codigo_operacion) {
-		case INICIAR_PATOTA:;
-			t_iniciar_patota* estructura_iniciar_patota = deserializar_iniciar_patota(paquete_recibido);
-			imprimir_paquete_iniciar_patota(estructura_iniciar_patota);
-
-//			liberar_iniciar_patota(estructura_iniciar_patota);
-			liberar_conexion(socketCliente);
-			break;
-
-		case TRIPULANTE:;
-			t_tripulante* estructura_tripulante = deserializar_tripulante(paquete_recibido);
-			imprimir_paquete_tripulante(estructura_tripulante);
-
-//			liberar_tripulante(estructura_tripulante);
-			liberar_conexion(socketCliente);
-			break;
-		case ELIMINAR_TRIPULANTE:;
-			t_eliminar_tripulante* tripulante_a_eliminar = deserializar_eliminar_tripulante(paquete_recibido);
-			imprimir_paquete_eliminar_tripulante(tripulante_a_eliminar);
-
-			break;
-
-		case PEDIR_TAREA:;
-			t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
-			imprimir_paquete_tripulante(tripulante_solicitud);
-//			char* tarea = buscar_tarea_correspondiente()
-			char* tarea = "DESCARGAR_ITINERARIO 3;1;1;1";
-			int tamanio_tarea = strlen(tarea)+1;
-			send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
-			send(socketCliente, tarea,tamanio_tarea,0);
-
-			liberar_conexion(socketCliente);
-			break;
-
-
-		case ACTUALIZAR_POS:;
-			t_tripulante* tripulante_a_mover = deserializar_tripulante(paquete_recibido);
-			imprimir_paquete_tripulante(tripulante_a_mover);
-
-			break;
-
-		case ACTUALIZAR_ESTADO:;
-			t_cambio_estado* tripulante_a_actualizar = deserializar_cambio_estado(paquete_recibido);
-			imprimir_paquete_cambio_estado(tripulante_a_actualizar);
-			break;
-
-		default:;
-			printf("No se especifico el caso para recibir el paquete tipo: %d\n",paquete_recibido->codigo_operacion);
-			break;
-		}
-		//--------------- MOMENTANEO ------------
 	}
 
 
@@ -169,72 +120,104 @@ int procesar_archivo(FILE* archivoTareas){
 	//return posicionDeMemoriaDePrimerTarea
 }
 
-//void administrar_cliente(int socketCliente){
-//	printf("El hilo fue creado correctamente\n");
-//
-//	t_paquete* paquete = malloc(sizeof(t_paquete));
-//	paquete->buffer = malloc(sizeof(t_buffer));
-//
-//	// Primero recibimos el codigo de operacion
-//	recv(socketCliente, &(paquete->codigo_operacion), sizeof(uint8_t), 0);
-//
-//	// Después ya podemos recibir el buffer. Primero su tamaño seguido del contenido
-//	recv(socketCliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
-//	printf("Size a allocar: %d \n", paquete->buffer->size);
-//
-//
-//	paquete->buffer->stream = malloc(paquete->buffer->size);
-//	recv(socketCliente, paquete->buffer->stream, paquete->buffer->size, 0);
-//
-//	// Ahora en función del código recibido procedemos a deserializar el resto
-//	printf("Recibi todo bien, codigo de operacion: %d\n", paquete->codigo_operacion);
-//
-//	switch(paquete->codigo_operacion) {
-//		case INICIAR_PATOTA:;
-//			printf("Inicio una patota /n");
-//			iniciar_patota* nuevaPatota;
-//			nuevaPatota = deserializar_iniciar_patota(paquete->buffer);
-//	    	printf("ID de la patota: %d \n",nuevaPatota -> idPatota);
-//			//PCB* pcb;
-//	    	//pcb ->	pid = nuevaPatota -> idPatota;
-//	    	/*uint32_t* tareas = procesar_archivo(nuevaPatota -> Tareas);
-//	    	pcb -> tareas = tareas;
-//	    	//Guardar PCB en memoria
-//	    	uint32_t* punteroPCB;
-//	    	for(int i = 0;i < nuevaPatota -> cantTripulantes;i++){
-//	    		recv(socketCliente, &(paquete->codigo_operacion), sizeof(uint8_t), 0);
-//	    		recv(socketCliente, &(paquete->buffer->size), sizeof(uint32_t), 0);
-//	    		paquete->buffer->stream = malloc(paquete->buffer->size);
-//	    		recv(socketCliente, paquete->buffer->stream, paquete->buffer->size, 0);
-//	    		Tripulante* tripulante;
-//	    		tripulante = deserializar_tripulante(paquete->buffer);
-//	    		iniciar_tripulante(tripulante, pcb);
-//	    	}*/
-//	    	break;
-//		case ACTUALIZAR_POS:;
-//			printf("Me pidio moverlo en el mapa \n");
-//			/*id_and_pos* nuevaPos;
-//			nuevaPos = deserializar_id_and_pos(paquete->buffer);
-//			actualizarPosicion(nuevaPos, nivel);*/
-//			break;
-//		case PEDIRTAREA:
-//			printf("Me pidio una tarea \n");
-//			break;
-//		case ELIMINAR_TRIPULANTE:
-//			printf("Eliminar tripulante \n");
-//			break;
-//		case ACTUALIZAR_ESTADO:
-//			printf("Me pidio actualizar estado \n");
-//			break;
-//		case TRIPULANTE:
-//			printf("Me mando un tripulante nuevo \n");
-//			break;
-//		default:
-//			printf("No tengo registrado ese case \n");
-//			break;
-//
-//	}
-//}
+void administrar_cliente(int socketCliente){
+	int respuesta;
+		t_paquete* paquete_recibido = recibir_paquete(socketCliente, &respuesta); // @suppress("Type cannot be resolved")
+
+		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
+			puts("No se pudo recibir correctamente el paquete");
+			liberar_conexion(socketCliente);
+			eliminar_paquete(paquete_recibido);
+		}
+
+		printf("PAQUETE DE TIPO %d RECIBIDO\n",paquete_recibido->codigo_operacion);
+
+	switch(paquete_recibido->codigo_operacion) {
+		case INICIAR_PATOTA:;
+			printf("Inicio una patota /n");
+
+
+			t_iniciar_patota* estructura_iniciar_patota = deserializar_iniciar_patota(paquete_recibido);
+			imprimir_paquete_iniciar_patota(estructura_iniciar_patota);
+			pcb* nuevaPatota;
+			nuevaPatota->id = estructura_iniciar_patota->idPatota;
+			if (strcmp(esquemaMemoria,"PAGINACION")){
+				tablaEnLista_struct *nuevaTablaPatota = malloc(sizeof(tablaEnLista_struct));
+				nuevaTablaPatota->idPatota = nuevaPatota->id;
+				nuevaTablaPatota->tablaDePaginas = list_create();
+				list_add(listaDeTablasDePaginas, nuevaTablaPatota);
+			}
+			guaradar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
+
+			nuevaPatota->tareas =  calcular_direccion_logia_archivo(estructura_iniciar_patota->idPatota);
+
+			guaradar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
+	    	break;
+		case TRIPULANTE:;
+				t_tripulante* estructura_tripulante = deserializar_tripulante(paquete_recibido);
+				tcb *nuevoTripulante = malloc(sizeof(tcb));
+				nuevoTripulante->id = estructura_tripulante->id_tripulante;
+				nuevoTripulante->estado = 'R';
+				nuevoTripulante->posX = estructura_tripulante->posicion_x;
+				nuevoTripulante->posY = estructura_tripulante->posicion_y;
+				nuevoTripulante->proxTarea=0;
+				nuevoTripulante->dirLogicaPcb=calcular_direccion_logia_patota(estructura_iniciar_patota->idPatota);
+				guardar_en_memoria_general(nuevoTripulante,estructura_tripulante->id_tripulante,21,estructura_tripulante->id_patota,'T');
+				//FALTA DIBUJAR EL TRIPULANTE.
+
+		//		liberar_tripulante(estructura_tripulante);
+				liberar_conexion(socketCliente);
+				break;
+		case ELIMINAR_TRIPULANTE:;
+				t_eliminar_tripulante* tripulante_a_eliminar = deserializar_eliminar_tripulante(paquete_recibido);
+				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
+				//BORRAR DEL MAPA
+
+					break;
+
+		case PEDIR_TAREA:;
+				t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
+				imprimir_paquete_tripulante(tripulante_solicitud);
+		//		char* tarea = buscar_tarea_correspondiente()
+				char* tarea = "DESCARGAR_ITINERARIO 3;1;1;1";
+				int tamanio_tarea = strlen(tarea)+1;
+				send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
+				send(socketCliente, tarea,tamanio_tarea,0);
+
+				liberar_conexion(socketCliente);
+				break;
+
+
+		case ACTUALIZAR_POS:;
+				t_tripulante* tripulante_a_mover = deserializar_tripulante(paquete_recibido);
+				imprimir_paquete_tripulante(tripulante_a_mover);
+				tcb *tripulanteAMover = malloc(sizeof(tcb));
+				tripulanteAMover = buscar_en_memoria_general(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota, 'T');
+				borrar_en_memoria_general(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota, 'T');
+				tripulanteAMover->posX = tripulante_a_mover->posicion_x;
+				tripulanteAMover->posY = tripulante_a_mover->posicion_y;
+				guardar_en_memoria_general(tripulanteAMover,tripulante_a_mover->id_tripulante,21,tripulante_a_mover->id_patota,'T');
+
+				//FALTA ACTUALIZAR EL MAPA
+				break;
+
+		case ACTUALIZAR_ESTADO:;
+				t_cambio_estado* tripulante_a_actualizar = deserializar_cambio_estado(paquete_recibido);
+				imprimir_paquete_cambio_estado(tripulante_a_actualizar);
+				tcb *tripulanteAActualizar = malloc(sizeof(tcb));
+				tripulanteAActualizar = buscar_en_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota, 'T');
+				borrar_en_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota, 'T');
+				tripulanteAActualizar->estado = tripulante_a_actualizar->estado;
+				guardar_en_memoria_general(tripulanteAActualizar,tripulante_a_actualizar->id_tripulante,21,tripulante_a_actualizar->id_patota,'T');
+				break;
+
+		default:;
+				printf("No se especifico el caso para recibir el paquete tipo: %d\n",paquete_recibido->codigo_operacion);
+				break;
+
+
+	}
+}
 
 char intAChar(int numero){
 	return numero + '0';

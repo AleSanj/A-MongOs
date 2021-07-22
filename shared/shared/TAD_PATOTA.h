@@ -32,6 +32,11 @@ typedef struct
 	uint8_t id;
 	char* tareas;
 }Patota;
+typedef struct
+{
+	uint32_t id;
+	uint32_t tareas;
+}pcb;
 
 
 void agregarTripulantes(int cantidad,Patota* patota ,t_list* listaTripulantes, uint8_t t);

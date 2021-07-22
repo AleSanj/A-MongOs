@@ -29,6 +29,11 @@ struct Patota
 	uint8_t id;
 	char* tareas;
 };
+struct pcb
+{
+	uint32_t id;
+	uint32_t tareas;
+};
 
 //void agregarTripulantes(int cantidad_tripulantes, Patota* patota ,t_list* lista_posiciones_tripulantes,uint8_t id_tripulantes)
 //{

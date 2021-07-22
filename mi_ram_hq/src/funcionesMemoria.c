@@ -32,31 +32,59 @@ int encontrarFrameEnSwapDisponible(){
     }
     return i;
 }
+uint32_t calcular_direccion_logia_archivo( int idPatota){
+	tipoUniversal ='A';
+	t_list *listaFiltrada;
+	listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoBuscado = malloc(sizeof(elementoEnLista_struct));
+	for(int i =0; i< list_size(listaFiltrada);i++){
+		elementoBuscado = list_get(listaFiltrada,i);
+		if(elementoBuscado->ID==idPatota){
+			break;
+		}
+	}
+	return (elementoBuscado->segmentoOPagina+elementoBuscado->offsetEnPagina);
 
-void guaradar_en_memoria_general(char* modo,void* payload,int idElemento,int tamPayload,uint32_t pid,char tipo){
 
-	if (strcmp(modo,"PAGINACION")==1){
+}
+uint32_t calcular_direccion_logia_patota( int idPatota){
+	tipoUniversal ='P';
+	t_list *listaFiltrada;
+	listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoBuscado = malloc(sizeof(elementoEnLista_struct));
+	for(int i =0; i< list_size(listaFiltrada);i++){
+		elementoBuscado = list_get(listaFiltrada,i);
+		if(elementoBuscado->ID==idPatota){
+			break;
+		}
+	}
+	return (elementoBuscado->segmentoOPagina+elementoBuscado->offsetEnPagina);
+}
+
+void guaradar_en_memoria_general(void* payload,int idElemento,int tamPayload,uint32_t pid,char tipo){
+
+	if (strcmp(esquemaMemoria,"PAGINACION")==1){
 		guardar_en_memoria_paginacion(payload, idElemento, tamPayload, pid, tipo);
 
-	}else if(strcmp(modo,"SEGMENTACION")==1){
+	}else if(strcmp(esquemaMemoria,"SEGMENTACION")==1){
 		guardar_en_memoria_segmentacion( payload, idElemento, tamPayload, pid, tipo,tipoDeGuardado);
 	}
 
 }
-void* buscar_en_memoria_general(char* modo,void* idElementoABuscar,int PID, char tipo){
-	if (strcmp(modo,"PAGINACION")==1){
+void* buscar_en_memoria_general(void* idElementoABuscar,int PID, char tipo){
+	if (strcmp(esquemaMemoria,"PAGINACION")==1){
 			buscar_en_memoria_paginacion( idElementoABuscar, PID,  tipo);
 
-		}else if(strcmp(modo,"SEGMENTACION")==1){
+		}else if(strcmp(esquemaMemoria,"SEGMENTACION")==1){
 			buscar_de_memoria_segmentacion( idElementoABuscar,  tipo);
 		}
 
 }
-void *borrar_de_memoria_general(char* modo,int idElemento, int idPatota, char tipo){
-	if (strcmp(modo,"PAGINACION")==1){
+void *borrar_de_memoria_general(int idElemento, int idPatota, char tipo){
+	if (strcmp(esquemaMemoria,"PAGINACION")==1){
 			borrar_de_memoria_paginacion( idElemento, idPatota,  tipo);
 
-			}else if(strcmp(modo,"SEGMENTACION")==1){
+			}else if(strcmp(esquemaMemoria,"SEGMENTACION")==1){
 				buscar_de_memoria_segmentacion( idElemento,tipo);
 			}
 
@@ -507,14 +535,14 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 
     if ((offset == 0 && tamanioPayload >= tamPagina) || (offset == 0 && paginaInicial == list_size(tablaDePaginas)-1)){
         bitarrayMemoria[paginaInicial] = 0;
-        list_remove(tablaDePaginas,paginaInicial);
-        list_remove(listaElementos,posicionElementoEvaluado);
+        list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
     }else if(offset!=0){
         paginaEnTabla_struct *paginaAActualizar = list_get(tablaDePaginas,paginaInicial);
         paginaAActualizar->espacioOcupado = offset;
         list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
-        list_remove(listaElementos,posicionElementoEvaluado);
+        list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
     }
 }
 
@@ -680,17 +708,19 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, char tipoDeElemento){
         if (tipoDeElemento == 'T'){
         	Tripulante *elementoABorrar = (Tripulante*)segmentoEvaluado->inicio;
             if (elementoABorrar->id == idElementoABorrar){
-                list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
+            	list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
                 printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
                 break;
             }
-        }/*else if(tipoDeElemento == 'P'){
-            pcb_t *elementoABorrar = segmentoEvaluado->inicio;
-            if (elementoABorrar->PID == idElementoABorrar){
-                list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
+        }else if(tipoDeElemento == 'P'){
+        	pcb *elementoABorrar = segmentoEvaluado->inicio;
+            if (elementoABorrar->id == idElementoABorrar){
+                list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
                 printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
             }
-        }*/
+        }else if(tipoDeElemento =='A'){
+        	printf("Aca se borra el archivo");
+        }
     }
 
 }
@@ -714,13 +744,13 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar, char tipoDeElemento)
                 //free(elementoEvaluado);
                 //free(segmentoEvaluado);
             }
-        }/*else if(tipoDeElemento == 'P'){
-            pcb_t *elementoABorrar = segmentoEvaluado->inicio;
-            if (elementoABorrar->PID == idElementoABorrar){
+        }else if(tipoDeElemento == 'P'){
+            pcb *elementoABorrar = segmentoEvaluado->inicio; // @suppress("Type cannot be resolved")
+            if (elementoABorrar->id == idElementoABuscar){ // @suppress("Field cannot be resolved")
                 list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
                 printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
             }
-        }*/
+        }
     }
     return 0;
 }

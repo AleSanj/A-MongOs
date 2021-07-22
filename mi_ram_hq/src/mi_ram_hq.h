@@ -63,6 +63,7 @@ void* memoriaSwap;
 int *bitarrayMemoria;
 int *bitarraySwap;
 int cantidadPaginas;
+int cantidadPaginasSwap;
 char *algoritmoReemplazo;
 int tipoDeGuardado;
 
