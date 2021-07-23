@@ -17,7 +17,13 @@
 int main(void) {
 	int socketCliente, socketServer;
 	bool terminar;
-	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/mi_ram_hq/src/mi_ram_hq.config");
+
+//	PATH MARTIN
+//	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/mi_ram_hq/src/mi_ram_hq.config");
+
+//	PATH ALE
+	config = config_create("/home/utnso/Escritorio/orgfinal/mi_ram_hq/src/mi_ram_hq.config");
+
 	tamMemoria = config_get_int_value(config, "TAMANIO_MEMORIA");
 	esquemaMemoria = config_get_string_value(config, "ESQUEMA_MEMORIA");
 	tamPagina = config_get_int_value(config, "TAMANIO_PAGINA");
@@ -57,7 +63,7 @@ int main(void) {
 		listaSegmentos = list_create();
 
 	}
-	nivel = crear_mapa();
+//	nivel = crear_mapa();
 
 	socketServer = crear_server(puerto);
 	while (1) {
@@ -85,7 +91,7 @@ int main(void) {
 void administrar_cliente(int socketCliente){
 	int respuesta;
 		t_paquete* paquete_recibido = recibir_paquete(socketCliente, &respuesta); // @suppress("Type cannot be resolved")
-
+		printf("SE recibio un paquete de tipo: %d\n",paquete_recibido->codigo_operacion);
 		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
 			liberar_conexion(socketCliente);
 			eliminar_paquete(paquete_recibido);

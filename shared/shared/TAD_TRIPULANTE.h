@@ -44,6 +44,7 @@ typedef struct {
 	pthread_t hilo_vida;
 	pthread_t sem_pasaje_a_exec;
 } Tripulante;
+
 typedef struct {
 	uint32_t id;
 	char* estado;

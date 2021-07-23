@@ -184,7 +184,9 @@ void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 
 char* leer_tareas(char* path, int* cantidad_tareas){
 	FILE* archivo;
-	char* raiz = strdup("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/src/tareas/");
+//	path martin
+//	char* raiz = strdup("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/src/tareas/");
+	char* raiz = strdup("/home/utnso/Escritorio/Amongos/discordiador/src/Tareas/");
 
 	string_append(&raiz,path);
 	archivo = fopen(raiz,"r");
@@ -199,14 +201,14 @@ char* leer_tareas(char* path, int* cantidad_tareas){
 
 	while(!feof(archivo)){
 		fgets(leido,50,archivo);
-//		strtok(leido,"\n");			//con esto borro el \n que se lee
+		strtok(leido,"\n");			//con esto borro el \n que se lee
 		string_append(&tareas,leido);
 //		string_append(&tareas,"|");
 		(*cantidad_tareas)++;
 	}
 
 	int ultima_posicion = strlen(tareas);
-//	tareas[ultima_posicion-1] = '\0'; //Con esto borro el ultimo "|"
+	tareas[ultima_posicion-1] = '\0'; //Con esto borro el ultimo "|"
 	fclose(archivo);
 
 	free(raiz);
@@ -923,7 +925,6 @@ int hacerConsola() {
 		string_to_upper(codigo_dividido[0]);
 
 		if (string_contains(linea, "INICIAR_PATOTA")) {
-			puts("Entre al if de iniciar patota");
 			char** parametros_divididos = string_n_split(codigo_dividido[1],3," ");
 
 //			[0] CANTIDAD_TRIPULANTES - [1] PATH_ARCHIVO - [2] POSICIONES - [3] NULL
@@ -1178,7 +1179,12 @@ int hacerConsola() {
 }
 
 int main() {
-	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/discordiador.config");
+//	PATH MARTIN
+//	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/discordiador.config");
+
+//	PATH ALE
+	config = config_create("/home/utnso/Escritorio/orgfinal/discordiador/discordiador.config");
+
 	ipMiRam= config_get_string_value(config, "IP_MI_RAM_HQ");
 	puertoMiRam = config_get_string_value(config, "PUERTO_MI_RAM_HQ");
 	multiProcesos = config_get_int_value(config, "GRADO_MULTITAREA");
