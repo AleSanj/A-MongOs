@@ -184,7 +184,7 @@ void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 
 char* leer_tareas(char* path, int* cantidad_tareas){
 	FILE* archivo;
-	char* raiz = strdup("/home/utnso/Escritorio/Conexiones/discordiador/src/tareas/");
+	char* raiz = strdup("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/src/tareas/");
 
 	string_append(&raiz,path);
 	archivo = fopen(raiz,"r");
@@ -906,13 +906,13 @@ int hacerConsola() {
 	puts("Bienvenido a A-MongOS de Cebollita Subcampeon \n");
 	char* linea=string_new();
 		//----- TRIPULANTE DE PRUEBA
-		Tripulante* tripu_prueba_mov = malloc (sizeof(Tripulante)); // CREAMOS UN TRIPULANTE PARA PROBAR LOS MOVIMIENTOS
+		/*Tripulante* tripu_prueba_mov = malloc (sizeof(Tripulante)); // CREAMOS UN TRIPULANTE PARA PROBAR LOS MOVIMIENTOS
 		tripu_prueba_mov->id = 88;
 		tripu_prueba_mov->idPatota = 88;
 		tripu_prueba_mov->posicionX = 0;
 		tripu_prueba_mov->posicionY = 0;
 		tripu_prueba_mov->Tarea = string_new();
-		tripu_prueba_mov->estado = string_new();
+		tripu_prueba_mov->estado = string_new();*/
 		//----------------------------
 
 	while (1) {
@@ -922,8 +922,8 @@ int hacerConsola() {
 //		[0] CODIGO - [1] PARAMETROS - [2] NULL
 		string_to_upper(codigo_dividido[0]);
 
-		if (string_contains(codigo_dividido[0], "INICIAR_PATOTA")) {
-
+		if (string_contains(linea, "INICIAR_PATOTA")) {
+			puts("Entre al if de iniciar patota");
 			char** parametros_divididos = string_n_split(codigo_dividido[1],3," ");
 
 //			[0] CANTIDAD_TRIPULANTES - [1] PATH_ARCHIVO - [2] POSICIONES - [3] NULL
@@ -955,7 +955,7 @@ int hacerConsola() {
 				enviar_tripulante(nuevo_tripulante);
 
 				//inicializamos su hilo y su semaforo
-				sem_init(&(tripu_prueba_mov->sem_pasaje_a_exec),NULL,0);
+				//sem_init(&(tripu_prueba_mov->sem_pasaje_a_exec),NULL,0);
 				pthread_create(&(nuevo_tripulante->hilo_vida), NULL, (void*) vivirTripulante, (void*) nuevo_tripulante);
 				t_totales++;
 			}
@@ -1003,6 +1003,7 @@ int hacerConsola() {
 			 */
 			list_clean(posiciones_iniciales);
 			free(posiciones_iniciales);
+			puts("termine al if de iniciar patota");
 		}
 
 
@@ -1141,7 +1142,7 @@ int hacerConsola() {
 		}
 		if (string_contains(linea, "PRUEBA_MOVER"))
 		{
-			moverTripulante(tripu_prueba_mov,3,3);
+			//moverTripulante(tripu_prueba_mov,3,3);
 //			free(tripu_prueba);
 
 		}
@@ -1149,7 +1150,7 @@ int hacerConsola() {
 		if (string_contains(linea, "PRUEBA_ESTADO"))
 		{
 			char** prueba_estado =string_split(linea, " ");
-			cambiar_estado(tripu_prueba_mov,prueba_estado[1]);
+			//cambiar_estado(tripu_prueba_mov,prueba_estado[1]);
 
 		}
 
@@ -1166,8 +1167,8 @@ int hacerConsola() {
 
 		if (string_contains(linea,"PRUEBA_PEDIR"))
 		{
-			pedir_tarea(tripu_prueba_mov);
-			puts(tripu_prueba_mov->Tarea);
+			//pedir_tarea(tripu_prueba_mov);
+			//puts(tripu_prueba_mov->Tarea);
 
 
 		}
@@ -1177,7 +1178,7 @@ int hacerConsola() {
 }
 
 int main() {
-	config = config_create("/home/utnso/Escritorio/Conexiones/discordiador/discordiador.config");
+	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/discordiador.config");
 	ipMiRam= config_get_string_value(config, "IP_MI_RAM_HQ");
 	puertoMiRam = config_get_string_value(config, "PUERTO_MI_RAM_HQ");
 	multiProcesos = config_get_int_value(config, "GRADO_MULTITAREA");

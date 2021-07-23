@@ -16,13 +16,11 @@
 #include <shared/conexion.h>
 #include <shared/TAD_PATOTA.h>
 #include <shared/TAD_TRIPULANTE.h>
+#include <commons/string.h>
 #include <commons/config.h>
 #include "funcionesMemoria.h"
 
 #define PUERTOPREDETERMINADO 6667
-
-pthread_mutex_t mutex_lista_restaurantes;
-
 
 typedef struct
 {
@@ -40,16 +38,15 @@ typedef struct
    uint32_t* puntero_pcb;
 }TCB;
 
-void dibujarTripulante(Tripulante*);
-int crear_mapa();
-//void administrar_cliente(id_and_pos,NIVEL);
-TCB* crearTCB(Tripulante*, uint32_t*);
+NIVEL* crear_mapa();
 void administrar_cliente(int);
 char intAChar(int);
-
+void dibujarTripulante(tcb*,char);
+void borrarTripulante(char);
+void actualizarPosicion(id_and_pos* ,char );
 NIVEL* nivel;
 t_config* config;
-
+int vectorIdTripulantes[94];
 int tamMemoria;
 char* esquemaMemoria;
 int tamPagina;
@@ -58,6 +55,11 @@ char* path_swap;
 char* alg_remplazo;
 char* crit_seleccion;
 char* puerto;
+
+pthread_mutex_t mutexMemoria;
+
+
+
 void *memoria;
 void* memoriaSwap;
 int *bitarrayMemoria;
