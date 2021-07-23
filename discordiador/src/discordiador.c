@@ -203,7 +203,7 @@ char* leer_tareas(char* path, int* cantidad_tareas){
 		fgets(leido,50,archivo);
 		strtok(leido,"\n");			//con esto borro el \n que se lee
 		string_append(&tareas,leido);
-//		string_append(&tareas,"|");
+		string_append(&tareas,"|");
 		(*cantidad_tareas)++;
 	}
 
@@ -251,6 +251,8 @@ void obtener_parametros_tarea(Tripulante* t, int posX, int posY)
 }
 
 tarea_tripulante* convertir_tarea(char* tarea){
+
+
 	 tarea_tripulante* tarea_convertida = malloc(sizeof(tarea_tripulante));
 	 char** id_dividido;
 	 char** parametros_divididos;
@@ -277,9 +279,9 @@ tarea_tripulante* convertir_tarea(char* tarea){
 		 free(parametros_divididos);
 
 	 } else {
-		 parametros_divididos= string_n_split(tarea,4,";");
- //		 GENERAR_OXIGENO;4;4;15
-		 tarea_convertida->nombre = strdup(id_dividido[0]);
+		 parametros_divididos= string_split(tarea,";");
+ //		 DESCARGAR_ITINERARIO;4;4;15
+		 tarea_convertida->nombre = strdup(parametros_divididos[0]);
 		 tarea_convertida->es_io = 0;
 		 tarea_convertida->parametro = 0;
 		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
@@ -296,33 +298,71 @@ tarea_tripulante* convertir_tarea(char* tarea){
 	 return tarea_convertida;
 }
 
+void mover_a_finalizado(Tripulante* tripulante){
+	t_list* lista_ready = ready->elements;
+	t_list* lista_block = bloqueados->elements;
 
-void eliminar_Tripulante(Tripulante* tripulante){
-	free(tripulante->Tarea);
-	free(tripulante->estado);
-	free(tripulante);
+	if (string_contains(tripulante->estado,"Ready")){
+		pthread_mutex_lock(&sem_cola_ready);
+		pthread_mutex_lock(&sem_cola_exit);
+		list_add(finalizado,list_remove_by_condition(lista_ready,(void*)esElMismoTripulante));
+		pthread_mutex_unlock(&sem_cola_ready);
+		pthread_mutex_unlock(&sem_cola_exit);
+		return;
+	}
+
+	if (string_contains(tripulante->estado,"Blocked")){
+		pthread_mutex_lock(&sem_cola_bloqIO);
+		pthread_mutex_lock(&sem_cola_exit);
+		list_add(finalizado,list_remove_by_condition(lista_block,(void*)esElMismoTripulante));
+		pthread_mutex_unlock(&sem_cola_bloqIO);
+		pthread_mutex_unlock(&sem_cola_exit);
+		return;
+		}
+
+	if (string_contains(tripulante->estado,"Exec")){
+		pthread_mutex_lock(&sem_cola_exec);
+		pthread_mutex_lock(&sem_cola_exit);
+		list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
+		pthread_mutex_unlock(&sem_cola_exec);
+		pthread_mutex_unlock(&sem_cola_exit);
+		return;
+		}
+
+
+
+
 }
-
-
 
 void eliminarTripulante(Tripulante* tripulante)
 {
 	int socket_miram=conectarse_Mi_Ram();
 	t_paquete* paquete = crear_paquete(ELIMINAR_TRIPULANTE);
-	t_eliminar_tripulante* estructura = malloc(sizeof(t_eliminar_tripulante));
+	t_tripulante* estructura = malloc(sizeof(t_tripulante));
 	estructura->id_tripulante = tripulante -> id;
+	estructura->id_patota = tripulante->idPatota;
+	estructura ->posicion_x = 0;
+	estructura ->posicion_y = 0;
 
-	agregar_paquete_eliminar_tripulante(paquete,estructura);
+	printf("TIPO DE PAQUETE: %d\n",paquete->codigo_operacion);
+	imprimir_paquete_tripulante(estructura);
+
+	agregar_paquete_tripulante(paquete,estructura);
 	enviar_paquete(paquete,socket_miram);
 
-	int socket_mongo = conectarse_mongo();
-	paquete = crear_paquete(ELIMINAR_TRIPULANTE);
-	agregar_paquete_eliminar_tripulante(paquete,estructura);
-	enviar_paquete(paquete,socket_mongo);
+//	int socket_mongo = conectarse_mongo();
+//	paquete = crear_paquete(ELIMINAR_TRIPULANTE);
+//	agregar_paquete_tripulante(paquete,estructura);
+//	enviar_paquete(paquete,socket_mongo);
 
-	liberar_t_eliminar_tripulante(estructura);
+	liberar_t_tripulante(estructura);
+	free(tripulante->Tarea->nombre);
 	free(tripulante->Tarea);
-//	free(tripulante->estado; 		//Creo q es mejor deajrle el estado para printearlo en la lista de colas
+
+
+	mover_a_finalizado(tripulante);
+	cambiar_estado(tripulante,"Exit");
+	sem_post(&multiProcesamiento);
 
 	pthread_exit(&(tripulante->hilo_vida));
 }
@@ -351,22 +391,6 @@ void* iniciar_Planificacion()
 
 	}
 }
-
-//void new_a_ready(){
-//	while (1){
-//		sem_wait(&(pararPlanificacion[1]));
-//		Tripulante* tripulante= (Tripulante*) queue_pop(new);
-//		cambiar_estado(tripulante,"READY");
-//
-//		pthread_mutex_lock(&sem_cola_ready);
-//		queue_push(ready,tripulante);
-//		pthread_mutex_unlock(&sem_cola_ready);
-//
-//		sem_post(&sem_tripulante_en_ready);
-//		sem_post(&(pararPlanificacion[1]));
-//
-//	}
-//}
 
 void ejecutando_a_bloqueado(Tripulante* trp )
 {
@@ -591,22 +615,16 @@ void* vivirTripulante(Tripulante* tripulante) {
 
 		if (tripulante->Tarea == NULL)
 			pedir_tarea(tripulante);
-
+		printf("TAREA %s",tripulante->Tarea->nombre);
 		if (string_contains(tripulante->Tarea->nombre,"FAULT")){
 			tripulante->vida = false;
 			continue;
 		}
 //		Si MIRAM ya los empieza en ready ya no seria necesario mandarselo con la funcino cambiar_estado()
 		cambiar_estado(tripulante,"READY");
-		pthread_mutex_lock(&sem_cola_new);
-		pthread_mutex_lock(&sem_cola_ready);
 
-		list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
 
-		pthread_mutex_lock(&sem_cola_new);
-		pthread_mutex_lock(&sem_cola_ready);
-
-		sem_post(&sem_tripulante_en_ready);
+//		sem_post(&sem_tripulante_en_ready);
 
 		//////	SEMAFORO PARA TESTEAR //////
 		//todo
@@ -626,15 +644,6 @@ void* vivirTripulante(Tripulante* tripulante) {
 			//ES HORA DE QUE EL VAGO DEL TRIPULANTE SE PONGA A LABURAR
 			hacerTarea(tripulante);
 	}
-
-	pthread_mutex_lock(&sem_cola_exec);
-	pthread_mutex_lock(&sem_cola_exit);
-	list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
-	pthread_mutex_unlock(&sem_cola_exec);
-	pthread_mutex_unlock(&sem_cola_exit);
-
-	sem_post(&multiProcesamiento);
-	cambiar_estado(tripulante,"EXIT");
 	eliminarTripulante(tripulante);
 
 	//ESTE RETURN NULL ES PARA CASTEARLA EN EL CREATE UNA PEQUEÑA BOLUDEZ
@@ -776,8 +785,7 @@ void enviar_estado (Tripulante* tripulante){
 
 	estado_actualizado->id_tripulante= tripulante->id;
 	estado_actualizado->id_patota = tripulante->idPatota;
-	estado_actualizado->tamanio_estado = strlen(tripulante->estado)+1;
-	estado_actualizado->estado = strdup(tripulante->estado);
+	estado_actualizado->estado = (char) tripulante->estado[0];
 
 	agregar_paquete_cambio_estado(paquete,estado_actualizado);
 	enviar_paquete(paquete,socket_miram);
@@ -815,7 +823,7 @@ void enviar_tripulante(Tripulante* nuevo_tripulante){
 	agregar_paquete_tripulante(paquete,tripulante);
 
 //	printf("TIPO DE PAQUETE: %d\n",paquete_tripulante_a_enviar->codigo_operacion);
-//	imprimir_paquete_tripulante(tripulante);
+	imprimir_paquete_tripulante(tripulante);
 	enviar_paquete(paquete,socket_miram);
 	liberar_t_tripulante(tripulante);
 
@@ -833,6 +841,20 @@ void recorrer_lista(t_list* lista){
 	}
 	puts("");
 }
+
+void recorrer_lista_patota(t_list* lista){
+	if (list_is_empty(lista)){
+		puts("(cola vacia)\n");
+		return;
+	}
+	int i;
+	for (i = 0; i < list_size(lista); i++) {
+		Patota* patota = (Patota*) list_get(lista,i);
+		printf("Patota: %d \t\t desde: %d \t\t hasta: %d\n", patota->id,patota->inicio,patota->fin);
+	}
+	puts("");
+}
+
 
 void imprimir_estado_nave() {
 	t_list* lista_ready = ready->elements;
@@ -903,6 +925,36 @@ void pedir_tarea(Tripulante* tripulante){
 
 
 
+Tripulante* buscar_tripulante(int tripulante_buscado){
+	bool _tripulante_en_la_cola(Tripulante* tripulante){
+		return tripulante->id == tripulante_buscado;
+	}
+	t_list* lista_new = new->elements;
+	t_list* lista_ready = ready->elements;
+	t_list* lista_block = bloqueados->elements;
+
+	Tripulante* encontrado = list_find(lista_new, (void*) _tripulante_en_la_cola);
+	if (encontrado != NULL)
+		return encontrado;
+
+	encontrado = list_find(lista_ready, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL)
+			return encontrado;
+
+	encontrado = list_find(execute, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL)
+			return encontrado;
+
+	encontrado = list_find(lista_block, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL)
+			return encontrado;
+
+	return encontrado;
+}
+
+
+
+
 int hacerConsola() {
 	//SIEMPRE HAY QUE SER CORTEZ Y SALUDAR
 	puts("Bienvenido a A-MongOS de Cebollita Subcampeon \n");
@@ -942,9 +994,11 @@ int hacerConsola() {
 
 
 
-			Patota* pato = iniciarPatota(p_totales, tareas);
+			Patota* pato = iniciarPatota(p_totales, tareas,t_totales,cantidad_tripulantes);
 			enviar_iniciar_patota(pato,cantidad_tripulantes);
-
+//			luego de enviar las tareas leidas a miram ya no nos interesa tenerlas en el discordiador
+			free(pato->tareas);
+			list_add(listaPatotas,(void*) pato);
 
 			Tripulante* nuevo_tripulante;
 			for(int i=0 ; i< cantidad_tripulantes;i++){
@@ -1127,23 +1181,18 @@ int hacerConsola() {
 			// FIJATE QUE SOLO SIRVE SI ES DE UN DIGIITO VAS A TENER QUE DIVIDIR EL ESTRING EN EL ESPACIO
 			// Y FIJARTE SI EL SUBSTRING TIENE 1 O 2 CARACTERES
 			char** obtener_id_trip=string_split(linea, " ");
-			//envio a MIRAM QUE BORREEL TRIPULANTE DEL MAPA
-			int socket_expulsar= conectarse_Mi_Ram();
+			int id_tripulante = strtol(obtener_id_trip[1],NULL,10);
+			Tripulante* tripulante_rip = buscar_tripulante(id_tripulante);
+			tripulante_rip->vida = false;
+			eliminarTripulante(tripulante_rip);
 
-			t_paquete* paquete_eliminar_tripulante = crear_paquete(ELIMINAR_TRIPULANTE);
-			t_eliminar_tripulante* tripulante_a_expulsar = malloc(sizeof(t_eliminar_tripulante));
-			tripulante_a_expulsar->id_tripulante = strtol(obtener_id_trip[1],NULL,10);
-
-			agregar_paquete_eliminar_tripulante(paquete_eliminar_tripulante,tripulante_a_expulsar);
-
-			printf("TIPO DE PAQUETE: %d\n",paquete_eliminar_tripulante->codigo_operacion);
-			imprimir_paquete_eliminar_tripulante(tripulante_a_expulsar);
-			enviar_paquete(paquete_eliminar_tripulante,socket_expulsar);
-			liberar_t_eliminar_tripulante(tripulante_a_expulsar);
+			free(obtener_id_trip[0]);
+			free(obtener_id_trip[1]);
+			free(obtener_id_trip);
 		}
 		if (string_contains(linea, "PRUEBA_MOVER"))
 		{
-			//moverTripulante(tripu_prueba_mov,3,3);
+//			moverTripulante(tripu_prueba_mov,3,3);
 //			free(tripu_prueba);
 
 		}

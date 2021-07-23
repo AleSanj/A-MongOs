@@ -171,50 +171,22 @@ void liberar_t_tripulante(t_tripulante* estructura){
 }
 //==============================ELIMINAR_TRIPUALNTE========================================
 
-void agregar_paquete_eliminar_tripulante(t_paquete* paquete, t_eliminar_tripulante* estructura){
-	int offset = 0;
 
-	paquete->buffer->size += sizeof(uint8_t);
-	paquete->buffer->stream = realloc(paquete->buffer->stream,paquete->buffer->size);
-
-	memcpy(paquete->buffer->stream, &(estructura->id_tripulante), sizeof(uint8_t));
-
-}
-
-t_eliminar_tripulante* deserializar_eliminar_tripulante(t_paquete* paquete){
-	t_eliminar_tripulante* estructura = malloc(sizeof(t_eliminar_tripulante));
-	int offset = 0;
-
-    memcpy(&(estructura->id_tripulante), paquete->buffer->stream, sizeof(uint8_t));
-
-	eliminar_paquete(paquete);
-	return estructura;
-}
-
-void imprimir_paquete_eliminar_tripulante(t_eliminar_tripulante* estructura){
-	printf("TRIPULANTE A ELIMINAR: %d \n",estructura->id_tripulante);
-	puts("");
-}
-
-void liberar_t_eliminar_tripulante(t_eliminar_tripulante* estructura){
-	free(estructura);
-}
 
 //============================== CAMBIO_ESTADO ========================================
 
 void agregar_paquete_cambio_estado(t_paquete* paquete, t_cambio_estado* estructura){
 	int offset = 0;
 
-	paquete->buffer->size += sizeof(uint8_t) * 2 + sizeof(uint32_t) + estructura->tamanio_estado;
+	paquete->buffer->size += sizeof(uint8_t) * 2 + sizeof(char);
 	paquete->buffer->stream = realloc(paquete->buffer->stream,paquete->buffer->size);
 
 	memcpy(paquete->buffer->stream, &(estructura->id_tripulante), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
 	memcpy(paquete->buffer->stream + offset, &(estructura->id_patota), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream+offset, &(estructura->tamanio_estado), sizeof(uint32_t));
-	offset += sizeof(uint32_t);
-	memcpy(paquete->buffer->stream+offset, estructura->estado, estructura->tamanio_estado);
+	memcpy(paquete->buffer->stream+offset, &(estructura->estado), sizeof(char));
+
 
 }
 
@@ -226,11 +198,7 @@ t_cambio_estado* deserializar_cambio_estado(t_paquete* paquete){
     offset += sizeof(uint8_t);
     memcpy(&(estructura->id_patota), paquete->buffer->stream+offset, sizeof(uint8_t));
     offset += sizeof(uint8_t);
-    memcpy(&(estructura->tamanio_estado), paquete->buffer->stream+offset, sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    printf("tamaño a reservar para el char estado: %d \n",estructura->tamanio_estado);
-    estructura->estado = (char* ) malloc( (int) estructura->tamanio_estado);
-    memcpy(estructura->estado, paquete->buffer->stream + offset, estructura->tamanio_estado );
+    memcpy(&(estructura->estado), paquete->buffer->stream + offset, sizeof(char));
 
 	eliminar_paquete(paquete);
 	return estructura;
@@ -239,81 +207,12 @@ t_cambio_estado* deserializar_cambio_estado(t_paquete* paquete){
 void imprimir_paquete_cambio_estado(t_cambio_estado* estructura){
 	printf("ID TRIPULANTE: %d\n",estructura->id_tripulante);
 	printf("ID PATOTA: %d\n",estructura->id_patota);
-	printf("TAMAÑO DE ESTADO: %d\n",estructura->tamanio_estado);
-	printf("ESTADO: %s\n",estructura->estado);
+	printf("ESTADO: %c\n",estructura->estado);
 	puts("");
 }
 void liberar_t_cambio_estado(t_cambio_estado* estructura){
-	free(estructura->estado);
 	free(estructura);
 }
-
-
-
-//============================== CAMBIO_ESTADO ========================================
-
-//void serializar_patota( Patota* unaPatota, int socket)
-//{
-//	t_buffer* buffer=malloc(sizeof(t_buffer));
-//	buffer->size=sizeof(uint8_t) //id patota
-//			    +sizeof(Tripulante)*10 //array de tripulantes VER ESTO
-//				+strlen(unaPatota->tareas)+1;
-//	void* stream=malloc(buffer->size);
-//	int offset=0;
-//	memcpy(stream+offset,&(unaPatota->id),sizeof(uint8_t));
-//	offset+=sizeof(uint8_t);
-//	memcpy(stream+offset,&(unaPatota->tripulacion),sizeof(Tripulante)*10);
-//	offset+=sizeof(Tripulante)*10;
-//	memcpy(stream+offset,&(unaPatota->tareas_length), sizeof(uint32_t));
-//	offset+=sizeof(uint32_t);
-//	memcpy(stream+offset,&(unaPatota->tareas),strlen(unaPatota->tareas)+1);
-//
-//	buffer->stream=stream;
-//	free(unaPatota->tareas);//esto?? no me borraria las tareas para siempre?? lol
-//
-//	//bueno pa vamo mandar el paquete
-//	t_paquete* paquete = malloc(sizeof(t_paquete));
-//
-//	//Definimos codigo de operacion PATOTA
-//	paquete->codigo_operacion= PATOTA;
-//	paquete->buffer=buffer;
-//
-//	//armamos el stream a enviar
-//	void* a_enviar=malloc(buffer->size+sizeof(uint8_t)+sizeof(uint32_t));
-//    offset=0;
-//	memcpy(a_enviar+offset,&(paquete->codigo_operacion),sizeof(uint8_t));
-//	offset+=sizeof(uint8_t);
-//	memcpy(a_enviar+offset,&(paquete->buffer->size),sizeof(uint32_t));
-//	offset+=sizeof(uint32_t);
-//	memcpy(a_enviar+offset,&(paquete->buffer->stream),paquete->buffer->size);
-//
-//	//ahora si enviamos todo
-//	send(socket,a_enviar, buffer->size+sizeof(uint8_t)+sizeof(uint32_t),0);
-//
-//	//LIBERAR MEMOREA EVITAR MEMORY LEAK
-//	free(a_enviar);
-//	free(paquete->buffer->stream);
-//	free(paquete->buffer);
-//	free (paquete);
-//
-//}
-//Patota* deserializarPatota(t_buffer* buffer)
-//{
-//	Patota* patota=malloc(sizeof(Patota));
-//	void*stream=buffer->stream;
-//	//Deserealizamos campo por campo mviendonos en el buffer
-//
-//	memcpy(&(patota->id),stream,sizeof(uint8_t));
-//	stream+=sizeof(uint8_t);
-//	memcpy(&(patota->tripulacion),stream,sizeof(Tripulante)*10);
-//	stream+=sizeof(Tripulante)*10;
-//	memcpy(&(patota->tareas_length),stream,sizeof(uint32_t));
-//	stream+=sizeof(uint32_t);
-//	patota->tareas=malloc(patota->tareas_length);
-//	memcpy(&(patota->tareas),stream,patota->tareas_length);
-//
-//	return patota;
-//}
 
 void serializar_tarea_tripulante( Tripulante* tareaTrip, int socket)
 {

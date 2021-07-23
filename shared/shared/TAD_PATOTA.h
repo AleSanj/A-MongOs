@@ -30,6 +30,8 @@ typedef struct
 typedef struct
 {
 	uint8_t id;
+	int inicio;
+	int fin;
 	char* tareas;
 }Patota;
 typedef struct
@@ -40,7 +42,7 @@ typedef struct
 
 
 void agregarTripulantes(int cantidad,Patota* patota ,t_list* listaTripulantes, uint8_t t);
- Patota* iniciarPatota(int id_patota ,char* tareas);
+ Patota* iniciarPatota(int id_patota ,char* tareas, int inicio, int fin);
 
 
 #endif

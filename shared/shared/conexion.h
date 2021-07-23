@@ -95,9 +95,7 @@ typedef struct {
 
 	uint8_t id_tripulante;
 	uint8_t id_patota;
-	uint32_t tamanio_estado;
-	char* estado;
-
+	char estado;
 }t_cambio_estado;
 
 /*
@@ -108,9 +106,6 @@ typedef struct {
 					Capaz podemos usar t_tripulante
 */
 
-typedef struct {
-	uint8_t id_tripulante;
-}t_eliminar_tripulante;
 /*========================== TODOS =================================*/
 void crear_buffer(t_paquete* paquete);
 t_paquete* crear_paquete(CODE_OP codigo);
@@ -156,13 +151,10 @@ void imprimir_paquete_tripulante(t_tripulante* estructura);
 void liberar_t_tripulante(t_tripulante* estructura);
 
 //--------------- ELIMINAR_TRIPULANTE ----------------------------------------
+// usamos el mismo mensaje T_TRIPULANTE
 void serializar_eliminar_tripulante(int idTripulante, int socket);			//todo//todavia no lo borre, preguntar por las dudas
 //int deserializar_eliminar_tripulante(t_buffer* buffer);
 
-void agregar_paquete_eliminar_tripulante(t_paquete* paquete, t_eliminar_tripulante* estructura);
-t_eliminar_tripulante* deserializar_eliminar_tripulante(t_paquete* paquete);
-void imprimir_paquete_eliminar_tripulante(t_eliminar_tripulante* estructura);
-void liberar_t_eliminar_tripulante(t_eliminar_tripulante* estructura);
 
 //--------------- MOVIMIENTO_TRIPULANTE ----------------------------------------
 // Se puede utilizar el mismo mensaje T_TRIPULANTE, pero cambiando el codigo de operacion

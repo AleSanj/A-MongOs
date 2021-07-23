@@ -58,11 +58,14 @@ struct pcb
 //		i++;
 //	}
 //}
- Patota* iniciarPatota(int id_patota,char* tareas){
+ Patota* iniciarPatota(int id_patota,char* tareas,int inicio, int fin){
 
-	Patota* devolverPatota = malloc(sizeof(Patota)) ;
+	Patota* devolverPatota = malloc(sizeof(Patota));
 	devolverPatota->id = id_patota;
 	devolverPatota->tareas = strdup(tareas);
+	devolverPatota->inicio = inicio;
+	devolverPatota->fin = inicio + fin - 1;
+
 	return devolverPatota;
 }
 

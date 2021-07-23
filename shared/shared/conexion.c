@@ -214,7 +214,7 @@ char* enviar_paquete_tarea(t_paquete* paquete,int socket){
 
 		tarea = malloc(tamanio_tarea);
 		if(recv(socket, tarea, tamanio_tarea, 0) <= 0){
-			free(respuesta);
+			free(tarea);
 			respuesta = NULL;
 			liberar_conexion(socket);
 			eliminar_paquete(paquete);
