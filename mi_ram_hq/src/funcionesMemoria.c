@@ -69,13 +69,11 @@ int calcular_direccion_logica_patota( int idPatota){
 
 void guardar_en_memoria_general(void* payload,int idElemento,int tamPayload,int pid,char tipo){
     pthread_mutex_lock(&mutexMemoria);
-    puts("ENTRE A GUARDAR EN MEMORIA");
-	if (strcmp(esquemaMemoria,"PAGINACION")==0){
-		puts("ENTRE A GUARDADO DE PAGINACION");
+    espacioLibre -= tamPayload;
+    if (strcmp(esquemaMemoria,"PAGINACION")==0){
 		guardar_en_memoria_paginacion(payload, idElemento, tamPayload, pid, tipo);
 
 	}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
-		puts("ENTRE A GUARDADO DE SEGMENTACION");
 		guardar_en_memoria_segmentacion( payload, idElemento, tamPayload, pid, tipo,tipoDeGuardado);
 	}
     pthread_mutex_unlock(&mutexMemoria);
@@ -86,15 +84,12 @@ void guardar_en_memoria_general(void* payload,int idElemento,int tamPayload,int 
 void* buscar_en_memoria_general(int idElementoABuscar,int PID, char tipo){
 	void* retornar;
     pthread_mutex_lock(&mutexMemoria);
-    puts("ENTRE A BUSCAR MEMORIA GENERAL");
-	if (strcmp(esquemaMemoria,"PAGINACION")==0){
-			puts("ENTRE A BUSCAR DE PAGINACION");
+    if (strcmp(esquemaMemoria,"PAGINACION")==0){
 			retornar =  buscar_en_memoria_paginacion( idElementoABuscar, PID,  tipo);
 		    pthread_mutex_unlock(&mutexMemoria);
 
 
 		}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
-			puts("ENTRE A BUSCAR DE SEGMENTACION");
 			retornar =  buscar_de_memoria_segmentacion( idElementoABuscar,  tipo);
 		    pthread_mutex_unlock(&mutexMemoria);
 
@@ -108,11 +103,11 @@ void *borrar_de_memoria_general(int idElemento, int idPatota, char tipo){
     pthread_mutex_lock(&mutexMemoria);
 
 	if (strcmp(esquemaMemoria,"PAGINACION")==0){
-			borrar_de_memoria_paginacion( idElemento, idPatota,  tipo);
+		borrar_de_memoria_paginacion( idElemento, idPatota,  tipo);
 
-			}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
-				buscar_de_memoria_segmentacion( idElemento,tipo);
-			}
+	}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
+		buscar_de_memoria_segmentacion( idElemento,tipo);
+	}
     pthread_mutex_unlock(&mutexMemoria);
 
 
@@ -463,7 +458,6 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 
 void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     tipoUniversal = tipo;
-    printf("TIPO: %c \n",tipo);
     t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
     elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
     int paginaInicial= -1,offset=-1,tamanioPayload=-1;
@@ -486,14 +480,12 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
         tablaBuscada = list_get(listaDeTablasDePaginas,i);
         if (tablaBuscada->idPatota == PID){
             tablaDePaginas = tablaBuscada->tablaDePaginas;
-            printf("El id de la patota: %d \n", tablaBuscada->idPatota);
             break;
         }
     }
 
     void* payloadADevolver = malloc(tamanioPayload);
     int tamanioPorGuardar = tamanioPayload;
-    printf("Tamanio del payload a devolver: %d \n",tamanioPayload);
     paginaEnTabla_struct *paginaDeLectura = malloc(sizeof(paginaEnTabla_struct));
     int movimientoDepagina=1;
     paginaDeLectura = list_get(tablaDePaginas,paginaInicial);
@@ -510,7 +502,6 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     memcpy(payloadADevolver,direccionFisicaDeLaPagina, menorEntreDos(tamanioPayload,tamPagina-offset));
     payloadADevolver += menorEntreDos(tamanioPayload,tamPagina-offset);
     tamanioPorGuardar -= menorEntreDos(tamanioPayload,tamPagina-offset);
-    printf("Tamanio por guardar antes del while: %d \n",tamanioPorGuardar);
     while(tamanioPorGuardar>0){
         paginaDeLectura = list_get(tablaDePaginas,paginaInicial+movimientoDepagina);
         if (paginaDeLectura->presencia == 0){
@@ -529,7 +520,6 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     }
 
     payloadADevolver -= tamanioPayload;
-    printf("el payload que devuelve es: %s", payloadADevolver);
     return payloadADevolver;
 
 }
@@ -557,6 +547,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
             break;
         }
     }
+    espacioLibre += tamanioPayload;
     tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
     t_list *tablaDePaginas;
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
@@ -588,7 +579,6 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
         //Guarda directamente en memoria y lo agrega a la lista de segmentos
         //*(tripulante_struct *)memoria = *(tripulante_struct *)payload;
         memcpy(memoria,payload,tamPayload);
-        printf("TamPayload: %d\n",tamPayload);
         segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
         nuevoSegmento->inicio = memoria;
         nuevoSegmento->tamanio = tamPayload;
@@ -640,7 +630,6 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                         int *posicionInicioHuecoLibre = (int)(segmentoIterante->inicio) + (segmentoIterante->tamanio);
                         //*(tripulante_struct *) posicionInicioHuecoLibre = tcb;
                         memcpy(posicionInicioHuecoLibre,payload,tamPayload);
-                        printf("TamPayload: %d\n",tamPayload);
                         segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
                         nuevoSegmento->inicio = posicionInicioHuecoLibre;
                         nuevoSegmento->tamanio = tamPayload;
@@ -722,7 +711,6 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                     elementoNuevo->tamanio = tamPayload;
                     elementoNuevo->ID = idElemento;
                     list_add(listaElementos,elementoNuevo);
-                    printf("Guardado \n");
                 }
                 list_destroy(listaDeEspaciosLibres);
                 break;
@@ -738,23 +726,20 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, char tipoDeElemento){
     for (int i=0;i< list_size(listaFiltrada);i++){
         elementoEnLista_struct *elementoEvaluado = list_get(listaFiltrada,i);
         segmentoEnTabla_struct *segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
+        espacioLibre += elementoEvaluado->tamanio;
         if (tipoDeElemento == 'T'){
             if (elementoEvaluado->ID== idElementoABorrar){
             	list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
-                printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
                 break;
             }
         }else if(tipoDeElemento == 'P'){
 
             if (elementoEvaluado->ID == idElementoABorrar){
                 list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
-                printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
             }
         }else if(tipoDeElemento =='A'){
         	if(elementoEvaluado->ID==idElementoABorrar){
         		list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
-        		printf("Elemento %d borrado de la lista de segmentos \n",elementoEvaluado->segmentoOPagina);
-
         	}
         }
     }
@@ -763,8 +748,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, char tipoDeElemento){
 
 void *buscar_de_memoria_segmentacion(int idElementoABuscar, char tipoDeElemento){
 	tipoUniversal = tipoDeElemento;
-	printf("tipo de elemento: %c \n", tipoDeElemento);
-    t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
     for (int s=0;s< list_size(listaFiltrada);s++){
         elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
         elementoEvaluado= list_get(listaFiltrada,s);
@@ -790,7 +774,6 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar, char tipoDeElemento)
         }else if(tipoDeElemento == 'A'){
 
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
-            printf("ELEMENTO EVALUADO.TAMANIO:%d \n", elementoEvaluado->tamanio);
             if (elementoEvaluado->ID== idElementoABuscar){
             	memcpy(elementoABuscar,segmentoEvaluado->inicio,elementoEvaluado->tamanio);
             	return elementoABuscar;
