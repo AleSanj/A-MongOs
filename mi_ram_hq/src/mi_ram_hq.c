@@ -16,14 +16,13 @@
 
 int main(void) {
 	int socketCliente, socketServer;
-	bool terminar;
 
 //	PATH MARTIN
 //	config = config_create("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/mi_ram_hq/src/mi_ram_hq.config");
 
 //	PATH ALE
 	config = config_create("/home/utnso/TP/tp-2021-1c-Cebollitas-subcampeon/mi_ram_hq/src/mi_ram_hq.config");
-
+	funcionando=true;
 	tamMemoria = config_get_int_value(config, "TAMANIO_MEMORIA");
 	esquemaMemoria = config_get_string_value(config, "ESQUEMA_MEMORIA");
 	tamPagina = config_get_int_value(config, "TAMANIO_PAGINA");
@@ -34,11 +33,11 @@ int main(void) {
 	puerto = config_get_string_value(config, "PUERTO");
 	pthread_mutex_init(&mutexMemoria, NULL);
 	for(int i =0; i<94;i++){
-		if (vectorIdTripulantes[i]==0){
-			vectorIdTripulantes[i] = 0;
-		}
+		vectorIdTripulantes[i] = -1;
 	}
 
+	signal(SIGUSR1,&manejoDump);
+	signal(SIGUSR2,&manejoCompactacion);
 	if (strcmp(crit_seleccion,"FF") == 0){
 		tipoDeGuardado = FIRSTFIT;
 	}else{
@@ -47,47 +46,48 @@ int main(void) {
 
 	memoria = malloc(tamMemoria);
 	listaElementos = list_create();
-
+	listaDeTablasDePaginas = list_create();
 	if (strcmp(esquemaMemoria,"PAGINACION")==0){
 		memoriaSwap = malloc(tamSwap);
 		cantidadPaginas = tamMemoria / tamPagina;
 		cantidadPaginasSwap = tamSwap / tamPagina;
 		bitarrayMemoria = calloc(cantidadPaginas, sizeof(int));
 		bitarraySwap = calloc(cantidadPaginasSwap, sizeof(int));
-		listaDeTablasDePaginas = list_create();
 		tablaDeFrames = queue_create();
 		punteroReemplazo = 0;
 		espacioLibre = tamMemoria + tamSwap;
+		int swap = open(path_swap, O_CREAT | O_RDWR);
+		ftruncate(swap, tamSwap);
+		mmap(memoriaSwap, tamSwap, PROT_READ | PROT_WRITE, MAP_SHARED, swap, 0);
+		close(swap);
+		msync(memoriaSwap, tamSwap, MS_SYNC);
+
 
 	}else if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
 		listaSegmentos = list_create();
 		espacioLibre = tamMemoria;
+		listaGlobalDeSegmentos = list_create();
 
 	}
-	dumpDeMemoria();
 
 	nivel = crear_mapa();
-
 	socketServer = crear_server(puerto);
-	while (1) {
+
+	while (funcionando) {
 		socketCliente = esperar_cliente(socketServer, 5);
 		if (socketCliente == -1)
 			continue;
 			pthread_t hiloCliente;
 			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
 			pthread_join(hiloCliente,NULL);
-
 	}
 
 
 	liberar_conexion(socketServer);
+
 	//crear_personajes(nivel, patota);
 	return EXIT_SUCCESS;
 	}
-
-
-
-
 
 
 
@@ -109,6 +109,7 @@ void administrar_cliente(int socketCliente){
 			int espacioNecesario;
 			espacioNecesario = estructura_iniciar_patota->tamanio_tareas + (estructura_iniciar_patota->cantTripulantes*21)+8;
 			if(espacioLibre<espacioNecesario){
+				//puts("Le dije que no tengo mas espacio");
 				send(socketCliente,6,sizeof(uint32_t),0);
 				send(socketCliente, "fault",6,0);
 			}else{
@@ -120,10 +121,15 @@ void administrar_cliente(int socketCliente){
 					nuevaTablaPatota->idPatota = nuevaPatota->id;
 					nuevaTablaPatota->tablaDePaginas = list_create();
 					list_add(listaDeTablasDePaginas, nuevaTablaPatota);
+				}else{
+					tablaEnLista_struct *nuevaListaDeTablasDePaginas = malloc(sizeof(tablaEnLista_struct));
+					nuevaListaDeTablasDePaginas->tablaDePaginas = list_create();
+					nuevaListaDeTablasDePaginas->idPatota=estructura_iniciar_patota->idPatota;
+					list_add(listaDeTablasDePaginas,nuevaListaDeTablasDePaginas);
 				}
 				guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
 				nuevaPatota->tareas =  calcular_direccion_logica_archivo(estructura_iniciar_patota->idPatota);
-				guardar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
+				guardar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,sizeof(pcb),estructura_iniciar_patota->idPatota,'P');
 			}
 			break;
 		case TRIPULANTE:;
@@ -135,29 +141,33 @@ void administrar_cliente(int socketCliente){
 				nuevoTripulante->posX = estructura_tripulante->posicion_x;
 				nuevoTripulante->posY = estructura_tripulante->posicion_y;
 				nuevoTripulante->proxTarea=0;
-				nuevoTripulante->dirLogicaPcb=calcular_direccion_logica_patota(estructura_iniciar_patota->idPatota);
+				nuevoTripulante->dirLogicaPcb=(uint32_t)calcular_direccion_logica_patota((int)estructura_tripulante->id_patota);
 				guardar_en_memoria_general(nuevoTripulante,estructura_tripulante->id_tripulante,21,estructura_tripulante->id_patota,'T');
 				for(int i =0; i<94;i++){
-					if (vectorIdTripulantes[i]==0){
+					if (vectorIdTripulantes[i]==-1){
 						//printf("Dentro del if i= %d \n",i);
 						vectorIdTripulantes[i] = nuevoTripulante->id;
+						pthread_mutex_lock(&mutexMapa);
 						dibujarTripulante(nuevoTripulante,(i+33));
+						pthread_mutex_unlock(&mutexMapa);
 						break;
 					}
 				}
-
+				//printf("CREE UN TRIPULANTE: %d\n",nuevoTripulante->id);
 
 		//		liberar_tripulante(estructura_tripulante);
 				liberar_conexion(socketCliente);
 				break;
 		case ELIMINAR_TRIPULANTE:;
 			//printf("eliminar TRIPULANTE /n");
-				t_tripulante* tripulante_a_eliminar = deserializar_eliminar_tripulante(paquete_recibido);
+				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
 						vectorIdTripulantes[i] = 0;
+						pthread_mutex_lock(&mutexMapa);
 						borrarTripulante((i+33));
+						pthread_mutex_unlock(&mutexMapa);
 						break;
 					}
 				}
@@ -169,13 +179,15 @@ void administrar_cliente(int socketCliente){
 				t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
 				//imprimir_paquete_tripulante(tripulante_solicitud);
 				char*tareas = string_new();
-				tareas = (char*)buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
+				tareas = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
 				char **arrayTareas = string_split(tareas,"|");
 				tcb *tripulanteATraer = malloc(sizeof(tcb));
-				int totalDeTareas=0;
-				tripulanteATraer = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'T');
-				int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
+				tripulanteATraer = buscar_en_memoria_general(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota,'T');
+				pcb* patotaATraer = malloc(sizeof(pcb));
+				patotaATraer = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'P');
+
 				int i=0;
+				int totalDeTareas=0;
 				while(arrayTareas[i]!=NULL){
 					totalDeTareas++;
 					i++;
@@ -184,8 +196,9 @@ void administrar_cliente(int socketCliente){
 					send(socketCliente,6,sizeof(uint32_t),0);
 					send(socketCliente, "fault",6,0);
 				}else{
+					int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
 					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
-					send(socketCliente, arrayTareas[0],tamanio_tarea,0);
+					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
 				}
 
 				liberar_conexion(socketCliente);
@@ -198,23 +211,27 @@ void administrar_cliente(int socketCliente){
 				t_tripulante* tripulante_a_mover = deserializar_tripulante(paquete_recibido);
 				//imprimir_paquete_tripulante(tripulante_a_mover);
 				tcb *tripulanteAMover = malloc(sizeof(tcb));
-				id_and_pos *tripulanteEnMapa = malloc(sizeof(id_and_pos));
-
 				tripulanteAMover = buscar_en_memoria_general(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota, 'T');
-				borrar_de_memoria_general(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota, 'T');
 				tripulanteAMover->posX = tripulante_a_mover->posicion_x;
 				tripulanteAMover->posY = tripulante_a_mover->posicion_y;
+				if(strcmp(esquemaMemoria,"PAGINACION")==0){
+					actualizar_posicion_paginacion(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota,tripulante_a_mover->posicion_x,tripulante_a_mover->posicion_y);
+				}else if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
+					actualizar_posicion_segmentacion(tripulante_a_mover->id_tripulante,tripulante_a_mover->id_patota,tripulante_a_mover->posicion_x,tripulante_a_mover->posicion_y);
+				}
+				id_and_pos *tripulanteEnMapa = malloc(sizeof(id_and_pos));
 				tripulanteEnMapa->idTripulante = tripulanteAMover->id;
 				tripulanteEnMapa->posX = tripulante_a_mover->posicion_x;
 				tripulanteEnMapa->posY = tripulante_a_mover->posicion_y;
 
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulanteEnMapa->idTripulante){
+						pthread_mutex_lock(&mutexMapa);
 						actualizarPosicion(tripulanteEnMapa,i+33);
+						pthread_mutex_unlock(&mutexMapa);
 						break;
 					}
 				}
-				guardar_en_memoria_general(tripulanteAMover,tripulante_a_mover->id_tripulante,21,tripulante_a_mover->id_patota,'T');
 
 				break;
 
@@ -222,16 +239,25 @@ void administrar_cliente(int socketCliente){
 			//printf("ACTUALIZAR_ESTADO /n");
 				t_cambio_estado* tripulante_a_actualizar = deserializar_cambio_estado(paquete_recibido);
 				//imprimir_paquete_cambio_estado(tripulante_a_actualizar);
-				tcb *tripulanteAActualizar = malloc(sizeof(tcb));
-				tripulanteAActualizar = buscar_en_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota, 'T');
-				borrar_de_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota, 'T');
-				tripulanteAActualizar->estado = tripulante_a_actualizar->estado;
-				guardar_en_memoria_general(tripulanteAActualizar,tripulante_a_actualizar->id_tripulante,21,tripulante_a_actualizar->id_patota,'T');
+				if(strcmp(esquemaMemoria,"PAGINACION")==0){
+					pthread_mutex_lock(&mutexMemoria);
+					actualizar_estado_paginacion(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota,tripulante_a_actualizar->estado);
+					pthread_mutex_unlock(&mutexMemoria);
+					tcb* tcbDePrueba = malloc(sizeof(tcb));
+					tcbDePrueba = buscar_en_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota,'T');
+					//printf("CAMBIO ESTADO: %c\n",tcbDePrueba->estado);
+				}else{
+					pthread_mutex_lock(&mutexMemoria);
+					actualizar_estado_segmentacion(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota,tripulante_a_actualizar->estado);
+					pthread_mutex_lock(&mutexMemoria);
+					tcb* tcbDePrueba = malloc(sizeof(tcb));
+					tcbDePrueba = buscar_en_memoria_general(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota,'T');
+				}
 				break;
 
 		default:;
-				//printf("No se especifico el caso para recibir el paquete tipo: %d\n",paquete_recibido->codigo_operacion)
-				break;
+			puts("No hizo nada");
+			break;
 
 
 	}
@@ -255,9 +281,9 @@ void dibujarTripulante(tcb* tripulante, char id){
 	err = personaje_crear(nivel, id, tripulante->posX, tripulante->posY);
 	ASSERT_CREATE(nivel, id, err);
 
-	if(err) {
+	/*if(err) {
 		//printf("Error: %s\n", nivel_gui_string_error(err));
-	}
+	}*/
 	nivel_gui_dibujar(nivel);
 
 	//free (id);
@@ -275,7 +301,7 @@ NIVEL *crear_mapa(){
 
 		nivel_gui_get_area_nivel(&cols, &rows);
 
-		nivel = nivel_crear("Test Chamber 04");
+		nivel = nivel_crear("Mapa de la nave");
 		nivel_gui_dibujar(nivel);
 		//printf("Ya Dibuje \n");
 		return nivel;
@@ -292,6 +318,7 @@ void dumpDeMemoria(){
 	//FILE* dmp = fopen ("Dump_", "w+");
 	free(nombreArchivo);
 	char* lineaAAgregar=string_new();
+	fprintf(dmp,"Dump: %s \n",timestamp);
 	if(strcmp(esquemaMemoria,"PAGINACION")==0){
 		for(int i =0;i<(tamMemoria/tamPagina);i++){
 
@@ -313,9 +340,25 @@ void dumpDeMemoria(){
 			}
 		}
 	}else{
-		//SEGMENTACION
+		for(int i=0; i < list_size(listaDeTablasDePaginas);i++){
+			tablaEnLista_struct *tablaDePaginas = malloc(sizeof(tablaEnLista_struct));
+			tablaDePaginas = list_get(listaDeTablasDePaginas,i);
+			for(int k=0; k<list_size(tablaDePaginas->tablaDePaginas);k++){
+				segmentoEnTabla_struct* segmentoIterante = malloc(sizeof(segmentoEnTabla_struct));
+				segmentoIterante = list_get(tablaDePaginas->tablaDePaginas,k);
+				fprintf(dmp,"Proceso:%d  Segmento:%d  Inicio:%X  Tamanio:%dB \n",tablaDePaginas->idPatota,k,segmentoIterante->inicio,segmentoIterante->tamanio);
+			}
+		}
 	}
 
 	fclose(dmp);
+}
+
+void manejoDump(int signal){
+	dumpDeMemoria();
+}
+
+void manejoCompactacion(int signal){
+	compactacion();
 }
 

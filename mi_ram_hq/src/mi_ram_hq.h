@@ -11,6 +11,8 @@
 #include <nivel-gui/nivel-gui.h>
 #include <nivel-gui/tad_nivel.h>
 #include <curses.h>
+#include <sys/mman.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <commons/collections/list.h>
 #include <pthread.h>
@@ -21,6 +23,8 @@
 #include <commons/config.h>
 #include <commons/temporal.h>
 #include <commons/string.h>
+#include <signal.h>
+#include <unistd.h>
 #include "funcionesMemoria.h"
 
 #define PUERTOPREDETERMINADO 6667
@@ -48,6 +52,8 @@ void dibujarTripulante(tcb*,char);
 void borrarTripulante(char);
 void actualizarPosicion(id_and_pos* ,char );
 void dumpDeMemoria();
+void manejoDump(int);
+void manejoCompactacion(int);
 NIVEL* nivel;
 t_config* config;
 int vectorIdTripulantes[94];
@@ -60,8 +66,11 @@ char* alg_remplazo;
 char* crit_seleccion;
 char* puerto;
 int espacioLibre;
+bool funcionando;
 
 pthread_mutex_t mutexMemoria;
+pthread_mutex_t mutexMapa;
+pthread_mutex_t mutexEstado;
 
 
 

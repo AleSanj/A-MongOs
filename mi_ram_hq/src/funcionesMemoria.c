@@ -50,7 +50,7 @@ int calcular_direccion_logica_archivo( int idPatota){
 
 
 }
-int calcular_direccion_logica_patota( int idPatota){
+int calcular_direccion_logica_patota(int idPatota){
 	pthread_mutex_lock(&mutexMemoria);
 	tipoUniversal ='P';
 	t_list *listaFiltrada;
@@ -85,15 +85,12 @@ void* buscar_en_memoria_general(int idElementoABuscar,int PID, char tipo){
 	void* retornar;
     pthread_mutex_lock(&mutexMemoria);
     if (strcmp(esquemaMemoria,"PAGINACION")==0){
-			retornar =  buscar_en_memoria_paginacion( idElementoABuscar, PID,  tipo);
-		    pthread_mutex_unlock(&mutexMemoria);
+		retornar =  buscar_en_memoria_paginacion( idElementoABuscar, PID,  tipo);
 
-
-		}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
-			retornar =  buscar_de_memoria_segmentacion( idElementoABuscar,  tipo);
-		    pthread_mutex_unlock(&mutexMemoria);
-
-		}
+	}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
+		retornar =  buscar_de_memoria_segmentacion( idElementoABuscar, PID,tipo);
+	}
+    pthread_mutex_unlock(&mutexMemoria);
 	return retornar;
 
 
@@ -106,7 +103,7 @@ void *borrar_de_memoria_general(int idElemento, int idPatota, char tipo){
 		borrar_de_memoria_paginacion( idElemento, idPatota,  tipo);
 
 	}else if(strcmp(esquemaMemoria,"SEGMENTACION")==0){
-		buscar_de_memoria_segmentacion( idElemento,tipo);
+		borrar_de_memoria_segmentacion( idElemento,idPatota,tipo);
 	}
     pthread_mutex_unlock(&mutexMemoria);
 
@@ -118,6 +115,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
     int indiceTablaCorrespondiente;
     elementoEnLista_struct *nuevoElemento= malloc(sizeof(elementoEnLista_struct));
     nuevoElemento->tipo = tipo;
+    nuevoElemento->PID = pid;
     tablaEnLista_struct *tablaCorrespondiente = malloc(sizeof(tablaEnLista_struct));
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
         tablaEnLista_struct *tablaIterante;
@@ -156,6 +154,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         nuevoElemento->segmentoOPagina = indicePaginaCorrespondiente;
         nuevoElemento->tamanio = tamPayload;
         nuevoElemento->ID = idElemento;
+        list_add(listaElementos,nuevoElemento);
         payLoadYaGuardado += menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         payload = (int)payload + menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         paginaParcialmenteLlena->espacioOcupado += menorEntreDos(tamPayload,tamPagina - paginaParcialmenteLlena->espacioOcupado);
@@ -163,7 +162,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         while (payLoadYaGuardado<tamPayload) {
             int frameDisponible = encontrarFrameDisponible();
             if (frameDisponible == -1){
-                guardar_en_swap(payload,idElemento,tamPayload,pid,tipo);
+                guardar_en_swap(payload,idElemento,tamPayload-payLoadYaGuardado,pid,tipo);
                 break;
             }
             paginaReemplazable3->nroFrame = frameDisponible;
@@ -205,6 +204,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
             nuevoElemento->offsetEnPagina = 0;
             nuevoElemento->tamanio = tamPayload;
             nuevoElemento->ID = idElemento;
+            list_add(listaElementos,nuevoElemento);
             paginaReemplazable->nroPagina = nuevoElemento->segmentoOPagina;
             bitarrayMemoria[frameDisponible] = 1;
             queue_push(tablaDeFrames, paginaReemplazable);
@@ -215,26 +215,26 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
                 paginaReemplazable2->PID=pid;
                 int frameDisponible = encontrarFrameDisponible();
                 if (frameDisponible == -1) {
-                    guardar_en_swap(payload, idElemento, tamPayload, pid, tipo);
+                    guardar_en_swap(payload, idElemento, tamPayload-payLoadYaGuardado, pid, tipo);
+                    break;
+                }else{
+					int *direccionFisica = memoria + (frameDisponible * tamPagina);
+					memcpy(direccionFisica, payload, menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina));
+					paginaEnTabla_struct *nuevaPagina = malloc(sizeof(paginaEnTabla_struct));
+					nuevaPagina->frame = frameDisponible;
+					//printf("Frame disponible: %d %d",frameDisponible, nuevaPagina->frame);
+					nuevaPagina->presencia = 1;
+					nuevaPagina->espacioOcupado = menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
+					paginaReemplazable2->nroFrame = frameDisponible;
+					payload += menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
+					payLoadYaGuardado += menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
+					paginaReemplazable2->nroPagina = list_add(tablaCorrespondiente->tablaDePaginas, nuevaPagina);
+					queue_push(tablaDeFrames, paginaReemplazable2);
+					bitarrayMemoria[frameDisponible] = 1;
                 }
-                int *direccionFisica = memoria + (frameDisponible * tamPagina);
-                memcpy(direccionFisica, payload, menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina));
-                paginaEnTabla_struct *nuevaPagina = malloc(sizeof(paginaEnTabla_struct));
-                nuevaPagina->frame = frameDisponible;
-                nuevaPagina->presencia = 1;
-                nuevaPagina->presencia = 1;
-                nuevaPagina->espacioOcupado = menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
-                paginaReemplazable2->nroFrame = frameDisponible;
-                payload += menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
-                payLoadYaGuardado += menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina);
-                paginaReemplazable2->nroPagina = list_add(tablaCorrespondiente->tablaDePaginas, nuevaPagina);
-                queue_push(tablaDeFrames, paginaReemplazable2);
-                bitarrayMemoria[frameDisponible] = 1;
             }
         }
     }
-
-    list_add(listaElementos,nuevoElemento);
     /*memcpy(memoria,payload, tamPayload/2);
     printf("Memoria: %d \n", memoria);
     printf("memoria + 500: %d \n", memoria+500);
@@ -256,7 +256,20 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
     int indiceTablaCorrespondiente;
 
     elementoEnLista_struct *nuevoElemento= malloc(sizeof(elementoEnLista_struct));
-    nuevoElemento->tipo = tipo;
+    nuevoElemento->tipo = 'M';
+
+    for(int i=0;i<list_size(listaElementos);i++){
+    	elementoEnLista_struct *elementoIterante= malloc(sizeof(elementoEnLista_struct));
+    	elementoIterante = list_get(listaElementos,i);
+    	if((elementoIterante->ID == idElemento) && (elementoIterante->tipo == tipo)){
+    		nuevoElemento = elementoIterante;
+    		break;
+    	}
+    }
+
+
+
+
     tablaEnLista_struct *tablaCorrespondiente = malloc(sizeof(tablaEnLista_struct));
 
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
@@ -291,10 +304,15 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
         direccionFisica = (int)memoriaSwap + (int)(paginaParcialmenteLlena->frame * tamPagina + paginaParcialmenteLlena->espacioOcupado);
         int menorEntre2 = menorEntreDos(tamPayload,(tamPagina-paginaParcialmenteLlena->espacioOcupado));
         memcpy(direccionFisica,payload,menorEntre2);
-        nuevoElemento->offsetEnPagina = paginaParcialmenteLlena->espacioOcupado;
-        nuevoElemento->segmentoOPagina = indicePaginaCorrespondiente;
-        nuevoElemento->tamanio = tamPayload;
-        nuevoElemento->ID = idElemento;
+        if(nuevoElemento->tipo=='M'){
+        	nuevoElemento->tipo = tipo;
+        	nuevoElemento->offsetEnPagina = paginaParcialmenteLlena->espacioOcupado;
+        	nuevoElemento->segmentoOPagina = indicePaginaCorrespondiente;
+        	nuevoElemento->tamanio = tamPayload;
+        	nuevoElemento->ID = idElemento;
+        	list_add(listaElementos,nuevoElemento);
+        }
+
         payLoadYaGuardado += menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         payload = (int)payload + menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         paginaParcialmenteLlena->espacioOcupado += menorEntreDos(tamPayload,tamPagina - paginaParcialmenteLlena->espacioOcupado);
@@ -311,24 +329,33 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
             payLoadYaGuardado = (int)payLoadYaGuardado + menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina);
             payload = (int)payload + menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina);
             list_add(tablaCorrespondiente->tablaDePaginas,nuevaPagina);
-            bitarrayMemoria[frameDisponible] = 1;
+            bitarraySwap[frameDisponible] = 1;
         }
 
     }
     else{
         int frameDisponible = encontrarFrameEnSwapDisponible();
         int *direccionFisica =(int) memoriaSwap + (frameDisponible * tamPagina);
+        char* payloadProbando;
+        payloadProbando=payload;
+        //printf("Payload la concha de tu madre: %s\n",payloadProbando);
         memcpy(direccionFisica,payload, menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina));
         paginaEnTabla_struct *nuevaPagina = malloc(sizeof (paginaEnTabla_struct));
         nuevaPagina->frame = frameDisponible;
         nuevaPagina->presencia = 0;
         nuevaPagina->espacioOcupado = menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina);
+        list_add(tablaCorrespondiente->tablaDePaginas,nuevaPagina);
         payload =(int)payload + menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina);
         payLoadYaGuardado =(int)payLoadYaGuardado + menorEntreDos(tamPayload-payLoadYaGuardado,tamPagina);
-        nuevoElemento->segmentoOPagina = list_add(tablaCorrespondiente->tablaDePaginas,nuevaPagina);
-        nuevoElemento->offsetEnPagina=0;
-        nuevoElemento->tamanio = tamPayload;
-        nuevoElemento->ID = idElemento;
+        if(nuevoElemento->tipo == 'M'){
+        	nuevoElemento->tipo = tipo;
+        	nuevoElemento->segmentoOPagina = list_add(tablaCorrespondiente->tablaDePaginas,nuevaPagina);
+        	nuevoElemento->offsetEnPagina=0;
+        	nuevoElemento->tamanio = tamPayload;
+        	nuevoElemento->ID = idElemento;
+        	list_add(listaElementos,nuevoElemento);
+        }
+
         bitarraySwap[frameDisponible] = 1;
 
         while (payLoadYaGuardado<tamPayload) {
@@ -347,8 +374,7 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
         }
 
     }
-
-    list_add(listaElementos,nuevoElemento);
+    msync(memoriaSwap, tamSwap, MS_SYNC);
 }
 
 
@@ -374,9 +400,16 @@ void* minimo_hueco_libre(void *elem1,void*elem2){
     }
 
 }
-bool ordenar_por_posicion(void *tam1, void *tam2){
+bool ordenar_por_posicion_local(void *tam1, void *tam2){
     segmentoEnTabla_struct *tam1bis = tam1;
     segmentoEnTabla_struct *tam2bis = tam2;
+    return (tam1bis->inicio < tam2bis->inicio);
+
+}
+
+bool ordenar_por_posicion_global(void *tam1, void *tam2){
+    segmentoEnTablaGlobal_struct *tam1bis = tam1;
+    segmentoEnTablaGlobal_struct  *tam2bis = tam2;
     return (tam1bis->inicio < tam2bis->inicio);
 
 }
@@ -394,8 +427,9 @@ bool filtrarPorTipo(void* elemento){
 }
 
 void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePaginas,int indiceDeLaPaginaATraer,int PID){
-    paginaParaReemplazar_struct *paginaAReemplazar = malloc(sizeof(paginaParaReemplazar_struct));
-    if (strcmp(algoritmoReemplazo,"LRU")==0){
+    int frameEnSwap = paginaATraer->frame;
+	paginaParaReemplazar_struct *paginaAReemplazar = malloc(sizeof(paginaParaReemplazar_struct));
+    if (strcmp(alg_remplazo,"LRU")==0){
         paginaAReemplazar = queue_pop(tablaDeFrames);
     } else{
         while (1) {
@@ -417,6 +451,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 
     }
 
+
     int* direccionFisicaPaginaEnSwap = (int)memoriaSwap + (paginaATraer->frame * tamPagina);
     int* direccionFisicaPaginaEnMemoria = (int) memoria + (paginaAReemplazar->nroFrame * tamPagina);
     void* direccionAuxiliar = malloc(tamPagina);
@@ -425,10 +460,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
     memcpy(direccionFisicaPaginaEnMemoria,direccionFisicaPaginaEnSwap,tamPagina);
     memcpy(direccionFisicaPaginaEnSwap,direccionAuxiliar,tamPagina);
     paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
-    //paginaAActualizar = list_get(tablaDePaginas,indiceDeLaPaginaATraer);
-    memcpy(paginaAActualizar,list_get(tablaDePaginas,indiceDeLaPaginaATraer),tamPagina);
-    //printf("Pagina a reemplazar: %d \n",paginaAReemplazar->nroPagina);
-    //printf("Pagina a traer: %d \n",paginaATraer->frame);
+    paginaAActualizar = list_get(tablaDePaginas,indiceDeLaPaginaATraer);
     paginaAActualizar->presencia = 1;
     paginaAActualizar->frame = paginaAReemplazar->nroFrame;
     list_replace(tablaDePaginas,indiceDeLaPaginaATraer,paginaAActualizar);
@@ -450,7 +482,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
     paginaEnTabla_struct *paginaAActualizar2 = malloc(sizeof(paginaEnTabla_struct));
     paginaAActualizar2 = list_get(tablaDePaginasBuscada,paginaAReemplazar->nroPagina);
     paginaAActualizar2->presencia = 0;
-    paginaAActualizar2->frame = paginaATraer->frame;
+    paginaAActualizar2->frame = frameEnSwap;
     list_replace(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar2);
 
     //free(direccionAuxiliar);
@@ -471,7 +503,6 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
         }
     }
     if (paginaInicial == -1){
-        printf("El elemento buscado no existe \n");
         return 0;
     }
     tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
@@ -491,26 +522,43 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     paginaDeLectura = list_get(tablaDePaginas,paginaInicial);
     if (paginaDeLectura->presencia == 0){
         traerPaginaAMemoria(paginaDeLectura,tablaDePaginas,paginaInicial,PID);
+        msync(memoriaSwap, tamSwap, MS_SYNC);
         paginaDeLectura = list_get(tablaDePaginas,paginaInicial);
     }else{
         paginaParaReemplazar_struct *paginaAux = malloc(sizeof(paginaParaReemplazar_struct));
-        paginaAux = list_remove(tablaDeFrames->elements,paginaInicial);
+        for(int j=0;j<list_size(tablaDeFrames->elements);j++){
+        	paginaParaReemplazar_struct *paginaIterante = malloc(sizeof(paginaParaReemplazar_struct ));
+        	paginaIterante = list_get(tablaDeFrames->elements,j);
+        	if(paginaIterante->nroPagina == paginaInicial){
+        		paginaAux = list_remove(tablaDeFrames->elements,j);
+        	}
+        }
+
         queue_push(tablaDeFrames,paginaAux);
     }
     int* direccionFisicaDeLaPagina;
-    direccionFisicaDeLaPagina = memoria + (paginaDeLectura->frame * tamPagina + offset);
+    direccionFisicaDeLaPagina = (int)memoria + (paginaDeLectura->frame * tamPagina + offset);
     memcpy(payloadADevolver,direccionFisicaDeLaPagina, menorEntreDos(tamanioPayload,tamPagina-offset));
     payloadADevolver += menorEntreDos(tamanioPayload,tamPagina-offset);
     tamanioPorGuardar -= menorEntreDos(tamanioPayload,tamPagina-offset);
     while(tamanioPorGuardar>0){
         paginaDeLectura = list_get(tablaDePaginas,paginaInicial+movimientoDepagina);
         if (paginaDeLectura->presencia == 0){
-            traerPaginaAMemoria(paginaDeLectura,tablaDePaginas, paginaInicial+movimientoDepagina,PID);
+            //printf("Frame a traer de swap a memoria: %d\n",paginaDeLectura->frame);
+        	traerPaginaAMemoria(paginaDeLectura,tablaDePaginas, paginaInicial+movimientoDepagina,PID);
+            msync(memoriaSwap, tamSwap, MS_SYNC);
             paginaDeLectura = list_get(tablaDePaginas,paginaInicial+movimientoDepagina);
         }else{
-            paginaParaReemplazar_struct *paginaAux = malloc(sizeof(paginaParaReemplazar_struct));
-            paginaAux = list_remove(tablaDeFrames->elements,paginaInicial);
-            queue_push(tablaDeFrames,paginaAux);
+        	paginaParaReemplazar_struct *paginaAux = malloc(sizeof(paginaParaReemplazar_struct));
+        	        for(int j=0;j<list_size(tablaDeFrames->elements);j++){
+        	        	paginaParaReemplazar_struct *paginaIterante = malloc(sizeof(paginaParaReemplazar_struct ));
+        	        	paginaIterante = list_get(tablaDeFrames->elements,j);
+        	        	if(paginaIterante->nroPagina == paginaInicial){
+        	        		paginaAux = list_remove(tablaDeFrames->elements,j);
+        	        	}
+        	        }
+
+        	        queue_push(tablaDeFrames,paginaAux);
         }
         direccionFisicaDeLaPagina = (int)memoria + (paginaDeLectura->frame * tamPagina);
         memcpy(payloadADevolver,direccionFisicaDeLaPagina, menorEntreDos(tamanioPorGuardar,tamPagina));
@@ -525,13 +573,27 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
 }
 void actualizarListaElementos(int paginaEliminada,int PID){
     for (int i = 0; i < list_size(listaElementos); ++i) {
-        elementoEnLista_struct *elementoIterante = list_get(listaElementos,i);
-        if(elementoIterante->segmentoOPagina > paginaEliminada){
-            elementoIterante->segmentoOPagina -= 1;
-            list_replace(listaElementos,i,elementoIterante);
+        elementoEnLista_struct *elementoIterante = malloc(sizeof(elementoEnLista_struct));
+        		elementoIterante = list_get(listaElementos,i);
+            if((elementoIterante->segmentoOPagina > paginaEliminada) && (elementoIterante->PID == PID)){
+                elementoIterante->segmentoOPagina -= 1;
+                list_replace(listaElementos,i,elementoIterante);
+            }
+    }
+}
+
+
+void actualizarListaGlobalDeSegmentos(int paginaEliminada,int PID){
+    for (int i = 0; i < list_size(listaGlobalDeSegmentos); ++i) {
+        segmentoEnTablaGlobal_struct *segmentoIterante = malloc(sizeof(segmentoEnTablaGlobal_struct));
+        		segmentoIterante = list_get(listaGlobalDeSegmentos,i);
+        if((segmentoIterante->segmentoEnLocal > paginaEliminada) && (segmentoIterante->idPatota == PID)){
+            segmentoIterante->segmentoEnLocal -= 1;
+            list_replace(listaGlobalDeSegmentos,i,segmentoIterante);
         }
     }
 }
+
 void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 	tipoUniversal = tipo;
     t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
@@ -571,58 +633,85 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     }
 }
 
-void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload,int pid,char tipo, int tipoDeGuardado)
+void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload,uint32_t pid,char tipo, int tipoDeGuardado)
 {
     int huecoLibre;
-    if (list_is_empty(listaSegmentos) == 1)
+    t_list *listaSegmentos;
+    for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+        tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+        tablaIterante = list_get(listaDeTablasDePaginas,i);
+        if (tablaIterante->idPatota == pid){
+            listaSegmentos=tablaIterante->tablaDePaginas;
+        }
+    }
+
+
+
+    if (list_is_empty(listaGlobalDeSegmentos) == 1)
     {
         //Guarda directamente en memoria y lo agrega a la lista de segmentos
         //*(tripulante_struct *)memoria = *(tripulante_struct *)payload;
         memcpy(memoria,payload,tamPayload);
         segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
+        segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
+        nuevoSegmentoGlobal->inicio=memoria;
+        nuevoSegmentoGlobal->tamanio=tamPayload;
+        nuevoSegmentoGlobal->idPatota=pid;
         nuevoSegmento->inicio = memoria;
         nuevoSegmento->tamanio = tamPayload;
         elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
-        int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion);
+        int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
         elementoNuevo->segmentoOPagina = segmentoGuardado;
+        nuevoSegmentoGlobal->segmentoEnLocal = segmentoGuardado;
+        list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
         elementoNuevo->offsetEnPagina=0;
         elementoNuevo->tipo = tipo;
         elementoNuevo->tamanio = tamPayload;
         elementoNuevo->ID = idElemento;
+        elementoNuevo->PID=pid;
         list_add(listaElementos,elementoNuevo);
     }
     else
     {
-        int tamanioListaSegmentos = list_size(listaSegmentos);
+        int tamanioListaSegmentos = list_size(listaGlobalDeSegmentos);
         switch (tipoDeGuardado) {
             case FIRSTFIT: {
-                if (((segmentoEnTabla_struct *)(list_get(listaSegmentos, 0)))->inicio != memoria){
-                    huecoLibre = ((segmentoEnTabla_struct *)(list_get(listaSegmentos, 0)))->inicio - (int*)memoria;
+            	segmentoEnTablaGlobal_struct* segmentoGlobalAComparar = malloc(sizeof(segmentoEnTablaGlobal_struct));
+            	segmentoGlobalAComparar = list_get(listaGlobalDeSegmentos, 0);
+            	if (segmentoGlobalAComparar->inicio != memoria){
+                    huecoLibre = (int)segmentoGlobalAComparar->inicio - (int)memoria;
                     if (huecoLibre >= tamPayload){
                         segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
+                        segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
+                        nuevoSegmentoGlobal->inicio=memoria;
+                        nuevoSegmentoGlobal->tamanio=tamPayload;
+                        nuevoSegmentoGlobal->idPatota=pid;
                         nuevoSegmento->inicio = memoria;
                         nuevoSegmento->tamanio = tamPayload;
                         elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
-                        elementoNuevo->segmentoOPagina = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion);
+                        elementoNuevo->segmentoOPagina = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
+                        nuevoSegmentoGlobal->segmentoEnLocal = elementoNuevo->segmentoOPagina;
+                        list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
                         elementoNuevo->offsetEnPagina=0;
                         elementoNuevo->tipo = tipo;
                         elementoNuevo->tamanio = tamPayload;
                         elementoNuevo->ID = idElemento;
+                        elementoNuevo->PID = pid;
                         list_add(listaElementos,elementoNuevo);
+                        break;
                     }
 
                 }
                 for (int i = 0; i < tamanioListaSegmentos; i++) {
-                    segmentoEnTabla_struct *segmentoIterante;
-                    segmentoIterante = list_get(listaSegmentos, i);
-                    if (i + 1 == (list_size(listaSegmentos))) {
+                    segmentoEnTablaGlobal_struct *segmentoIterante = malloc(sizeof(segmentoEnTablaGlobal_struct));
+                    segmentoIterante = list_get(listaGlobalDeSegmentos, i);
+                    if (i + 1 == (list_size(listaGlobalDeSegmentos))) {
 
-                        huecoLibre = (int) (memoria + 1024) -
-                                     (int) ((segmentoIterante->inicio) + (segmentoIterante->tamanio));
+                        huecoLibre = ((int)memoria + tamMemoria) -  ((int)segmentoIterante->inicio + segmentoIterante->tamanio);
                     } else{
 
-                        segmentoEnTabla_struct *segmentoSiguiente = list_get(listaSegmentos, i + 1);
-                        huecoLibre =(segmentoSiguiente->inicio) - ((segmentoIterante->inicio) + segmentoIterante->tamanio);
+                        segmentoEnTablaGlobal_struct *segmentoSiguiente = list_get(listaGlobalDeSegmentos, i + 1);
+                        huecoLibre =((int)segmentoSiguiente->inicio) - ((int)segmentoIterante->inicio + segmentoIterante->tamanio);
                     }
 
                     if (tamPayload <= huecoLibre) {
@@ -631,21 +720,24 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                         //*(tripulante_struct *) posicionInicioHuecoLibre = tcb;
                         memcpy(posicionInicioHuecoLibre,payload,tamPayload);
                         segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
+                        segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
+                        nuevoSegmentoGlobal->inicio=posicionInicioHuecoLibre;
+                        nuevoSegmentoGlobal->tamanio=tamPayload;
+                        nuevoSegmentoGlobal->idPatota=pid;
                         nuevoSegmento->inicio = posicionInicioHuecoLibre;
                         nuevoSegmento->tamanio = tamPayload;
                         elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
-                        //int segmentoGuardado = list_add(listaSegmentos, nuevoSegmento);
-                        elementoNuevo->segmentoOPagina = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion);
-                        //elementoNuevo->segmentoOPagina = segmentoGuardado;
+                        elementoNuevo->segmentoOPagina = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
+                        nuevoSegmentoGlobal->segmentoEnLocal = elementoNuevo->segmentoOPagina;
+                        list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
                         elementoNuevo->offsetEnPagina = 0;
                         elementoNuevo->tipo = tipo;
                         elementoNuevo->tamanio = tamPayload;
                         elementoNuevo->ID = idElemento;
+                        elementoNuevo->PID = pid;
                         list_add(listaElementos,elementoNuevo);
+                        break;
                     }
-                }
-                if (tamanioListaSegmentos == list_size(listaSegmentos)){
-                   	compactacion();
 
                 }
                 break;
@@ -655,8 +747,9 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 
                 t_list *listaDeEspaciosLibres;
                 listaDeEspaciosLibres = list_create();
-                if ((int)((segmentoEnTabla_struct *)(list_get(listaSegmentos, 0)))->inicio != (int)memoria){
-                    huecoLibre = (int)((segmentoEnTabla_struct *)(list_get(listaSegmentos, 0)))->inicio - (int)memoria;
+                if ((int)((segmentoEnTablaGlobal_struct *)(list_get(listaGlobalDeSegmentos, 0)))->inicio != memoria){
+                	segmentoEnTablaGlobal_struct* segmentoIteranteSeg = list_get(listaGlobalDeSegmentos, 0);
+                	huecoLibre = (int)segmentoIteranteSeg->inicio - (int)memoria;
                     if (huecoLibre >= tamPayload){
                         espacio_struct *nuevoHuecoLibre = malloc(sizeof (espacio_struct)) ;
                         nuevoHuecoLibre->tamanio = huecoLibre;
@@ -665,23 +758,21 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 
                     }
                 }
-                for (int i = 0; i < tamanioListaSegmentos; i++) {
-                    segmentoEnTabla_struct *segmentoIterante;
-                    segmentoIterante = list_get(listaSegmentos, i);
+                for (int i = 0; i < list_size(listaGlobalDeSegmentos); i++) {
+                    segmentoEnTablaGlobal_struct *segmentoIterante;
+                    segmentoIterante = list_get(listaGlobalDeSegmentos, i);
 
-                    if (i + 1 == (list_size(listaSegmentos))) {
+                    if (i + 1 == (list_size(listaGlobalDeSegmentos))) {
 
-                        huecoLibre = (int) (memoria + 1024) -
-                                     (int) ((segmentoIterante->inicio) + (segmentoIterante->tamanio));
+                        huecoLibre = ((int)memoria + tamMemoria) - ((int)segmentoIterante->inicio + segmentoIterante->tamanio);
                     } else {
 
-                        segmentoEnTabla_struct *segmentoSiguiente = list_get(listaSegmentos, i + 1);
-                        huecoLibre =
-                                (segmentoSiguiente->inicio) - ((segmentoIterante->inicio) + segmentoIterante->tamanio);
+                        segmentoEnTablaGlobal_struct *segmentoSiguiente = list_get(listaGlobalDeSegmentos, i + 1);
+                        huecoLibre = (int)segmentoSiguiente->inicio - ((int)segmentoIterante->inicio + segmentoIterante->tamanio);
                     }
 
                     if (tamPayload <= huecoLibre) {
-                        int *posicionInicioHuecoLibre = (int)(segmentoIterante->inicio) + (segmentoIterante->tamanio);
+                        int *posicionInicioHuecoLibre = (int)segmentoIterante->inicio + segmentoIterante->tamanio;
                         espacio_struct *nuevoHuecoLibre = malloc(sizeof (espacio_struct)) ;
                         nuevoHuecoLibre->tamanio = huecoLibre;
                         nuevoHuecoLibre->ptrHuecoLibre = posicionInicioHuecoLibre;
@@ -691,8 +782,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 
                 }
                 if (list_is_empty(listaDeEspaciosLibres) == 1){
-                    //aca va la compactacion
-                	compactacion();
+                    compactacion();
 
                 }
                 else{
@@ -701,15 +791,22 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                     //*(tripulante_struct *) punteroHuecoMinimo->ptrHuecoLibre = tcb;
                     memcpy(punteroHuecoMinimo->ptrHuecoLibre,payload,tamPayload);
                     segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
+                    segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
+                    nuevoSegmentoGlobal->inicio=punteroHuecoMinimo->ptrHuecoLibre;
+                    nuevoSegmentoGlobal->tamanio=tamPayload;
+                    nuevoSegmentoGlobal->idPatota=pid;
                     nuevoSegmento->inicio = punteroHuecoMinimo->ptrHuecoLibre;
                     nuevoSegmento->tamanio = tamPayload;
                     elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
-                    int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion);
+                    int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
                     elementoNuevo->segmentoOPagina = segmentoGuardado;
+                    nuevoSegmentoGlobal->segmentoEnLocal = elementoNuevo->segmentoOPagina;
+                    list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
                     elementoNuevo->offsetEnPagina=0;
                     elementoNuevo->tipo = tipo;
                     elementoNuevo->tamanio = tamPayload;
                     elementoNuevo->ID = idElemento;
+                    elementoNuevo->PID = pid;
                     list_add(listaElementos,elementoNuevo);
                 }
                 list_destroy(listaDeEspaciosLibres);
@@ -719,36 +816,55 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
     }
 }
 
+void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char tipoDeElemento){
 
-void borrar_de_memoria_segmentacion(int idElementoABorrar, char tipoDeElemento){
     tipoUniversal = tipoDeElemento;
-    t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
-    for (int i=0;i< list_size(listaFiltrada);i++){
-        elementoEnLista_struct *elementoEvaluado = list_get(listaFiltrada,i);
+    t_list *listaSegmentos;
+    for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+        tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+        tablaIterante = list_get(listaDeTablasDePaginas,i);
+        if (tablaIterante->idPatota == idPatota){
+            listaSegmentos=tablaIterante->tablaDePaginas;
+        }
+    }
+    for (int i=0;i< list_size(listaElementos);i++){
+        elementoEnLista_struct *elementoEvaluado = list_get(listaElementos,i);
         segmentoEnTabla_struct *segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
-        espacioLibre += elementoEvaluado->tamanio;
-        if (tipoDeElemento == 'T'){
-            if (elementoEvaluado->ID== idElementoABorrar){
-            	list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
+
+            if ((elementoEvaluado->ID == idElementoABorrar) && (elementoEvaluado->tipo == tipoDeElemento)){
+                list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
+                list_remove(listaElementos,i);
+
+                segmentoEnTablaGlobal_struct *segmentoGlobalIterante = malloc(sizeof(segmentoGlobalIterante));
+                for (int j = 0; j < list_size(listaGlobalDeSegmentos); ++j) {
+                    segmentoGlobalIterante = list_get(listaGlobalDeSegmentos,j);
+                    if ((segmentoGlobalIterante->idPatota == idPatota)&&(segmentoGlobalIterante->segmentoEnLocal == elementoEvaluado->segmentoOPagina)){
+                        list_remove(listaGlobalDeSegmentos,j);
+                        actualizarListaElementos(elementoEvaluado->segmentoOPagina,idPatota);
+                        actualizarListaGlobalDeSegmentos(elementoEvaluado->segmentoOPagina,idPatota);
+                        break;
+                    }
+                }
                 break;
             }
-        }else if(tipoDeElemento == 'P'){
 
-            if (elementoEvaluado->ID == idElementoABorrar){
-                list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
-            }
-        }else if(tipoDeElemento =='A'){
-        	if(elementoEvaluado->ID==idElementoABorrar){
-        		list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
-        	}
-        }
+
     }
 
 }
 
-void *buscar_de_memoria_segmentacion(int idElementoABuscar, char tipoDeElemento){
-	tipoUniversal = tipoDeElemento;
-	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char tipoDeElemento){
+    tipoUniversal = tipoDeElemento;
+    t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+    t_list *listaSegmentos;
+    for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+        tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+        tablaIterante = list_get(listaDeTablasDePaginas,i);
+        if (tablaIterante->idPatota == idPatota){
+            listaSegmentos=tablaIterante->tablaDePaginas;
+            break;
+        }
+    }
     for (int s=0;s< list_size(listaFiltrada);s++){
         elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
         elementoEvaluado= list_get(listaFiltrada,s);
@@ -756,50 +872,273 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar, char tipoDeElemento)
         segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
 
         if (tipoDeElemento == 'T'){
-            Tripulante* elementoABuscar = malloc(sizeof(Tripulante));
+            tcb* elementoABuscar = malloc(sizeof(tcb));
             //elementoABuscar = (tripulante_struct*)segmentoEvaluado->inicio;
-            memcpy(elementoABuscar,segmentoEvaluado->inicio, sizeof(Tripulante));
+            memcpy(elementoABuscar,segmentoEvaluado->inicio, sizeof(tcb));
             if (elementoABuscar->id == idElementoABuscar){
                 return elementoABuscar;
             }else{
                 //free(elementoEvaluado);
                 //free(segmentoEvaluado);
             }
-        }else if(tipoDeElemento == 'P'){
-            pcb *elementoABuscar = malloc(sizeof(pcb));
-            if (elementoEvaluado->ID== idElementoABuscar){
-            	memcpy(elementoABuscar,segmentoEvaluado->inicio,elementoEvaluado->tamanio);
-            	return elementoABuscar;
-            }
         }else if(tipoDeElemento == 'A'){
-
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
-            if (elementoEvaluado->ID== idElementoABuscar){
-            	memcpy(elementoABuscar,segmentoEvaluado->inicio,elementoEvaluado->tamanio);
-            	return elementoABuscar;
+            if (elementoEvaluado->ID == idElementoABuscar){
+                memcpy(elementoABuscar,segmentoEvaluado->inicio, elementoEvaluado->tamanio);
+                return elementoABuscar;
             }
         }
     }
-    return 0;
 }
 
 void compactacion(){
-    for (int i =0;i<list_size(listaSegmentos);i++){
+    for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
         if(i==0){
-            segmentoEnTabla_struct *primerSegmento = list_get(listaSegmentos,0);
+            segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));
+            primerSegmento = list_get(listaGlobalDeSegmentos,0);
             if(primerSegmento->inicio != memoria){
                 memcpy(memoria,primerSegmento->inicio,primerSegmento->tamanio);
                 primerSegmento->inicio = memoria;
-                list_replace(listaSegmentos,0,primerSegmento);
+                list_replace(listaGlobalDeSegmentos,0,primerSegmento);
+
+
+                t_list *listaSegmentosLocal = malloc(sizeof(tablaEnLista_struct));
+                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+                    tablaIterante = list_get(listaDeTablasDePaginas,i);
+                    if (tablaIterante->idPatota == primerSegmento->idPatota){
+                        listaSegmentosLocal=tablaIterante->tablaDePaginas;
+                    }
+                }
+                segmentoEnTabla_struct *primerSegmentoLocal = list_get(listaSegmentosLocal,0);
+                primerSegmentoLocal->inicio=memoria;
+                list_replace(listaSegmentosLocal,0,primerSegmentoLocal);
+
             }
         }else{
-            segmentoEnTabla_struct *segmentoActual = list_get(listaSegmentos,i);
-            segmentoEnTabla_struct *segmentoAnterior = list_get(listaSegmentos,i-1);
+            segmentoEnTablaGlobal_struct *segmentoActual = list_get(listaGlobalDeSegmentos,i);
+            segmentoEnTablaGlobal_struct *segmentoAnterior = list_get(listaGlobalDeSegmentos,i-1);
             if ((int)segmentoActual->inicio != ((int)segmentoAnterior->inicio + segmentoAnterior->tamanio)){
                 memcpy((int)segmentoAnterior->inicio+segmentoAnterior->tamanio,segmentoActual->inicio,segmentoActual->tamanio);
                 segmentoActual->inicio = (int)segmentoAnterior->inicio+segmentoAnterior->tamanio;
-                list_replace(listaSegmentos,i,segmentoActual);
+                list_replace(listaGlobalDeSegmentos,i,segmentoActual);
+
+
+                t_list *listaSegmentosLocalActual = malloc(sizeof(tablaEnLista_struct));
+                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+                    tablaIterante = list_get(listaDeTablasDePaginas,i);
+                    if (tablaIterante->idPatota == segmentoActual->idPatota){
+                        listaSegmentosLocalActual=tablaIterante->tablaDePaginas;
+                    }
+                }
+
+                t_list *listaSegmentosLocalAnterior = malloc(sizeof(tablaEnLista_struct));
+                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+                    tablaIterante = list_get(listaDeTablasDePaginas,i);
+                    if (tablaIterante->idPatota == segmentoAnterior->idPatota){
+                        listaSegmentosLocalAnterior=tablaIterante->tablaDePaginas;
+                    }
+                }
+
+                segmentoEnTabla_struct *segmentoLocalActual = list_get(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal);
+                segmentoLocalActual->inicio=segmentoActual->inicio;
+                list_replace(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal,segmentoLocalActual);
+
+
             }
         }
     }
+}
+
+void actualizar_estado_paginacion(uint32_t idElemento, uint32_t idPatota, char nuevoEstado){
+	tipoUniversal = 'T';
+	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
+	for(int i=0;i<list_size(listaFiltrada);i++){
+		elementoAReemplazar = list_get(listaFiltrada,i);
+		if(elementoAReemplazar->ID == idElemento){
+			break;
+		}
+	}
+
+	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	t_list *tablaDePaginas;
+	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+		tablaBuscada = list_get(listaDeTablasDePaginas,i);
+	    if (tablaBuscada->idPatota == idPatota){
+	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
+	        break;
+	    }
+	}
+
+	paginaEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
+	int primeraPagina = elementoAReemplazar->segmentoOPagina;
+	int frameInicial = paginaInicial->frame;
+
+	tcb* tcbAModificar = malloc(sizeof(tcb));
+	tcbAModificar = buscar_en_memoria_paginacion(idElemento, idPatota, 'T');
+	tcbAModificar->estado = nuevoEstado;
+	void* payload = tcbAModificar;
+
+	int* direccionFisica;
+	int payloadYaGuardado=0;
+	int tamPayload = 21;
+	direccionFisica = (int)memoria + (frameInicial * tamPagina + elementoAReemplazar->offsetEnPagina);
+	int menorEntre2 = menorEntreDos(tamPayload,(tamPagina-elementoAReemplazar->offsetEnPagina));
+	memcpy(direccionFisica,payload,menorEntre2);
+	payloadYaGuardado += menorEntreDos(tamPayload,tamPagina-elementoAReemplazar->offsetEnPagina);
+	payload = (int)payload + menorEntreDos(tamPayload,tamPagina-elementoAReemplazar->offsetEnPagina);
+	while (payloadYaGuardado<tamPayload) {
+		primeraPagina++;
+	    paginaInicial=list_get(tablaDePaginas,primeraPagina);
+	    frameInicial = paginaInicial->frame;
+	    if (paginaInicial->presencia == 0){
+	    	direccionFisica = (int)memoriaSwap + (frameInicial * tamPagina);
+	    }else{
+	    	direccionFisica = (int)memoria + (frameInicial * tamPagina);
+	    }
+	    menorEntre2 = menorEntreDos(tamPagina,tamPayload-payloadYaGuardado);
+	    memcpy(direccionFisica,payload, menorEntre2);
+	    payloadYaGuardado = (int)payloadYaGuardado + menorEntreDos(tamPayload-payloadYaGuardado,tamPagina);
+	    payload = (int)payload + menorEntreDos(tamPayload-payloadYaGuardado,tamPagina);
+	}
+}
+
+
+
+
+
+void actualizar_posicion_paginacion(uint32_t idElemento, uint32_t idPatota, uint32_t nuevaPosX,uint32_t nuevaPosY){
+	tipoUniversal = 'T';
+	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
+	for(int i=0;i<list_size(listaFiltrada);i++){
+		elementoAReemplazar = list_get(listaFiltrada,i);
+		if(elementoAReemplazar->ID == idElemento){
+			break;
+		}
+	}
+
+	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	t_list *tablaDePaginas;
+	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+		tablaBuscada = list_get(listaDeTablasDePaginas,i);
+	    if (tablaBuscada->idPatota == idPatota){
+	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
+	        break;
+	    }
+	}
+
+	paginaEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
+	int primeraPagina = elementoAReemplazar->segmentoOPagina;
+	int frameInicial = paginaInicial->frame;
+
+	tcb* tcbAModificar = malloc(sizeof(tcb));
+	tcbAModificar = buscar_en_memoria_paginacion(idElemento, idPatota, 'T');
+	tcbAModificar->posX = nuevaPosX;
+	tcbAModificar->posY = nuevaPosY;
+	void* payload = tcbAModificar;
+
+	int* direccionFisica;
+	int payloadYaGuardado=0;
+	int tamPayload = 21;
+	direccionFisica = (int)memoria + (frameInicial * tamPagina + elementoAReemplazar->offsetEnPagina);
+	        int menorEntre2 = menorEntreDos(tamPayload,(tamPagina-elementoAReemplazar->offsetEnPagina));
+	        memcpy(direccionFisica,payload,menorEntre2);
+	        payloadYaGuardado += menorEntreDos(tamPayload,tamPagina-elementoAReemplazar->offsetEnPagina);
+	        payload = (int)payload + menorEntreDos(tamPayload,tamPagina-elementoAReemplazar->offsetEnPagina);
+	        while (payloadYaGuardado<tamPayload) {
+	        	primeraPagina++;
+	        	paginaInicial=list_get(tablaDePaginas,primeraPagina);
+	        	frameInicial = paginaInicial->frame;
+	        	direccionFisica = (int)memoria + (frameInicial * tamPagina);
+	        	menorEntre2 = menorEntreDos(tamPagina,tamPayload-payloadYaGuardado);
+	        	memcpy(direccionFisica,payload, menorEntre2);
+	        	paginaEnTabla_struct *nuevaPagina = malloc(sizeof (paginaEnTabla_struct));
+	        	payloadYaGuardado = (int)payloadYaGuardado + menorEntreDos(tamPayload-payloadYaGuardado,tamPagina);
+	        	payload = (int)payload + menorEntreDos(tamPayload-payloadYaGuardado,tamPagina);
+	        }
+}
+
+
+
+
+
+
+void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char nuevoEstado){
+	tipoUniversal = 'T';
+	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
+	for(int i=0;i<list_size(listaFiltrada);i++){
+		elementoAReemplazar = list_get(listaFiltrada,i);
+		if(elementoAReemplazar->ID == idElemento){
+			break;
+		}
+	}
+
+	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	t_list *tablaDePaginas;
+	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+		tablaBuscada = list_get(listaDeTablasDePaginas,i);
+	    if (tablaBuscada->idPatota == idPatota){
+	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
+	        break;
+	    }
+	}
+
+	segmentoEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
+	int inicioSegmento = paginaInicial->inicio;
+
+	tcb* tcbAModificar = malloc(sizeof(tcb));
+	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
+	tcbAModificar->estado = nuevoEstado;
+	void* payload = tcbAModificar;
+
+	int* direccionFisica;
+	int payloadYaGuardado=0;
+	int tamPayload = 21;
+
+	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
+}
+
+
+
+
+void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, uint32_t nuevaPosX,uint32_t nuevaPosY){
+	tipoUniversal = 'T';
+	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
+	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
+	for(int i=0;i<list_size(listaFiltrada);i++){
+		elementoAReemplazar = list_get(listaFiltrada,i);
+		if(elementoAReemplazar->ID == idElemento){
+			break;
+		}
+	}
+
+	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	t_list *tablaDePaginas;
+	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+		tablaBuscada = list_get(listaDeTablasDePaginas,i);
+	    if (tablaBuscada->idPatota == idPatota){
+	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
+	        break;
+	    }
+	}
+
+	segmentoEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
+	int inicioSegmento = paginaInicial->inicio;
+
+	tcb* tcbAModificar = malloc(sizeof(tcb));
+	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
+	tcbAModificar->posX = nuevaPosX;
+	tcbAModificar->posY = nuevaPosY;
+	void* payload = tcbAModificar;
+
+	int* direccionFisica;
+	int payloadYaGuardado=0;
+	int tamPayload = 21;
+
+	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
 }

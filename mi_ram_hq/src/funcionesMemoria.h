@@ -22,6 +22,14 @@
 
 typedef struct
 {
+    int idPatota;
+    int segmentoEnLocal;
+    int *inicio;
+    int tamanio;
+
+} segmentoEnTablaGlobal_struct;
+typedef struct
+{
     int *inicio;
     int tamanio;
 
@@ -29,6 +37,7 @@ typedef struct
 typedef struct
 {
     int ID;
+    int PID;
     int segmentoOPagina;
     int offsetEnPagina;
     char tipo;
@@ -57,6 +66,7 @@ typedef struct{
     unsigned int uso;
 }paginaParaReemplazar_struct;
 t_list *listaDeTablasDePaginas;
+t_list *listaGlobalDeSegmentos;
 t_list *listaSegmentos;
 t_list *listaElementos;
 t_queue *tablaDeFrames;
@@ -65,12 +75,12 @@ int calcular_direccion_logica_archivo(int);
 int calcular_direccion_logica_patota(int);
 void *minimo_segmentos_en_tabla(void *, void *);
 void *minimo_hueco_libre(void *, void *);
-void guardar_en_memoria_segmentacion(void*,int,int,int,char,int);
-void borrar_de_memoria_segmentacion(int, char);
+void guardar_en_memoria_segmentacion(void*,int,int,uint32_t,char,int);
+void borrar_de_memoria_segmentacion(int, int,char);
 bool ordenar_por_posicion(void *, void *);
 bool encontrarTablaDePaginas(void*);
 bool filtrarPorTipo(void*);
-void *buscar_de_memoria_segmentacion(int, char);
+void *buscar_de_memoria_segmentacion(int,int,char);
 char tipoUniversal;
 void guardar_en_memoria_general(void* ,int ,int ,int ,char );
 void guardar_en_memoria_paginacion(void*,int,int,int,char);
@@ -79,6 +89,9 @@ void *borrar_de_memoria_paginacion(int, int, char);
 void* buscar_en_memoria_general(int ,int , char );
 void *borrar_de_memoria_general(int , int , char );
 void guardar_en_swap(void*,int,int,int,char);
+void actualizar_estado_segmentacion(uint32_t,uint32_t,char);
+void actualizar_estado_paginacion(uint32_t,uint32_t,char);
+void actualizar_posicion_segmentacion(uint32_t, uint32_t, uint32_t,uint32_t);
 int punteroReemplazo;
 
 #endif /* FUNCIONESMEMORIA_H_ */
