@@ -429,7 +429,7 @@ Patota* buscar_patota(int numero_patota) {
 }
 
 void enviar_fin_patota(Patota* patota){
-	if (!(patota->cantidad_tripulantes))
+	if ((patota->cantidad_tripulantes)>0)
 		return;
 
 	int socket_miram = conectarse_Mi_Ram();
@@ -470,15 +470,18 @@ void eliminarTripulante(Tripulante* tripulante)
 //	enviar_paquete(paquete,socket_mongo);
 
 	liberar_t_tripulante(estructura);
-	free(tripulante->Tarea->nombre);
-	free(tripulante->Tarea);
+	if (tripulante->Tarea != NULL){
+		free(tripulante->Tarea->nombre);
+		free(tripulante->Tarea);
+	}
 
 	mover_a_finalizado(tripulante);
 	cambiar_estado(tripulante,"EXIT");
 	Patota* patota_a_eliminar = buscar_patota(tripulante->idPatota);
 	patota_a_eliminar->cantidad_tripulantes--;
 	enviar_fin_patota(patota_a_eliminar);
-	pthread_exit(&(tripulante->hilo_vida));
+	pthread_detach(&(tripulante->hilo_vida));
+
 }
 void* iniciar_Planificacion()
 {
