@@ -116,6 +116,53 @@ _Bool correr_programa=true;
  */
 //esta funcion es porque no puedo aplicar parcialmente una funcion en c ):
 
+Tripulante* buscar_tripulante(int tripulante_buscado){
+	bool _tripulante_en_la_cola(Tripulante* tripulante){
+		return tripulante->id == tripulante_buscado;
+	}
+	t_list* lista_new = new->elements;
+	t_list* lista_ready = ready->elements;
+	t_list* lista_block = bloqueados->elements;
+
+	pthread_mutex_lock(&sem_cola_new);
+	Tripulante* encontrado = list_find(lista_new, (void*) _tripulante_en_la_cola);
+	if (encontrado != NULL){
+		pthread_mutex_unlock(&sem_cola_new);
+		return encontrado;
+	}
+
+	pthread_mutex_unlock(&sem_cola_new);
+
+	pthread_mutex_lock(&sem_cola_ready);
+	encontrado = list_find(lista_ready, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL){
+			pthread_mutex_unlock(&sem_cola_ready);
+			return encontrado;
+		}
+
+	pthread_mutex_unlock(&sem_cola_ready);
+
+	pthread_mutex_lock(&sem_cola_exec);
+	encontrado = list_find(execute, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL){
+			pthread_mutex_unlock(&sem_cola_exec);
+			return encontrado;
+		}
+
+	pthread_mutex_unlock(&sem_cola_exec);
+
+	pthread_mutex_lock(&sem_cola_bloqIO);
+	encontrado = list_find(lista_block, (void*) _tripulante_en_la_cola);
+		if (encontrado != NULL){
+			pthread_mutex_unlock(&sem_cola_exec);
+			return encontrado;
+		}
+
+	pthread_mutex_unlock(&sem_cola_exec);
+
+	return encontrado;
+}
+
 void iniciar_paths(char* s){
 	if (!strcmp(s,"eclipse")){
 		PATH_CONFIG = "discordiador.config";
@@ -718,7 +765,7 @@ void hacerTareaIO(Tripulante* io) {
 	pthread_mutex_lock(&mutexIO);
 	pthread_mutex_lock(&sem_cola_bloqIO);
 	//LO ENVIOPARA QUE HAGA SUS COSAS CON MONGOSTORE
-	enviarMongoStore((void*) queue_pop(bloqueados));
+	enviarMongoStore(buscar_tripulante(io->id));
 	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&mutexIO);
 
@@ -1252,32 +1299,6 @@ void pedir_tarea(Tripulante* tripulante){
 }
 
 
-Tripulante* buscar_tripulante(int tripulante_buscado){
-	bool _tripulante_en_la_cola(Tripulante* tripulante){
-		return tripulante->id == tripulante_buscado;
-	}
-	t_list* lista_new = new->elements;
-	t_list* lista_ready = ready->elements;
-	t_list* lista_block = bloqueados->elements;
-
-	Tripulante* encontrado = list_find(lista_new, (void*) _tripulante_en_la_cola);
-	if (encontrado != NULL)
-		return encontrado;
-
-	encontrado = list_find(lista_ready, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL)
-			return encontrado;
-
-	encontrado = list_find(execute, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL)
-			return encontrado;
-
-	encontrado = list_find(lista_block, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL)
-			return encontrado;
-
-	return encontrado;
-}
 
 int hacerConsola() {
 	log_info(logger_discordiador,"Consola iniciada");
