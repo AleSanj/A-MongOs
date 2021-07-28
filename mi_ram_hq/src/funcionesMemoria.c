@@ -651,7 +651,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}
 
         list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
-        espacioLibre += elementoEvaluado->tamanio;
+        //espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += tamPagina;
@@ -670,7 +670,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}else{
     	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
-    	espacioLibre += elementoEvaluado->tamanio;
+    	//espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
     	actualizarListaElementos(paginaInicial,idPatota);
     	payloadBorrado += tamanioPayload;
@@ -689,7 +689,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         }else{
         	list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         }
-        espacioLibre += elementoEvaluado->tamanio;
+        //espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += (tamPagina-offset);
@@ -708,7 +708,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
     	payloadBorrado += tamanioPayload;
-    	espacioLibre += elementoEvaluado->tamanio;
+    	//espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
     	actualizarListaElementos(paginaInicial,idPatota);
     }
@@ -740,7 +740,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         	}else{
         	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         	}
-        	espacioLibre += elementoEvaluado->tamanio;
+        	//espacioLibre += elementoEvaluado->tamanio;
         	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         	actualizarListaElementos(paginaInicial,idPatota);
         	payloadBorrado += tamanioPayload;
@@ -946,6 +946,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
 
     tipoUniversal = tipoDeElemento;
     t_list *listaSegmentos;
+    log_info(logger,"Entro al borrar, para borrar el elemento %d de tipo %c",idElementoABorrar,tipoDeElemento);
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
         tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
         tablaIterante = list_get(listaDeTablasDePaginas,i);
@@ -955,26 +956,26 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
     }
     for (int i=0;i< list_size(listaElementos);i++){
         elementoEnLista_struct *elementoEvaluado = list_get(listaElementos,i);
-        segmentoEnTabla_struct *segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
-
-            if ((elementoEvaluado->ID == idElementoABorrar) && (elementoEvaluado->tipo == tipoDeElemento)){
+        if (elementoEvaluado->PID == idPatota){
+        	segmentoEnTabla_struct *segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
+        	if ((elementoEvaluado->ID == idElementoABorrar) && (elementoEvaluado->tipo == tipoDeElemento)){
                 segmentoEnTablaGlobal_struct *segmentoGlobalIterante = malloc(sizeof(segmentoGlobalIterante));
                 for (int j = 0; j < list_size(listaGlobalDeSegmentos); ++j) {
-                    segmentoGlobalIterante = list_get(listaGlobalDeSegmentos,j);
+                	segmentoGlobalIterante = list_get(listaGlobalDeSegmentos,j);
                     if ((segmentoGlobalIterante->idPatota == idPatota)&&(segmentoGlobalIterante->segmentoEnLocal == elementoEvaluado->segmentoOPagina)){
-                        list_remove(listaGlobalDeSegmentos,j);
+                    	list_remove(listaGlobalDeSegmentos,j);
                         actualizarListaElementos(elementoEvaluado->segmentoOPagina,idPatota);
                         actualizarListaGlobalDeSegmentos(elementoEvaluado->segmentoOPagina,idPatota);
                         break;
                     }
                 }
                 list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
-                espacioLibre += elementoEvaluado->tamanio;
+                //espacioLibre += elementoEvaluado->tamanio;
                 list_remove(listaElementos,i);
                 break;
             }
 
-
+        }
     }
 
 }
@@ -996,7 +997,6 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
         elementoEvaluado= list_get(listaFiltrada,s);
         segmentoEnTabla_struct *segmentoEvaluado = malloc(sizeof(segmentoEnTabla_struct));
         segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
-        log_info(logger,"Estoy buscando las tareas");
         if (tipoDeElemento == 'T'){
             tcb* elementoABuscar = malloc(sizeof(tcb));
             //elementoABuscar = (tripulante_struct*)segmentoEvaluado->inicio;
@@ -1009,10 +1009,9 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
             }
         }else if(tipoDeElemento == 'A'){
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
-            log_info(logger,"Tipo del elemento evaluado: %c y PID %d",elementoEvaluado->tipo,elementoEvaluado->PID);
             if (elementoEvaluado->ID == idElementoABuscar && elementoEvaluado->tipo == 'A'){
                 memcpy(elementoABuscar,segmentoEvaluado->inicio, elementoEvaluado->tamanio);
-                log_info(logger,"Encontre las tareas en la direccion %d y son de tamanio %d",segmentoEvaluado->inicio,elementoEvaluado->tamanio);
+                //log_info(logger,"Encontre las tareas en la direccion %d y son de tamanio %d",segmentoEvaluado->inicio,elementoEvaluado->tamanio);
                 return elementoABuscar;
 
             }

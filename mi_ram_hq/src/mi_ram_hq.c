@@ -178,6 +178,8 @@ void administrar_cliente(int socketCliente){
 		case ELIMINAR_TRIPULANTE:;
 			//printf("eliminar TRIPULANTE /n");
 				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
+
+				log_info(logger, "Voy a borrar el tripulante %d de la patota %d",tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota);
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
@@ -302,6 +304,7 @@ void administrar_cliente(int socketCliente){
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
+			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
 			break;
 
 		default:;
