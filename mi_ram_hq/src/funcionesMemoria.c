@@ -154,6 +154,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         nuevoElemento->segmentoOPagina = indicePaginaCorrespondiente;
         nuevoElemento->tamanio = tamPayload;
         nuevoElemento->ID = idElemento;
+        log_info(logger,"EL pid en la linea 157 del nuevo elemento es: %d y el ID es: ",nuevoElemento->PID,nuevoElemento->ID);
         list_add(listaElementos,nuevoElemento);
         payLoadYaGuardado += menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         payload = (int)payload + menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
@@ -205,6 +206,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
             nuevoElemento->offsetEnPagina = 0;
             nuevoElemento->tamanio = tamPayload;
             nuevoElemento->ID = idElemento;
+            log_info(logger,"EL pid en la linea 208 del nuevo elemento es: %d y el ID es: ",nuevoElemento->PID,nuevoElemento->ID);
             list_add(listaElementos,nuevoElemento);
             paginaReemplazable->nroPagina = nuevoElemento->segmentoOPagina;
             bitarrayMemoria[frameDisponible] = 1;
@@ -310,6 +312,7 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
         	nuevoElemento->segmentoOPagina = indicePaginaCorrespondiente;
         	nuevoElemento->tamanio = tamPayload;
         	nuevoElemento->ID = idElemento;
+        	log_info(logger,"EL pid en la linea 313 del nuevo elemento es: %d y el ID es: ",nuevoElemento->PID,nuevoElemento->ID);
         	list_add(listaElementos,nuevoElemento);
         }
 
@@ -352,6 +355,7 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
         	nuevoElemento->offsetEnPagina=0;
         	nuevoElemento->tamanio = tamPayload;
         	nuevoElemento->ID = idElemento;
+        	log_info(logger,"EL pid en la linea 356 del nuevo elemento es: %d y el ID es: ",nuevoElemento->PID,nuevoElemento->ID);
         	list_add(listaElementos,nuevoElemento);
         }
 
@@ -617,6 +621,10 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
     log_info(logger,"Tamanio de la lista filtrada donde voy a borrar al tipo: %c de la patota:%d, Tamanio: %d",tipo,idPatota,list_size(listaFiltrada));
     elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
+    elementoEnLista_struct *elementoDePrueba = malloc(sizeof(elementoEnLista_struct));
+    elementoDePrueba = list_get(listaFiltrada,5);
+    log_info(logger,"El elemento de prueba en el indice 5(tripulante 6) de la lista filtrada es id de tripu: %d, id patota: %d,tamanio: %d ",elementoDePrueba->ID,elementoDePrueba->PID,elementoDePrueba->tamanio);
+
     int paginaInicial,offset,tamanioPayload,posicionElementoEvaluado;
     for (int i = 0; i < list_size(listaFiltrada); ++i) {
     	log_info(logger,"Entre al for de borrado");
