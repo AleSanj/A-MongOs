@@ -8,7 +8,7 @@
  ============================================================================
  */
 
-
+int ciclos_totales;
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -126,40 +126,28 @@ Tripulante* buscar_tripulante(int tripulante_buscado){
 
 	pthread_mutex_lock(&sem_cola_new);
 	Tripulante* encontrado = list_find(lista_new, (void*) _tripulante_en_la_cola);
-	if (encontrado != NULL){
-		pthread_mutex_unlock(&sem_cola_new);
-		return encontrado;
-	}
-
 	pthread_mutex_unlock(&sem_cola_new);
+
+	if (encontrado != NULL)
+		return encontrado;
 
 	pthread_mutex_lock(&sem_cola_ready);
 	encontrado = list_find(lista_ready, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL){
-			pthread_mutex_unlock(&sem_cola_ready);
-			return encontrado;
-		}
-
 	pthread_mutex_unlock(&sem_cola_ready);
+
+	if (encontrado != NULL)
+		return encontrado;
 
 	pthread_mutex_lock(&sem_cola_exec);
 	encontrado = list_find(execute, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL){
-			pthread_mutex_unlock(&sem_cola_exec);
-			return encontrado;
-		}
-
 	pthread_mutex_unlock(&sem_cola_exec);
+
+	if (encontrado != NULL)
+		return encontrado;
 
 	pthread_mutex_lock(&sem_cola_bloqIO);
 	encontrado = list_find(lista_block, (void*) _tripulante_en_la_cola);
-		if (encontrado != NULL){
-			pthread_mutex_unlock(&sem_cola_exec);
-			return encontrado;
-		}
-
-	pthread_mutex_unlock(&sem_cola_exec);
-
+	pthread_mutex_unlock(&sem_cola_bloqIO);
 	return encontrado;
 }
 
@@ -461,7 +449,6 @@ void mover_a_finalizado(Tripulante* tripulante){
 		list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
 		pthread_mutex_unlock(&sem_cola_exec);
 		pthread_mutex_unlock(&sem_cola_exit);
-		sem_post(&multiProcesamiento);
 		pthread_mutex_unlock(&trip_comparar);
 		return;
 		}
@@ -763,10 +750,7 @@ void hacerTareaIO(Tripulante* io) {
 	//libero el recurso de multiprocesamiento porque me voy a io
 	sem_post(&multiProcesamiento);
 	pthread_mutex_lock(&mutexIO);
-	pthread_mutex_lock(&sem_cola_bloqIO);
-	//LO ENVIOPARA QUE HAGA SUS COSAS CON MONGOSTORE
 	enviarMongoStore(buscar_tripulante(io->id));
-	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&mutexIO);
 
 }
@@ -842,6 +826,8 @@ void hacerRoundRobin(Tripulante* tripulant) {
 			continue;
 		}
 		sleep(retardoCpu);
+		ciclos_totales++;
+		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		moverTripulante(tripulant);
 		contadorQuantum++;
 		//le tiroun post al semaforo que me permite frenar la ejecucion
@@ -861,6 +847,8 @@ void hacerRoundRobin(Tripulante* tripulant) {
 			continue;
 		}
 		sleep(retardoCpu);
+		ciclos_totales++;
+		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y){
 		tripulant->espera--;
 		} else {
@@ -1134,7 +1122,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	estructura->cantTripulantes = cantidad_tripulantes;
 	estructura->tamanio_tareas = strlen(pato->tareas)+1;
 	estructura->Tareas = strdup(pato->tareas);
-
+	printf("TAMAÑO TAREAS: %d",estructura->tamanio_tareas);
 //Cuando tenemos la estructura la metemos al paquete vacio que teniamos--------------------
 	agregar_paquete_iniciar_patota(paquete,estructura);
 
@@ -1343,8 +1331,10 @@ int hacerConsola() {
 			Patota* pato = iniciarPatota(p_totales, tareas,t_totales,cantidad_tripulantes);
 			char* respuesta = enviar_iniciar_patota(pato,cantidad_tripulantes);
 			if(!strcmp(respuesta,"fault")){
-				continue;
 				free(respuesta);
+				puts("no hay espacio en ram");
+				log_info(logger_discordiador,"NO HAY ESPACIO PARA LA NUEVA PATOTA");
+				continue;
 			}
 			free(respuesta);
 //			luego de enviar las tareas leidas a miram ya no nos interesa tenerlas en el discordiador
@@ -1437,6 +1427,7 @@ int hacerConsola() {
 				log_info(logger_discordiador,"El tripulante %d ingresado no existe",id_tripulante);
 				continue;
 			}
+			if (tripulante_rip->estado,"EXIT")
 
 			log_info(logger_discordiador,"Se encontro al tripulante a expulsar: %d en %s",tripulante_rip->id,tripulante_rip->estado);
 			tripulante_rip->vida = false;
@@ -1478,6 +1469,7 @@ int hacerConsola() {
 	free(linea);
 }
 int main(int argc, char* argv[]) {
+	ciclos_totales = 0;
 	estado_planificacion= 0;
 	iniciar_paths(argv[1]);
 	//=========== LOGS ===============
@@ -1566,37 +1558,37 @@ int main(int argc, char* argv[]) {
 
 	pthread_t consola;
 	pthread_create(&consola, NULL, (void *) hacerConsola, NULL);
-//	pthread_join(consola,NULL);
+	pthread_join(consola,NULL);
 
-	int socket_sabotaje = crear_server(puertoSabotaje);
-	log_info(logger_conexiones,"Servidor abierto con el socket %d\n",socket_sabotaje);
-	while(correr_programa)
-	{
-		cliente_sabotaje = esperar_cliente(socket_sabotaje,5);
-		if (cliente_sabotaje == -1)
-			continue;
-
-		log_info(logger_conexiones, "Nueva conexion recibida con el socket: %d",cliente_sabotaje);
-		int respuesta;
-		t_paquete* paquete_recibido = recibir_paquete(cliente_sabotaje, &respuesta);
-		log_info(logger_conexiones, "paquete recibido de tipo: %d",paquete_recibido->codigo_operacion);
-		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
-			liberar_conexion(cliente_sabotaje);
-			eliminar_paquete(paquete_recibido);
-
-		}
-
-		printf("SABOTAJE RECIBIDO: %d\n",paquete_recibido->codigo_operacion);
-		t_pedido_mongo* posiciciones_sabotaje = deserializar_pedido_mongo(paquete_recibido);
-		int parar_todo_sabotaje=0;
-
-		waitear_exec();
-		sem_wait(&pararIo);
-		sem_wait(&(pararPlanificacion[0]));
-
-		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
-		pthread_join(&hilo_sabotaje,NULL);
-	}
+//	int socket_sabotaje = crear_server(puertoSabotaje);
+//	log_info(logger_conexiones,"Servidor abierto con el socket %d\n",socket_sabotaje);
+//	while(correr_programa)
+//	{
+//		cliente_sabotaje = esperar_cliente(socket_sabotaje,5);
+//		if (cliente_sabotaje == -1)
+//			continue;
+//
+//		log_info(logger_conexiones, "Nueva conexion recibida con el socket: %d",cliente_sabotaje);
+//		int respuesta;
+//		t_paquete* paquete_recibido = recibir_paquete(cliente_sabotaje, &respuesta);
+//		log_info(logger_conexiones, "paquete recibido de tipo: %d",paquete_recibido->codigo_operacion);
+//		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
+//			liberar_conexion(cliente_sabotaje);
+//			eliminar_paquete(paquete_recibido);
+//
+//		}
+//
+//		printf("SABOTAJE RECIBIDO: %d\n",paquete_recibido->codigo_operacion);
+//		t_pedido_mongo* posiciciones_sabotaje = deserializar_pedido_mongo(paquete_recibido);
+//		int parar_todo_sabotaje=0;
+//
+//		waitear_exec();
+//		sem_wait(&pararIo);
+//		sem_wait(&(pararPlanificacion[0]));
+//
+//		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
+//		pthread_join(&hilo_sabotaje,NULL);
+//	}
 
 	return 0;
 }
