@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <signal.h>
 #include <commons/config.h>
 #include <pthread.h>
 #include <readline/readline.h>
@@ -451,6 +452,10 @@ void eliminarTripulante(Tripulante* tripulante)
 	if (!strcmp(tripulante->estado,"EXIT"))
 		return;
 
+	if(!strcmp(tripulante->estado,"EXEC"))
+	{
+		sem_post(&multiProcesamiento);
+	}
 	int socket_miram=conectarse_Mi_Ram();
 	t_paquete* paquete = crear_paquete(ELIMINAR_TRIPULANTE);
 	t_tripulante* estructura = malloc(sizeof(t_tripulante));
@@ -480,7 +485,8 @@ void eliminarTripulante(Tripulante* tripulante)
 	Patota* patota_a_eliminar = buscar_patota(tripulante->idPatota);
 	patota_a_eliminar->cantidad_tripulantes--;
 	enviar_fin_patota(patota_a_eliminar);
-	pthread_detach(&(tripulante->hilo_vida));
+	//sem_post(&(tripulante->sem_pasaje_a_exec));
+	pthread_kill(tripulante->hilo_vida,0);
 
 }
 void* iniciar_Planificacion()
@@ -489,10 +495,14 @@ void* iniciar_Planificacion()
 	log_info(logger_discordiador,"SE INICIA LA PLANIFICACION");
 	pthread_detach(firstInit);
 	while (correr_programa){
-		sem_wait(&sem_tripulante_en_ready);
-
 		if(!estado_planificacion)
 			sem_wait(&(pararPlanificacion[0]));
+
+		sem_wait(&sem_tripulante_en_ready);
+		if(list_size(ready->elements)==0)
+		{
+			continue;
+		}
 		log_info(logger_discordiador,"Se espera signal para ver mover elementos de READY");
 		sem_wait(&multiProcesamiento);
 
@@ -689,6 +699,10 @@ void enviarMongoStore(Tripulante* enviar) {
 		enviar->espera--;
 		sem_post(&pararIo);
 	}
+	if(!enviar->vida)
+	{
+		return;
+	}
 	//lo paso a cola ready
 	// char* ="22:09 Fin consumir_oxigeno"
 	enviar_inicio_fin_mongo(enviar,'F');
@@ -716,7 +730,10 @@ void hacerFifo(Tripulante* tripu) {
 	while ((tripu->posicionX != tripu->Tarea->posicion_x || tripu->posicionY != tripu->Tarea->posiciion_y) && tripu->vida) {
 		//este es el semaforo para pausar laejecucion
 		if (!estado_planificacion)
+		{
 			sem_wait(&(tripu->hilosEnEjecucion));
+			continue;
+		}
 		sleep(retardoCpu);
 		moverTripulante(tripu);
 		//le tiroun post al semaforo que me permite frenar la ejecucion
@@ -727,15 +744,26 @@ void hacerFifo(Tripulante* tripu) {
 	{
 		hacerTareaIO(tripu);
 	}
+	if(!tripu->vida)
+	{
+		return;
+	}
 	else {
 		//una vez que llego donde tenia que llegar espera lo que tenia que esperar
 		enviar_inicio_fin_mongo(tripu,'I');
 		while((tripu->espera !=0) && tripu->vida)
 		{
 			if (!estado_planificacion)
+			{
 				sem_wait(&(tripu->hilosEnEjecucion));
+				continue;
+			}
 			sleep(retardoCpu);
 			tripu->espera --;
+		}
+		if(!tripu->vida)
+		{
+			return;
 		}
 		enviar_inicio_fin_mongo(tripu,'F');
 		free(tripu->Tarea->nombre);
@@ -762,7 +790,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		//este es el semaforo para pausar laejecucion
 //		todo este semaforo entiendo que es para
 		if (!estado_planificacion)
+		{
 			sem_wait(&(tripulant->hilosEnEjecucion));
+			continue;
+		}
 		sleep(retardoCpu);
 		moverTripulante(tripulant);
 		contadorQuantum++;
@@ -778,8 +809,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 	enviar_inicio_fin_mongo(tripulant,'I');
 	while ((contadorQuantum < quantum) && tripulant->vida && tripulant->espera > 0)
 	{
-		if (!estado_planificacion)
+		if (!estado_planificacion){
 			sem_wait(&(tripulant->hilosEnEjecucion));
+			continue;
+		}
 		sleep(retardoCpu);
 		if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y){
 		tripulant->espera--;
@@ -788,8 +821,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		}
 		contadorQuantum++;
 	}
-
-
+	if(!tripulant->vida)
+	{
+		return;
+	}
 	if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y && tripulant->espera==0 &&tripulant->vida)
 	{
 		tripulant->kuantum=contadorQuantum;
@@ -811,9 +846,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		pthread_mutex_lock(&trip_comparar);
 		trip_cmp=tripulant;
 		queue_push(ready,list_remove_by_condition(execute,esElMismoTripulante));
-		pthread_mutex_unlock(&trip_comparar);
+
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exec);
+		pthread_mutex_unlock(&trip_comparar);
 		log_info(logger_discordiador,"Se mueve al tripulante %d de READY a %s",tripulant->id,tripulant->estado);
 		cambiar_estado(tripulant,"READY");
 	//le aviso al semaforo que libere un recurso para que mande otro tripulante
@@ -1383,7 +1419,7 @@ int hacerConsola() {
 
 			log_info(logger_discordiador,"Se encontro al tripulante a expulsar: %d en %s",tripulante_rip->id,tripulante_rip->estado);
 			tripulante_rip->vida = false;
-			sem_post(&(tripulante_rip->sem_pasaje_a_exec));
+			//sem_post(&(tripulante_rip->sem_pasaje_a_exec));
 
 			eliminarTripulante(tripulante_rip);
 
