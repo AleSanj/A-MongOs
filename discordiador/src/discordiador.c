@@ -448,6 +448,9 @@ void enviar_fin_patota(Patota* patota){
 }
 void eliminarTripulante(Tripulante* tripulante)
 {
+	if (!strcmp(tripulante->estado,"EXIT"))
+		return;
+
 	int socket_miram=conectarse_Mi_Ram();
 	t_paquete* paquete = crear_paquete(ELIMINAR_TRIPULANTE);
 	t_tripulante* estructura = malloc(sizeof(t_tripulante));
@@ -1035,7 +1038,7 @@ void* atender_sabotaje(char* posiciones)
 	return NULL;
 }
 
-void enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
+char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	int socket_iniciar_patota=conectarse_Mi_Ram();
 //Creamos un paquete vacio, que solo contiene el codigo de operacion --------------------
 	t_paquete* paquete = crear_paquete(INICIAR_PATOTA);
@@ -1053,11 +1056,11 @@ void enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 //	imprimir_paquete_iniciar_patota(estructura);
 //con un paquete ya creado podemos enviarlo y dejar que las funcionen hagan to do--------------------
 	log_info(logger_conexiones,"Se envia mensaje INICIAR_PATOTA id: %d, cantidad:%d y tareas: %s",estructura->idPatota,estructura->cantTripulantes,estructura->Tareas);
-	enviar_paquete(paquete,socket_iniciar_patota);
-//	char* respuesta = enviar_paquete_respuesta_string(paquete,socket_iniciar_patota);
-//	log_info(logger_conexiones,"Se recibie la respuesta: %s",respuesta);
+//	enviar_paquete(paquete,socket_iniciar_patota);
+	char* respuesta = enviar_paquete_respuesta_string(paquete,socket_iniciar_patota);
+	log_info(logger_conexiones,"Se recibie la respuesta: %s",respuesta);
 	liberar_t_iniciar_patota(estructura);
-
+	return respuesta;
 }
 
 uint8_t obtener_pos(t_list* lista_posiciones_iniciales){
@@ -1278,7 +1281,12 @@ int hacerConsola() {
 			completar_posiciones_iniciales(parametros_divididos[2],posiciones_iniciales);
 
 			Patota* pato = iniciarPatota(p_totales, tareas,t_totales,cantidad_tripulantes);
-			enviar_iniciar_patota(pato,cantidad_tripulantes);
+			char* respuesta = enviar_iniciar_patota(pato,cantidad_tripulantes);
+			if(!strcmp(respuesta,"fault")){
+				continue;
+				free(respuesta);
+			}
+			free(respuesta);
 //			luego de enviar las tareas leidas a miram ya no nos interesa tenerlas en el discordiador
 			free(pato->tareas);
 			list_add(listaPatotas,(void*) pato);
@@ -1374,9 +1382,7 @@ int hacerConsola() {
 			tripulante_rip->vida = false;
 			sem_post(&(tripulante_rip->sem_pasaje_a_exec));
 
-			if (string_contains(tripulante_rip->estado,"BLOQUEADO")){
-				eliminarTripulante(tripulante_rip);
-			}
+			eliminarTripulante(tripulante_rip);
 
 			free(obtener_id_trip[0]);
 			free(obtener_id_trip[1]);
