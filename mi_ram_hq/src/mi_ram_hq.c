@@ -126,7 +126,11 @@ void administrar_cliente(int socketCliente){
 				send(socketCliente, fault,tamanio_fault,0);
 				free(fault);
 			}else{
-
+				char* fault = strdup("Ok");
+				uint32_t tamanio_fault = strlen(fault)+1;
+				send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
+				send(socketCliente, fault,tamanio_fault,0);
+				free(fault);
 				pcb* nuevaPatota = malloc(sizeof(pcb));
 				nuevaPatota->id = estructura_iniciar_patota->idPatota;
 				if (strcmp(esquemaMemoria,"PAGINACION")==0){
