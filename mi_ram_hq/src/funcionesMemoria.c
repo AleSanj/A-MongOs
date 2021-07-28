@@ -651,6 +651,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}
 
         list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += tamPagina;
@@ -669,6 +670,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}else{
     	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
+    	espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
     	actualizarListaElementos(paginaInicial,idPatota);
     	payloadBorrado += tamanioPayload;
@@ -687,7 +689,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         }else{
         	list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         }
-
+        espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += (tamPagina-offset);
@@ -706,6 +708,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
     	payloadBorrado += tamanioPayload;
+    	espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
     	actualizarListaElementos(paginaInicial,idPatota);
     }
@@ -737,6 +740,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         	}else{
         	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         	}
+        	espacioLibre += elementoEvaluado->tamanio;
         	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         	actualizarListaElementos(paginaInicial,idPatota);
         	payloadBorrado += tamanioPayload;
@@ -965,6 +969,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
                     }
                 }
                 list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
+                espacioLibre += elementoEvaluado->tamanio;
                 list_remove(listaElementos,i);
                 break;
             }

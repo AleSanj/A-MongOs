@@ -298,6 +298,12 @@ void administrar_cliente(int socketCliente){
 
 		//case FINALIZAR:;
 			//break;
+		case FIN_PATOTA:;
+			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
+			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
+			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
+			break;
+
 		default:;
 
 			break;
