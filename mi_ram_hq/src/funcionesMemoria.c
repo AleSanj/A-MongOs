@@ -970,7 +970,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
                     }
                 }
                 list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
-                //espacioLibre += elementoEvaluado->tamanio;
+                espacioLibre += elementoEvaluado->tamanio;
                 list_remove(listaElementos,i);
                 break;
             }
@@ -1026,6 +1026,7 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
 }
 
 void compactacion(){
+	log_info(logger,"SE COMPACTO LA MEMORIA");
     for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
         if(i==0){
             segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));

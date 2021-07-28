@@ -120,6 +120,9 @@ void administrar_cliente(int socketCliente){
 			espacioNecesario = estructura_iniciar_patota->tamanio_tareas + (estructura_iniciar_patota->cantTripulantes*21)+8;
 			if(espacioLibre<espacioNecesario){
 				log_info(logger, "No tengo espacio en la memoria para guardar la patota %d\n",estructura_iniciar_patota->idPatota);
+				log_info(logger, "ESPACIO LIBRE: %d",espacioLibre);
+				log_info(logger, "ESPACIO NECESARIO: %d",espacioNecesario);
+
 				char* fault = strdup("fault");
 				uint32_t tamanio_fault = strlen(fault)+1;
 				send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
@@ -346,6 +349,7 @@ void dibujarTripulante(tcb* tripulante, char id){
 }
 void borrarTripulante( char id){
 	item_borrar(nivel, id);
+	nivel_gui_dibujar(nivel);
 }
 
 NIVEL *crear_mapa(){

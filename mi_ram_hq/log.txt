@@ -1,54 +1,426 @@
-[INFO] 01:05:25:240 Memoria/(23161:23294): Segmento en el que guardo las tareas: 0 y el tipo: A
-[INFO] 01:05:25:240 Memoria/(23161:23294): Guarde las tareas de la patota 1
+[INFO] 18:49:28:484 Memoria/(7708:7864): Segmento en el que guardo las tareas: 0 y el tipo: A
+[INFO] 18:49:28:484 Memoria/(7708:7864): Guarde las tareas de la patota 1
 
-[INFO] 01:05:25:240 Memoria/(23161:23294): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+[INFO] 18:49:28:484 Memoria/(7708:7864): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
 
-[INFO] 01:05:25:240 Memoria/(23161:23294): Tipo de lo que guardo: P
-[INFO] 01:05:25:240 Memoria/(23161:23294): Segmento que le pongo a la lista de elementos: 1
-[INFO] 01:05:25:240 Memoria/(23161:23294): Inicio del segmento en la lista de segmentos: 140653164
-[INFO] 01:05:25:240 Memoria/(23161:23294): Inicio del segmento en la lista global de segmentos: 140653164
-[INFO] 01:05:25:240 Memoria/(23161:23294): Guarde el PCB de la patota 1
+[INFO] 18:49:28:484 Memoria/(7708:7864): Guarde el PCB de la patota 1
 
-[INFO] 01:07:34:995 Memoria/(23161:23604): Tipo de lo que guardo: A
-[INFO] 01:07:34:995 Memoria/(23161:23604): Segmento que le pongo a la lista de elementos: 0
-[INFO] 01:07:34:995 Memoria/(23161:23604): Inicio del segmento en la lista de segmentos: 140653172
-[INFO] 01:07:34:995 Memoria/(23161:23604): Inicio del segmento en la lista global de segmentos: 140653172
-[INFO] 01:07:34:995 Memoria/(23161:23604): Entre al maldito if
-[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
-[INFO] 01:07:34:996 Memoria/(23161:23604): Guarde las tareas de la patota 1
+[INFO] 18:49:28:485 Memoria/(7708:7866): Guarde el tripulante 1
 
-[INFO] 01:07:34:996 Memoria/(23161:23604): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+[INFO] 18:49:28:489 Memoria/(7708:7868): Guarde el tripulante 2
 
-[INFO] 01:07:34:996 Memoria/(23161:23604): Tipo de lo que guardo: P
-[INFO] 01:07:34:996 Memoria/(23161:23604): Segmento que le pongo a la lista de elementos: 1
-[INFO] 01:07:34:996 Memoria/(23161:23604): Inicio del segmento en la lista de segmentos: 140653272
-[INFO] 01:07:34:996 Memoria/(23161:23604): Inicio del segmento en la lista global de segmentos: 140653272
-[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
-[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
-[INFO] 01:07:34:996 Memoria/(23161:23604): Guarde el PCB de la patota 1
+[INFO] 18:49:28:491 Memoria/(7708:7871): Guarde el tripulante 3
 
-[INFO] 01:10:21:901 Memoria/(24211:24239): Segmento en el que guardo las tareas: 0 y el tipo: A
-[INFO] 01:10:21:901 Memoria/(24211:24239): Guarde las tareas de la patota 1
+[INFO] 18:49:28:491 Memoria/(7708:7873): Guarde el tripulante 4
 
-[INFO] 01:10:21:901 Memoria/(24211:24239): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+[INFO] 18:49:41:353 Memoria/(7708:7900): Guarde las tareas de la patota 2
 
-[INFO] 01:10:21:901 Memoria/(24211:24239): Tipo de lo que guardo: P
-[INFO] 01:10:21:901 Memoria/(24211:24239): Segmento que le pongo a la lista de elementos: 1
-[INFO] 01:10:21:901 Memoria/(24211:24239): Inicio del segmento en la lista de segmentos: 147305068
-[INFO] 01:10:21:901 Memoria/(24211:24239): Inicio del segmento en la lista global de segmentos: 147305068
-[INFO] 01:10:21:901 Memoria/(24211:24239): Guarde el PCB de la patota 1
+[INFO] 18:49:41:356 Memoria/(7708:7900): Tareas: C00;1;1;1
 
-[INFO] 01:10:21:901 Memoria/(24211:24241): Tipo de lo que guardo: T
-[INFO] 01:10:21:901 Memoria/(24211:24241): Segmento que le pongo a la lista de elementos: 2
-[INFO] 01:10:21:901 Memoria/(24211:24241): Inicio del segmento en la lista de segmentos: 147305076
-[INFO] 01:10:21:901 Memoria/(24211:24241): Inicio del segmento en la lista global de segmentos: 147305076
-[INFO] 01:10:21:901 Memoria/(24211:24241): Guarde el tripulante 1
+[INFO] 18:49:41:356 Memoria/(7708:7900): Guarde el PCB de la patota 2
 
-[INFO] 01:10:35:743 Memoria/(24211:24273): Voy a borrar el tripulante 1 de la patota 1
-[INFO] 01:10:35:746 Memoria/(24211:24273): Entro al borrar, para borrar el elemento 1 de tipo T
-[INFO] 01:10:35:746 Memoria/(24211:24273): Borre el tripulante 1
+[INFO] 18:49:41:356 Memoria/(7708:7902): Guarde el tripulante 5
 
-[INFO] 01:10:35:746 Memoria/(24211:24276): Voy a borrar el tripulante 1 de la patota 1
-[INFO] 01:10:35:746 Memoria/(24211:24276): Entro al borrar, para borrar el elemento 1 de tipo T
-[INFO] 01:10:35:746 Memoria/(24211:24276): Borre el tripulante 1
+[INFO] 18:50:25:968 Memoria/(7708:7991): Actualice el estado del tripulante 1 a E
 
+[INFO] 18:50:25:969 Memoria/(7708:7993): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:50:25:973 Memoria/(7708:7993): Mande la tarea A00;1;1;5 (Numero 0) al tripulante 1
+
+[INFO] 18:50:25:974 Memoria/(7708:7995): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:50:25:974 Memoria/(7708:7996): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:50:25:974 Memoria/(7708:7996): Mande la tarea A00;1;1;5 (Numero 0) al tripulante 2
+
+[INFO] 18:50:31:975 Memoria/(7708:8011): Actualice el estado del tripulante 1 a R
+
+[INFO] 18:50:31:976 Memoria/(7708:8012): Actualice el estado del tripulante 3 a E
+
+[INFO] 18:50:31:976 Memoria/(7708:8013): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:50:31:976 Memoria/(7708:8013): Mande la tarea A00;1;1;5 (Numero 0) al tripulante 3
+
+[INFO] 18:50:31:976 Memoria/(7708:8014): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:50:31:976 Memoria/(7708:8015): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:50:31:976 Memoria/(7708:8016): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:50:31:976 Memoria/(7708:8016): Mande la tarea A00;1;1;5 (Numero 0) al tripulante 4
+
+[INFO] 18:50:37:978 Memoria/(7708:8034): Actualice el estado del tripulante 3 a R
+
+[INFO] 18:50:37:978 Memoria/(7708:8035): Actualice el estado del tripulante 5 a E
+
+[INFO] 18:50:37:978 Memoria/(7708:8036): Encontre las tareas: C00;1;1;1
+
+[INFO] 18:50:37:978 Memoria/(7708:8036): Mande la tarea C00;1;1;1 (Numero 0) al tripulante 5
+
+[INFO] 18:50:37:979 Memoria/(7708:8037): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:50:37:979 Memoria/(7708:8038): Actualice el estado del tripulante 1 a E
+
+[INFO] 18:50:43:980 Memoria/(7708:8055): Encontre las tareas: C00;1;1;1
+
+[INFO] 18:50:43:984 Memoria/(7708:8055): Mande la tarea fault
+
+[INFO] 18:50:43:984 Memoria/(7708:8057): Actualice el estado del tripulante 1 a R
+
+[INFO] 18:50:43:985 Memoria/(7708:8058): Voy a borrar el tripulante 5 de la patota 2
+[INFO] 18:50:43:985 Memoria/(7708:8058): Entro al borrar, para borrar el elemento 5 de tipo T
+[INFO] 18:50:43:985 Memoria/(7708:8058): Borre el tripulante 5
+
+[INFO] 18:50:43:985 Memoria/(7708:8059): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:50:43:985 Memoria/(7708:8060): Actualice el estado del tripulante 3 a E
+
+[INFO] 18:50:43:985 Memoria/(7708:8061): Entro al borrar, para borrar el elemento 2 de tipo A
+[INFO] 18:50:43:985 Memoria/(7708:8061): Entro al borrar, para borrar el elemento 2 de tipo P
+[INFO] 18:50:43:985 Memoria/(7708:8061): Elimine la patota 2
+[INFO] 18:50:49:986 Memoria/(7708:8075): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:50:49:986 Memoria/(7708:8076): Actualice el estado del tripulante 3 a R
+
+[INFO] 18:50:49:987 Memoria/(7708:8077): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:50:49:987 Memoria/(7708:8078): Actualice el estado del tripulante 1 a E
+
+[INFO] 18:50:51:988 Memoria/(7708:8081): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:50:51:988 Memoria/(7708:8081): Mande la tarea A01;1;1;5 (Numero 1) al tripulante 1
+
+[INFO] 18:51:32:917 Memoria/(7708:8168): Voy a borrar el tripulante 1 de la patota 1
+[INFO] 18:51:32:917 Memoria/(7708:8168): Entro al borrar, para borrar el elemento 1 de tipo T
+[INFO] 18:51:32:918 Memoria/(7708:8168): Borre el tripulante 1
+
+[INFO] 18:51:32:918 Memoria/(7708:8170): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:51:36:325 Memoria/(7708:8178): Voy a borrar el tripulante 3 de la patota 1
+[INFO] 18:51:36:325 Memoria/(7708:8178): Entro al borrar, para borrar el elemento 3 de tipo T
+[INFO] 18:51:36:325 Memoria/(7708:8178): Borre el tripulante 3
+
+[INFO] 18:51:49:182 Memoria/(7708:8205): Guarde las tareas de la patota 3
+
+[INFO] 18:51:49:183 Memoria/(7708:8205): Tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:51:49:183 Memoria/(7708:8205): Entre al maldito if
+[INFO] 18:51:49:183 Memoria/(7708:8205): Guarde el PCB de la patota 3
+
+[INFO] 18:51:49:184 Memoria/(7708:8207): Entre al maldito if
+[INFO] 18:51:49:184 Memoria/(7708:8207): Entre al maldito if
+[INFO] 18:51:49:184 Memoria/(7708:8207): Guarde el tripulante 6
+
+[INFO] 18:51:49:188 Memoria/(7708:8209): Guarde el tripulante 7
+
+[INFO] 18:52:07:423 Memoria/(7708:8245): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:52:07:424 Memoria/(7708:8247): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:07:424 Memoria/(7708:8247): Mande la tarea A01;1;1;5 (Numero 1) al tripulante 2
+
+[INFO] 18:52:07:427 Memoria/(7708:8248): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:52:07:428 Memoria/(7708:8250): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:52:07:428 Memoria/(7708:8250): Mande la tarea B00;3;3;5 (Numero 0) al tripulante 6
+
+[INFO] 18:52:11:425 Memoria/(7708:8261): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:52:11:425 Memoria/(7708:8262): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:52:11:425 Memoria/(7708:8263): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:52:11:425 Memoria/(7708:8263): Mande la tarea B00;3;3;5 (Numero 0) al tripulante 7
+
+[INFO] 18:52:13:430 Memoria/(7708:8271): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:52:13:430 Memoria/(7708:8272): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:52:15:431 Memoria/(7708:8280): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:15:431 Memoria/(7708:8280): Mande la tarea A01;1;1;5 (Numero 1) al tripulante 4
+
+[INFO] 18:52:17:428 Memoria/(7708:8282): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:52:17:428 Memoria/(7708:8283): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:52:19:432 Memoria/(7708:8291): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:52:19:432 Memoria/(7708:8292): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:52:23:430 Memoria/(7708:8301): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:23:430 Memoria/(7708:8301): Mande la tarea A02;1;1;5 (Numero 2) al tripulante 2
+
+[INFO] 18:52:23:431 Memoria/(7708:8302): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:52:23:431 Memoria/(7708:8303): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:52:25:435 Memoria/(7708:8313): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:52:25:435 Memoria/(7708:8314): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:52:29:435 Memoria/(7708:8324): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:52:29:435 Memoria/(7708:8325): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:52:31:436 Memoria/(7708:8329): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:31:436 Memoria/(7708:8329): Mande la tarea A02;1;1;5 (Numero 2) al tripulante 4
+
+[INFO] 18:52:31:436 Memoria/(7708:8330): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:52:31:437 Memoria/(7708:8331): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:52:35:437 Memoria/(7708:8342): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:52:35:441 Memoria/(7708:8344): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:52:37:438 Memoria/(7708:8345): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:52:37:439 Memoria/(7708:8346): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:52:41:442 Memoria/(7708:8363): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:52:41:443 Memoria/(7708:8364): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:52:43:440 Memoria/(7708:8368): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:52:43:440 Memoria/(7708:8369): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:52:45:446 Memoria/(7708:8376): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:45:446 Memoria/(7708:8376): Mande la tarea A03;1;1;5 (Numero 3) al tripulante 2
+
+[INFO] 18:52:47:441 Memoria/(7708:8378): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:52:47:441 Memoria/(7708:8378): Mande la tarea B01;3;3;5 (Numero 1) al tripulante 6
+
+[INFO] 18:52:47:447 Memoria/(7708:8379): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:52:47:447 Memoria/(7708:8380): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:52:49:442 Memoria/(7708:8387): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:52:49:442 Memoria/(7708:8388): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:52:51:448 Memoria/(7708:8393): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:52:51:448 Memoria/(7708:8393): Mande la tarea B01;3;3;5 (Numero 1) al tripulante 7
+
+[INFO] 18:52:53:443 Memoria/(7708:8399): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:52:53:443 Memoria/(7708:8399): Mande la tarea A03;1;1;5 (Numero 3) al tripulante 4
+
+[INFO] 18:52:53:449 Memoria/(7708:8400): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:52:53:449 Memoria/(7708:8401): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:52:55:444 Memoria/(7708:8408): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:52:55:444 Memoria/(7708:8409): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:52:59:451 Memoria/(7708:8417): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:52:59:451 Memoria/(7708:8418): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:53:01:445 Memoria/(7708:8423): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:53:01:445 Memoria/(7708:8424): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:05:452 Memoria/(7708:8434): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:53:05:452 Memoria/(7708:8435): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:07:446 Memoria/(7708:8437): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:07:447 Memoria/(7708:8438): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:53:07:453 Memoria/(7708:8439): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:07:453 Memoria/(7708:8439): Mande la tarea A04;1;1;5 (Numero 4) al tripulante 2
+
+[INFO] 18:53:09:447 Memoria/(7708:8446): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:53:09:447 Memoria/(7708:8446): Mande la tarea B02;3;3;5 (Numero 2) al tripulante 6
+
+[INFO] 18:53:11:454 Memoria/(7708:8451): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:11:454 Memoria/(7708:8452): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:53:13:448 Memoria/(7708:8456): Actualice el estado del tripulante 6 a R
+
+[INFO] 18:53:13:449 Memoria/(7708:8457): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:13:455 Memoria/(7708:8458): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:53:13:455 Memoria/(7708:8458): Mande la tarea B02;3;3;5 (Numero 2) al tripulante 7
+
+[INFO] 18:53:15:449 Memoria/(7708:8465): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:15:449 Memoria/(7708:8465): Mande la tarea A04;1;1;5 (Numero 4) al tripulante 4
+
+[INFO] 18:53:17:455 Memoria/(7708:8467): Actualice el estado del tripulante 7 a R
+
+[INFO] 18:53:17:456 Memoria/(7708:8468): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:19:450 Memoria/(7708:8475): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:19:450 Memoria/(7708:8476): Actualice el estado del tripulante 6 a E
+
+[INFO] 18:53:23:456 Memoria/(7708:8484): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:23:460 Memoria/(7708:8484): Mande la tarea A05;1;1;5 (Numero 5) al tripulante 2
+
+[INFO] 18:53:23:460 Memoria/(7708:8486): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:23:461 Memoria/(7708:8487): Actualice el estado del tripulante 7 a E
+
+[INFO] 18:53:25:452 Memoria/(7708:8494): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:53:25:452 Memoria/(7708:8494): Mande la tarea fault
+
+[INFO] 18:53:25:452 Memoria/(7708:8495): Voy a borrar el tripulante 6 de la patota 3
+[INFO] 18:53:25:452 Memoria/(7708:8495): Entro al borrar, para borrar el elemento 6 de tipo T
+[INFO] 18:53:25:452 Memoria/(7708:8495): Borre el tripulante 6
+
+[INFO] 18:53:25:452 Memoria/(7708:8496): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:29:465 Memoria/(7708:8504): Encontre las tareas: B00;3;3;5|B01;3;3;5|B02;3;3;5
+
+[INFO] 18:53:29:465 Memoria/(7708:8504): Mande la tarea fault
+
+[INFO] 18:53:29:465 Memoria/(7708:8505): Voy a borrar el tripulante 7 de la patota 3
+[INFO] 18:53:29:465 Memoria/(7708:8505): Entro al borrar, para borrar el elemento 7 de tipo T
+[INFO] 18:53:29:466 Memoria/(7708:8505): Borre el tripulante 7
+
+[INFO] 18:53:29:466 Memoria/(7708:8506): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:29:466 Memoria/(7708:8507): Entro al borrar, para borrar el elemento 3 de tipo A
+[INFO] 18:53:29:466 Memoria/(7708:8507): Entro al borrar, para borrar el elemento 3 de tipo P
+[INFO] 18:53:29:466 Memoria/(7708:8507): Elimine la patota 3
+[INFO] 18:53:31:454 Memoria/(7708:8511): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:31:454 Memoria/(7708:8511): Mande la tarea A05;1;1;5 (Numero 5) al tripulante 4
+
+[INFO] 18:53:31:454 Memoria/(7708:8512): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:31:454 Memoria/(7708:8513): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:35:467 Memoria/(7708:8524): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:35:467 Memoria/(7708:8525): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:37:455 Memoria/(7708:8526): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:37:456 Memoria/(7708:8527): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:39:469 Memoria/(7708:8535): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:39:469 Memoria/(7708:8535): Mande la tarea A06;1;1;5 (Numero 6) al tripulante 2
+
+[INFO] 18:53:41:456 Memoria/(7708:8539): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:41:456 Memoria/(7708:8539): Mande la tarea A06;1;1;5 (Numero 6) al tripulante 4
+
+[INFO] 18:53:41:470 Memoria/(7708:8540): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:41:470 Memoria/(7708:8541): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:43:457 Memoria/(7708:8545): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:43:457 Memoria/(7708:8546): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:47:471 Memoria/(7708:8554): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:47:471 Memoria/(7708:8555): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:49:458 Memoria/(7708:8563): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:49:458 Memoria/(7708:8564): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:49:472 Memoria/(7708:8565): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:49:472 Memoria/(7708:8565): Mande la tarea A07;1;1;5 (Numero 7) al tripulante 2
+
+[INFO] 18:53:51:459 Memoria/(7708:8569): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:51:459 Memoria/(7708:8569): Mande la tarea A07;1;1;5 (Numero 7) al tripulante 4
+
+[INFO] 18:53:53:473 Memoria/(7708:8575): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:53:473 Memoria/(7708:8576): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:53:55:460 Memoria/(7708:8584): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:53:55:460 Memoria/(7708:8585): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:53:59:474 Memoria/(7708:8593): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:53:59:475 Memoria/(7708:8593): Mande la tarea A08;1;1;5 (Numero 8) al tripulante 2
+
+[INFO] 18:53:59:475 Memoria/(7708:8594): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:53:59:475 Memoria/(7708:8595): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:54:01:461 Memoria/(7708:8599): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:54:01:461 Memoria/(7708:8599): Mande la tarea A08;1;1;5 (Numero 8) al tripulante 4
+
+[INFO] 18:54:01:462 Memoria/(7708:8600): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:54:01:462 Memoria/(7708:8601): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:54:05:477 Memoria/(7708:8612): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:54:05:477 Memoria/(7708:8613): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:54:07:464 Memoria/(7708:8614): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:54:07:464 Memoria/(7708:8615): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:54:09:478 Memoria/(7708:8623): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:54:09:478 Memoria/(7708:8623): Mande la tarea A09;1;1;5 (Numero 9) al tripulante 2
+
+[INFO] 18:54:11:465 Memoria/(7708:8627): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:54:11:465 Memoria/(7708:8627): Mande la tarea A09;1;1;5 (Numero 9) al tripulante 4
+
+[INFO] 18:54:11:478 Memoria/(7708:8628): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:54:11:479 Memoria/(7708:8629): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:54:13:466 Memoria/(7708:8633): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:54:13:466 Memoria/(7708:8634): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:54:17:480 Memoria/(7708:8642): Actualice el estado del tripulante 2 a R
+
+[INFO] 18:54:17:480 Memoria/(7708:8643): Actualice el estado del tripulante 2 a E
+
+[INFO] 18:54:19:468 Memoria/(7708:8652): Actualice el estado del tripulante 4 a R
+
+[INFO] 18:54:19:468 Memoria/(7708:8653): Actualice el estado del tripulante 4 a E
+
+[INFO] 18:54:19:480 Memoria/(7708:8654): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:54:19:480 Memoria/(7708:8654): Mande la tarea fault
+
+[INFO] 18:54:19:480 Memoria/(7708:8655): Voy a borrar el tripulante 2 de la patota 1
+[INFO] 18:54:19:480 Memoria/(7708:8655): Entro al borrar, para borrar el elemento 2 de tipo T
+[INFO] 18:54:19:481 Memoria/(7708:8655): Borre el tripulante 2
+
+[INFO] 18:54:21:469 Memoria/(7708:8659): Encontre las tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 18:54:21:469 Memoria/(7708:8659): Mande la tarea fault
+
+[INFO] 18:54:21:470 Memoria/(7708:8660): Voy a borrar el tripulante 4 de la patota 1
+[INFO] 18:54:21:470 Memoria/(7708:8660): Entro al borrar, para borrar el elemento 4 de tipo T
+[INFO] 18:54:21:470 Memoria/(7708:8660): Borre el tripulante 4
+
+[INFO] 18:54:21:470 Memoria/(7708:8661): Entro al borrar, para borrar el elemento 1 de tipo A
+[INFO] 18:54:21:470 Memoria/(7708:8661): Entro al borrar, para borrar el elemento 1 de tipo P
+[INFO] 18:54:21:470 Memoria/(7708:8661): Elimine la patota 1
+[INFO] 18:55:03:819 Memoria/(7708:7708): SE COMPACTO LA MEMORIA
