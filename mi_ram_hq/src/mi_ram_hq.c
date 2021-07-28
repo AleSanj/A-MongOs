@@ -48,7 +48,7 @@ int main(void) {
 	}else{
 		tipoDeGuardado = BESTFIT;
 	}
-	if((logger = log_create("../log.txt", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 		{
 			printf(" No pude leer el logger\n");
 			exit(1);
@@ -145,6 +145,7 @@ void administrar_cliente(int socketCliente){
 					nuevaListaDeTablasDePaginas->idPatota=estructura_iniciar_patota->idPatota;
 					list_add(listaDeTablasDePaginas,nuevaListaDeTablasDePaginas);
 				}
+				log_info(logger, "TAMANIO DE TAREAS:  %d\n",estructura_iniciar_patota->tamanio_tareas);
 				guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
 				log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
 				nuevaPatota->tareas =  calcular_direccion_logica_archivo(estructura_iniciar_patota->idPatota);
@@ -218,17 +219,19 @@ void administrar_cliente(int socketCliente){
 				log_info(logger, "Encontre las tareas: %s\n",tareas);
 				if(tripulanteATraer->proxTarea==totalDeTareas){
 					char* fault = strdup("fault");
+					log_info(logger, "Entre al if para mandar tarea fault");
 					uint32_t tamanio_fault = strlen(fault)+1;
 					send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
 					send(socketCliente, fault,tamanio_fault,0);
 					free(fault);
 					log_info(logger, "Mande la tarea fault\n");
 				}else{
-					//log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
+					log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
 					int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
 					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
 					if(strcmp(esquemaMemoria,"PAGINACION")==0){
+						log_info(logger, "Entre al esquema de paginacion para mandar");
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_paginacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
@@ -346,6 +349,7 @@ void dibujarTripulante(tcb* tripulante, char id){
 }
 void borrarTripulante( char id){
 	item_borrar(nivel, id);
+	nivel_gui_dibujar(nivel);
 }
 
 NIVEL *crear_mapa(){
