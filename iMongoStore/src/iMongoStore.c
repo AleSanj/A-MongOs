@@ -1428,10 +1428,9 @@ t_log* iniciar_logger(char* logger_path){
 }
 
 t_config* leer_config(char* config_path){
-	t_config* config=malloc(sizeof(config));
+	t_config* config;
 	if((config = config_create(config_path)) == NULL){
 		printf("No se pudo leer la config");
-		free(config);
 		exit(2);
 	}
 	return config;
