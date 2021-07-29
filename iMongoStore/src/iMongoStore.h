@@ -73,6 +73,8 @@ int size_b=0;
 bool correr_programa=true;
 
 pthread_mutex_t mutexEscrituraBloques;
+pthread_mutex_t mutexBitacoras;
+
 
 //VARIABLES GLOBALES
 
