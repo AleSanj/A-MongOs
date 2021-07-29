@@ -97,11 +97,14 @@ int main(void) {
 		restaurar_file_system();
 		log_info(logger,"Se restauro el file System");
 	}
+	pthread_mutex_init(&mutexEscrituraBloques,NULL);
+	pthread_mutex_init(&mutexBitacoras,NULL);
 	// LEVANTAMOS LA SINCRO DE LOS BLOQUES
 
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
+//
 
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
@@ -345,12 +348,25 @@ void* atender_mensaje (int socketTripulante){
 		t_movimiento_mongo* mov= deserializar_movimiento_mongo(paquete_recibido);
 		char* tiempo= temporal_get_string_time("%H:%M:%S:%MS");
 		char* bitacorear=string_new();
-		sprintf(bitacorear,"Se mueve de %d|%d a %d|%d", mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
-		string_append(&tiempo,bitacorear);
-		printf("%s\n",tiempo);
-		imprimir_movimiento_mongo(mov);
-		escribir_en_bitacora((int) mov->id_tripulante,tiempo);
-		free(tiempo);
+		string_append(&bitacorear,tiempo);
+		string_append(&bitacorear," Se mueve de ");
+		string_append(&bitacorear,string_itoa((int)mov->origen_x));
+		string_append(&bitacorear,"|");
+		string_append(&bitacorear,string_itoa((int)mov->origen_y));
+		string_append(&bitacorear," a ");
+		string_append(&bitacorear,string_itoa((int)mov->destino_x));
+		string_append(&bitacorear,"|");
+		string_append(&bitacorear,string_itoa((int)mov->destino_y));
+
+		//sprintf(bitacorear,"%s Se mueve de %d|%d a %d|%d",tiempo , mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
+		//string_append(&tiempo,bitacorear);
+		printf("%s\n",bitacorear);
+		//imprimir_movimiento_mongo(mov);
+		log_info(logger,"voy a escribir rn bitacora %d", mov->id_tripulante);
+		escribir_en_bitacora((int) mov->id_tripulante,bitacorear);
+		log_info(logger,"se escribio bien la bitacora %d", mov->id_tripulante);
+		free(bitacorear);
+		//free(tiempo);
 		liberar_t_movimiento_mongo(mov);
 		liberar_conexion(socketTripulante);
 		break;
@@ -369,12 +385,15 @@ void* atender_mensaje (int socketTripulante){
 		break;
 	case INICIO_TAREA:;
 		t_pedido_mongo* inico = deserializar_pedido_mongo(paquete_recibido);
+		char* guardar=string_new();
 		char* agregar= temporal_get_string_time("%H:%M:%S:%MS");
-		string_append(&agregar,"SE_INICIO_LA_TAREA_");
-		string_append(&agregar,inico->mensaje);
+		string_append(&guardar,agregar);
+		string_append(&guardar,"SE_INICIO_LA_TAREA_");
+		string_append(&guardar,inico->mensaje);
 		imprimir_pedido_mongo(inico);
-		escribir_en_bitacora((int) inico->id_tripulante,agregar);
-		free(agregar);
+		escribir_en_bitacora((int) inico->id_tripulante,guardar);
+		free(guardar);
+		//free(agregar);
 		liberar_t_pedido_mongo(inico);
 		liberar_conexion(socketTripulante);
 		break;
@@ -1066,6 +1085,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	if(esMetadataRecurso(rutita)){
 		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
 	}
+	config_destroy(config_o2);
 
 	//Cantidad de caracteres escritos
 	int cantidadEscrita = 0;
@@ -1198,16 +1218,16 @@ void generar_bitacora(int idTripulante){
 	string_append(&ruta_bitacora, id_trip);
 	string_append(&ruta_bitacora, ".ims");
 
-	FILE* metadata_fd = fopen(ruta_metadata, "rb");
+//	FILE* metadata_fd = fopen(ruta_metadata, "rb");
 
 	if (verificar_existencia(ruta_bitacora) == 1) {
-		fclose(metadata_fd);
+		//fclose(metadata_fd);
 		printf("Existe esa bitacora!");
 		log_info(logger, "Bitacora encontrada");
 		return;
 	}
 
-	metadata_fd = fopen(ruta_metadata, "w");
+//	metadata_fd = fopen(ruta_metadata, "w");
 	t_config* bitacora_config = malloc(sizeof(t_config));
 	bitacora_config->path = ruta_bitacora;
 	bitacora_config->properties = dictionary_create();
@@ -1218,24 +1238,28 @@ void generar_bitacora(int idTripulante){
 
 	config_save(bitacora_config);
 
-	//fclose(metadata_fd);
+//	fclose(metadata_fd);
 	free(bitacora_config);
+
 }
 
 
 void escribir_en_bitacora(int idTripulante, char* texto){
 	char* id_trip = string_itoa(idTripulante);
+	log_info(logger,"bitacora id %d", idTripulante);
 	char* ruta_bitacora = string_new();
 	string_append(&ruta_bitacora, punto_montaje);
 	string_append(&ruta_bitacora, "/Files/Bitacoras/Tripulante");
 	string_append(&ruta_bitacora, id_trip);
 	string_append(&ruta_bitacora, ".ims");
+	log_info(logger, "se qiere bitacorear %s", texto);
+	pthread_mutex_lock(&mutexBitacoras);
 	if(verificar_existencia(ruta_bitacora) != 1)
 	{
 		generar_bitacora(idTripulante);
-		char*log=string_new();
-		sprintf(log,"Se creo la bitacora del tripulante %d",idTripulante);
-		log_info(logger, log);
+		//char*log=string_new();
+
+		log_info(logger, "Se cro exitosamente la bitacora %d", idTripulante);
 //		free(log);
 	}
 		int longitud = strlen(texto);
@@ -1246,6 +1270,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		}
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
+		pthread_mutex_unlock(&mutexBitacoras);
 }
 
 
@@ -1347,7 +1372,7 @@ void actualizar_metadata(char* valorBlocks, char* valorSize, char* valorBlockCou
 }
 
 void actualizar_bitacora(char* valorBlocks, char* valorSize, char* valorBlockCount, char* ruta){
-	FILE* bita=fopen(ruta,"w");
+//	FILE* bita=fopen(ruta,"w");
 	t_config* bitacora_config = malloc(sizeof(t_config));
 	bitacora_config->path = ruta;
 	bitacora_config->properties = dictionary_create();
@@ -1357,7 +1382,7 @@ void actualizar_bitacora(char* valorBlocks, char* valorSize, char* valorBlockCou
 	dictionary_put(bitacora_config->properties, "BLOCKS", valorBlocks);
 
 	config_save(bitacora_config);
-	fclose(bita);
+//	fclose(bita);
 	free(bitacora_config);
 
 }
@@ -1428,8 +1453,8 @@ t_log* iniciar_logger(char* logger_path){
 }
 
 t_config* leer_config(char* config_path){
-	t_config* config=malloc(sizeof(config));
-	if((config = config_create(config_path)) == NULL){
+	t_config* config=config_create(config_path);
+	if(config == NULL){
 		printf("No se pudo leer la config");
 		free(config);
 		exit(2);
