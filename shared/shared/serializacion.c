@@ -216,14 +216,14 @@ void liberar_t_cambio_estado(t_cambio_estado* estructura){
 void agregar_paquete_pedido_mongo(t_paquete* paquete, t_pedido_mongo* estructura){
 	int offset = 0;
 
-	paquete->buffer->size += sizeof(uint8_t) * sizeof(uint32_t) + estructura->tamanio_mensaje;
+	paquete->buffer->size += sizeof(uint8_t) + sizeof(uint32_t) + estructura->tamanio_mensaje;
 	paquete->buffer->stream = realloc(paquete->buffer->stream,paquete->buffer->size);
 
 	memcpy(paquete->buffer->stream, &(estructura->id_tripulante), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
 	memcpy(paquete->buffer->stream + offset, &(estructura->tamanio_mensaje), sizeof(uint32_t));
 	offset += sizeof(uint32_t);
-	memcpy(paquete->buffer->stream+offset, estructura->mensaje, estructura->tamanio_mensaje);
+	memcpy(paquete->buffer->stream + offset, estructura->mensaje, estructura->tamanio_mensaje);
 
 
 }
