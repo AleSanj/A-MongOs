@@ -188,7 +188,12 @@ void administrar_cliente(int socketCliente){
 				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
 
 				log_info(logger, "Voy a borrar el tripulante %d de la patota %d",tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota);
+				tcb* tcbDePrueba = malloc(sizeof(tcb));
+				tcbDePrueba = buscar_en_memoria_general(3,1,'T');
+				log_info(logger, "Id del tcb que encontre: %d",tcbDePrueba->id);
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
+				tcbDePrueba = buscar_en_memoria_general(3,1,'T');
+				log_info(logger, "Id del tcb que encontre: %d",tcbDePrueba->id);
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
 						vectorIdTripulantes[i] = 0;

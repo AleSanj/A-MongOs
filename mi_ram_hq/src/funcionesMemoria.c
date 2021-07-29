@@ -259,7 +259,7 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
 
     elementoEnLista_struct *nuevoElemento= malloc(sizeof(elementoEnLista_struct));
     nuevoElemento->tipo = 'M';
-
+    nuevoElemento->PID = pid;
     for(int i=0;i<list_size(listaElementos);i++){
     	elementoEnLista_struct *elementoIterante= malloc(sizeof(elementoEnLista_struct));
     	elementoIterante = list_get(listaElementos,i);
@@ -619,20 +619,20 @@ void actualizarListaGlobalDeSegmentos(int paginaEliminada,int PID){
 void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 	tipoUniversal = tipo;
     t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
-    log_info(logger,"Tamanio de la lista filtrada donde voy a borrar al tipo: %c de la patota:%d, Tamanio: %d",tipo,idPatota,list_size(listaFiltrada));
+    //log_info(logger,"Tamanio de la lista filtrada donde voy a borrar al tipo: %c de la patota:%d, Tamanio: %d",tipo,idPatota,list_size(listaFiltrada));
     elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
-    elementoEnLista_struct *elementoDePrueba = malloc(sizeof(elementoEnLista_struct));
-    elementoDePrueba = list_get(listaFiltrada,5);
-    log_info(logger,"El elemento de prueba en el indice 5(tripulante 6) de la lista filtrada es id de tripu: %d, id patota: %d,tamanio: %d ",elementoDePrueba->ID,elementoDePrueba->PID,elementoDePrueba->tamanio);
+    //elementoEnLista_struct *elementoDePrueba = malloc(sizeof(elementoEnLista_struct));
+    //elementoDePrueba = list_get(listaFiltrada,5);
+    //log_info(logger,"El elemento de prueba en el indice 5(tripulante 6) de la lista filtrada es id de tripu: %d, id patota: %d,tamanio: %d ",elementoDePrueba->ID,elementoDePrueba->PID,elementoDePrueba->tamanio);
 
     int paginaInicial,offset,tamanioPayload,posicionElementoEvaluado;
-    for (int i = 0; i < list_size(listaFiltrada); ++i) {
-    	log_info(logger,"Entre al for de borrado");
-    	elementoEvaluado = list_get(listaFiltrada,i);
-    	log_info(logger, "Elemento evaluado PID: %d", elementoEvaluado->PID);
-        log_info(logger,"lista filtrada en %d",i);
-        if (elementoEvaluado->ID == idElemento){
-        	log_info(logger,"ENCONTRE EL TRIPULANTE: %d, de la patota: %d, de tamanio: %d, de tipo: %c",elementoEvaluado->ID,elementoEvaluado->PID,elementoEvaluado->tamanio,elementoEvaluado->tipo);
+    for (int i = 0; i < list_size(listaElementos); ++i) {
+    	//log_info(logger,"Entre al for de borrado");
+    	elementoEvaluado = list_get(listaElementos,i);
+    	//log_info(logger, "Elemento evaluado PID: %d", elementoEvaluado->PID);
+        //log_info(logger,"lista filtrada en %d",i);
+        if (elementoEvaluado->ID == idElemento && elementoEvaluado->tipo==tipo){
+        	//log_info(logger,"ENCONTRE EL TRIPULANTE: %d, de la patota: %d, de tamanio: %d, de tipo: %c",elementoEvaluado->ID,elementoEvaluado->PID,elementoEvaluado->tamanio,elementoEvaluado->tipo);
             paginaInicial = elementoEvaluado->segmentoOPagina;
             offset = elementoEvaluado->offsetEnPagina;
             tamanioPayload = elementoEvaluado->tamanio;
@@ -661,6 +661,14 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}
 
         list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        actualizarListaElementos(paginaInicial,idPatota);
+        for(int i=0;i<list_size(listaSegmentos->elements_count);i++){
+        	paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
+        	paginaABorrar = list_get(listaSegmentos->elements_count,i);
+        	if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
+        		list_remove(listaSegmentos->elements_count,i);
+        	}
+        }
         //espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
         actualizarListaElementos(paginaInicial,idPatota);
@@ -677,12 +685,20 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		   bitarraySwap[paginaAActualizar->frame] = 0;
     		}
     		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    		actualizarListaElementos(paginaInicial,idPatota);
+    		for(int i=0;i<list_size(listaSegmentos->elements_count);i++){
+    			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
+    			paginaABorrar = list_get(listaSegmentos->elements_count,i);
+    			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
+    				list_remove(listaSegmentos->elements_count,i);
+    			}
+    		}
     	}else{
     	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
     	//espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
-    	actualizarListaElementos(paginaInicial,idPatota);
+
     	payloadBorrado += tamanioPayload;
     }
     else if(offset!=0 && tamanioPayload >= tamPagina-offset){
@@ -696,12 +712,19 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         		bitarraySwap[paginaAActualizar->frame] = 0;
         	}
         	list_remove(tablaDePaginas,paginaInicial);
+        	actualizarListaElementos(paginaInicial,idPatota);
+        	for(int i=0;i<list_size(listaSegmentos->elements_count);i++){
+        		paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
+        		paginaABorrar = list_get(listaSegmentos->elements_count,i);
+        		if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
+        			list_remove(listaSegmentos->elements_count,i);
+        		}
+        	}
         }else{
         	list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         }
         //espacioLibre += elementoEvaluado->tamanio;
         list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
-        actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += (tamPagina-offset);
     }else if(offset!=0 && tamanioPayload < tamPagina-offset){
     	paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
@@ -714,13 +737,20 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		   bitarraySwap[paginaAActualizar->frame] = 0;
     		}
     		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    		actualizarListaElementos(paginaInicial,idPatota);
+    		for(int i=0;i<list_size(listaSegmentos->elements_count);i++){
+    			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
+    			paginaABorrar = list_get(listaSegmentos->elements_count,i);
+    			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
+    				list_remove(listaSegmentos->elements_count,i);
+    			}
+    		}
     	}else{
     		list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
     	payloadBorrado += tamanioPayload;
     	//espacioLibre += elementoEvaluado->tamanio;
     	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
-    	actualizarListaElementos(paginaInicial,idPatota);
     }
     while(payloadBorrado != tamanioPayload){
     	paginaInicial++;
@@ -736,7 +766,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
     		payloadBorrado += tamPagina;
     		actualizarListaElementos(paginaInicial,idPatota);
-    	}else if(tamanioPayload < tamPagina){
+    	}else if(tamanioPayload -  payloadBorrado < tamPagina){
         	paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
         	paginaAActualizar =	list_get(tablaDePaginas,paginaInicial);
         	paginaAActualizar->espacioOcupado -= tamanioPayload;
@@ -747,13 +777,20 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         		   bitarraySwap[paginaAActualizar->frame] = 0;
         		}
         		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        		actualizarListaElementos(paginaInicial,idPatota);
+        		for(int i=0;i<list_size(listaSegmentos->elements_count);i++){
+        			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
+        			paginaABorrar = list_get(listaSegmentos->elements_count,i);
+        			if(paginaABorrar->PID==idPatota && paginaABorrar->nroFrame==paginaAActualizar->frame){
+        				list_remove(listaSegmentos->elements_count,i);
+        			}
+        		}
         	}else{
         	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         	}
         	//espacioLibre += elementoEvaluado->tamanio;
         	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
-        	actualizarListaElementos(paginaInicial,idPatota);
-        	payloadBorrado += tamanioPayload;
+        	payloadBorrado += (tamanioPayload -  payloadBorrado);
         }
 
     }
@@ -1097,9 +1134,9 @@ void actualizar_estado_paginacion(uint32_t idElemento, uint32_t idPatota, char n
 	tipoUniversal = 'T';
 	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
 	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
-	for(int i=0;i<list_size(listaFiltrada);i++){
-		elementoAReemplazar = list_get(listaFiltrada,i);
-		if(elementoAReemplazar->ID == idElemento){
+	for(int i=0;i<list_size(listaElementos);i++){
+		elementoAReemplazar = list_get(listaElementos,i);
+		if(elementoAReemplazar->ID == idElemento && elementoAReemplazar->tipo=='T'){
 			break;
 		}
 	}
@@ -1156,9 +1193,9 @@ void actualizar_posicion_paginacion(uint32_t idElemento, uint32_t idPatota, uint
 	tipoUniversal = 'T';
 	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
 	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
-	for(int i=0;i<list_size(listaFiltrada);i++){
-		elementoAReemplazar = list_get(listaFiltrada,i);
-		if(elementoAReemplazar->ID == idElemento){
+	for(int i=0;i<list_size(listaElementos);i++){
+		elementoAReemplazar = list_get(listaElementos,i);
+		if(elementoAReemplazar->ID == idElemento && elementoAReemplazar->tipo=='T'){
 			break;
 		}
 	}
