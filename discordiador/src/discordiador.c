@@ -1473,7 +1473,8 @@ int hacerConsola() {
 		free(obtener_id[1]);
 		free(obtener_id);
 		}
-		if (string_contains(linea,"EXIT"|| linea[0] == '\0')){
+
+		if (string_contains(linea,"EXIT") || linea[0] == '\0'){
 			int socket_miram=conectarse_Mi_Ram();
 			t_paquete* paquete_miram = crear_paquete(FINALIZAR);
 			t_paquete* paquete_mongo = crear_paquete(FINALIZAR);
