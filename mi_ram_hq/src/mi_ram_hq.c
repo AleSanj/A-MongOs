@@ -14,7 +14,7 @@
 //#define PATH_CONFIG "src/mi_ram_hq.config"
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "../src/mi_ram_hq.config"
+#define PATH_CONFIG "src/mi_ram_hq.config"
 //-------------------------------------
 
 #include "mi_ram_hq.h"
@@ -48,7 +48,7 @@ int main(void) {
 	}else{
 		tipoDeGuardado = BESTFIT;
 	}
-	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger = log_create("log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 		{
 			printf(" No pude leer el logger\n");
 			exit(1);
@@ -309,6 +309,9 @@ void administrar_cliente(int socketCliente){
 				break;
 
 		case FINALIZAR:;
+		log_info(logger,"Voy a cerrar el programa");
+		t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
+			free(tripulante_a_liberar);
 			terminar_programa();
 			break;
 		case FIN_PATOTA:;
@@ -429,9 +432,9 @@ void manejoCompactacion(int signal){
 terminar_programa(){
 	funcionando = false;
 	for(int i=0;i<list_size(listaDeTablasDePaginas);i++){
-		tablaEnLista_struct tablaABorrar = malloc(sizeof(tablaEnLista_struct));
+		tablaEnLista_struct *tablaABorrar = malloc(sizeof(tablaEnLista_struct));
 		tablaABorrar = list_get(listaDeTablasDePaginas,i);
-		list_destroy_and_destroy_elements(tablaABorrar.tablaDePaginas,free);
+		list_destroy_and_destroy_elements(tablaABorrar->tablaDePaginas,free);
 	}
 	list_destroy_and_destroy_elements(listaDeTablasDePaginas,free);
 	list_destroy_and_destroy_elements(listaElementos,free);

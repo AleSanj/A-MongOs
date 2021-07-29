@@ -1488,8 +1488,8 @@ int hacerConsola() {
 			agregar_paquete_tripulante(paquete_miram,estructura);
 			agregar_paquete_tripulante(paquete_mongo,estructura);
 			log_info(logger_conexiones,"Se emvia mensaje de finalizacion a Mongostore y Miram");
-			enviar_paquete(paquete_miram,estructura);
-			enviar_paquete(paquete_mongo,estructura);
+			enviar_paquete(paquete_miram,socket_miram);
+			//enviar_paquete(paquete_mongo,estructura);
 
 			liberar_t_tripulante(estructura);
 			terminar_programa();
