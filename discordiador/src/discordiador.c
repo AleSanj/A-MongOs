@@ -272,11 +272,16 @@ void cambiar_estado(Tripulante* tripulante,char* estado){
 	log_info(logger_discordiador,"Se le cambia el estado al tripulante %d a %s ",tripulante->id,estado);
 	tripulante->estado = strdup(estado);
 	enviar_estado(tripulante);
-
 }
 
 void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 {
+	if (posiciones == NULL)
+		return;
+	string_trim(&posiciones);
+	if(posiciones[0] == '\0')
+		return;
+
 	char** pares_xy = string_split(posiciones," ");
 	char** get_posicion;
 
@@ -581,8 +586,8 @@ void bloqueado_a_ready(Tripulante* bloq)
 	cambiar_estado(bloq,"READY");
 	log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
 	sem_post(&sem_tripulante_en_ready);
-
 }
+
 void enviar_posicion_mongo(int posx,int posy, Tripulante* tripulante,int socket_cliente){
 	t_movimiento_mongo* movimiento = malloc(sizeof(t_movimiento_mongo));
 	movimiento->id_tripulante = tripulante->id;
@@ -730,7 +735,6 @@ void enviarMongoStore(Tripulante* enviar) {
 	enviar_consumir_recurso(enviar);
 	while((enviar->espera!=0)&& enviar->vida)
 	{
-
 		//semaforo para parar ejecucion
 		sem_wait(&pararIo);
 		sleep(retardoCpu);
@@ -745,7 +749,6 @@ void enviarMongoStore(Tripulante* enviar) {
 	// char* ="22:09 Fin consumir_oxigeno"
 	enviar_inicio_fin_mongo(enviar,'F');
 	bloqueado_a_ready(enviar);
-
 
 }
 void hacerTareaIO(Tripulante* io) {
@@ -1115,6 +1118,9 @@ void* atender_sabotaje(char* posiciones)
 				liberar_conexion(cliente_sabotaje);
 	return NULL;
 }
+void terminar_programa(){
+
+}
 
 char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	int socket_iniciar_patota=conectarse_Mi_Ram();
@@ -1466,6 +1472,26 @@ int hacerConsola() {
 		free(obtener_id[0]);
 		free(obtener_id[1]);
 		free(obtener_id);
+		}
+		if (string_contains(linea,"EXIT"|| linea[0] == '\0')){
+			int socket_miram=conectarse_Mi_Ram();
+			t_paquete* paquete_miram = crear_paquete(FINALIZAR);
+			t_paquete* paquete_mongo = crear_paquete(FINALIZAR);
+
+			t_tripulante* estructura = malloc(sizeof(t_tripulante));
+			estructura->id_tripulante = 0;
+			estructura->id_patota = 0;
+			estructura ->posicion_x = 0;
+			estructura ->posicion_y = 0;
+
+			agregar_paquete_tripulante(paquete_miram,estructura);
+			agregar_paquete_tripulante(paquete_mongo,estructura);
+			log_info(logger_conexiones,"Se emvia mensaje de finalizacion a Mongostore y Miram");
+			enviar_paquete(paquete_miram,estructura);
+			enviar_paquete(paquete_mongo,estructura);
+
+			liberar_t_tripulante(estructura);
+			terminar_programa();
 		}
 
 	}

@@ -308,8 +308,9 @@ void administrar_cliente(int socketCliente){
 				log_info(logger, "Actualice el estado del tripulante %d a %c\n",tripulante_a_actualizar->id_tripulante, tripulante_a_actualizar->estado);
 				break;
 
-		//case FINALIZAR:;
-			//break;
+		case FINALIZAR:;
+			terminar_programa();
+			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
@@ -425,3 +426,27 @@ void manejoCompactacion(int signal){
 	compactacion();
 }
 
+terminar_programa(){
+	funcionando = false;
+	for(int i=0;i<list_size(listaDeTablasDePaginas);i++){
+		tablaEnLista_struct tablaABorrar = malloc(sizeof(tablaEnLista_struct));
+		tablaABorrar = list_get(listaDeTablasDePaginas,i);
+		list_destroy_and_destroy_elements(tablaABorrar.tablaDePaginas,free);
+	}
+	list_destroy_and_destroy_elements(listaDeTablasDePaginas,free);
+	list_destroy_and_destroy_elements(listaElementos,free);
+	if(strcmp(esquemaMemoria,"PAGINACION")==0){
+		free(bitarrayMemoria);
+		free(bitarraySwap);
+		list_destroy_and_destroy_elements(tablaDeFrames->elements,free);
+		free(memoriaSwap);
+	}else{
+		list_destroy_and_destroy_elements(listaGlobalDeSegmentos,free);
+
+	}
+	free(memoria);
+	nivel_destruir(nivel);                                                          \
+	nivel_gui_terminar();
+	log_info(logger,"EJECUCION FINALIZADA, GRACIAS POR TODO!");
+	log_destroy(logger);
+}
