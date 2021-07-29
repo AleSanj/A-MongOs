@@ -264,13 +264,13 @@ void agregar_paquete_movimiento_mongo(t_paquete* paquete, t_movimiento_mongo* es
 
 	memcpy(paquete->buffer->stream, &(estructura->id_tripulante), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream, &(estructura->origen_x), sizeof(uint8_t));
+	memcpy(paquete->buffer->stream + offset , &(estructura->origen_x), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream, &(estructura->origen_y), sizeof(uint8_t));
+	memcpy(paquete->buffer->stream + offset , &(estructura->origen_y), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream, &(estructura->destino_x), sizeof(uint8_t));
+	memcpy(paquete->buffer->stream + offset , &(estructura->destino_x), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream, &(estructura->destino_y), sizeof(uint8_t));
+	memcpy(paquete->buffer->stream + offset, &(estructura->destino_y), sizeof(uint8_t));
 
 }
 
@@ -280,13 +280,13 @@ t_movimiento_mongo* deserializar_movimiento_mongo(t_paquete* paquete){
 
 	memcpy(&(estructura->id_tripulante), paquete->buffer->stream, sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(&(estructura->origen_x), paquete->buffer->stream, sizeof(uint8_t));
+	memcpy(&(estructura->origen_x), paquete->buffer->stream + offset , sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(&(estructura->origen_y), paquete->buffer->stream, sizeof(uint8_t));
+	memcpy(&(estructura->origen_y), paquete->buffer->stream + offset , sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(&(estructura->destino_x), paquete->buffer->stream, sizeof(uint8_t));
+	memcpy(&(estructura->destino_x), paquete->buffer->stream + offset , sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(&(estructura->destino_y), paquete->buffer->stream, sizeof(uint8_t));
+	memcpy(&(estructura->destino_y), paquete->buffer->stream + offset , sizeof(uint8_t));
 
 	eliminar_paquete(paquete);
 	return estructura;
@@ -315,9 +315,9 @@ void agregar_paquete_consumir_recurso(t_paquete* paquete, t_consumir_recurso* es
 
 	memcpy(paquete->buffer->stream, &(estructura->cantidad), sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(paquete->buffer->stream, &(estructura->tipo), sizeof(char));
+	memcpy(paquete->buffer->stream + offset , &(estructura->tipo), sizeof(char));
 	offset += sizeof(char);
-	memcpy(paquete->buffer->stream, &(estructura->consumible), sizeof(char));
+	memcpy(paquete->buffer->stream + offset , &(estructura->consumible), sizeof(char));
 
 }
 t_consumir_recurso* deserializar_consumir_recurso(t_paquete* paquete){
@@ -326,9 +326,9 @@ t_consumir_recurso* deserializar_consumir_recurso(t_paquete* paquete){
 
 	memcpy(&(estructura->cantidad), paquete->buffer->stream, sizeof(uint8_t));
 	offset += sizeof(uint8_t);
-	memcpy(&(estructura->tipo), paquete->buffer->stream, sizeof(char));
+	memcpy(&(estructura->tipo), paquete->buffer->stream + offset , sizeof(char));
 	offset += sizeof(char);
-	memcpy(&(estructura->consumible), paquete->buffer->stream, sizeof(char));
+	memcpy(&(estructura->consumible), paquete->buffer->stream + offset , sizeof(char));
 
 	eliminar_paquete(paquete);
 	return estructura;

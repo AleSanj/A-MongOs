@@ -30,7 +30,6 @@ int ciclos_totales;
 #include <shared/conexion.h>
 #include <shared/TAD_PATOTA.h>
 #include <shared/TAD_TRIPULANTE.h>
-
 // =============== PAHTS =================
 char* PATH_TAREAS;
 char* PATH_CONFIG;
@@ -585,7 +584,6 @@ void bloqueado_a_ready(Tripulante* bloq)
 }
 void enviar_posicion_mongo(int posx,int posy, Tripulante* tripulante,int socket_cliente){
 	t_movimiento_mongo* movimiento = malloc(sizeof(t_movimiento_mongo));
-	movimiento->id_tripulante = tripulante->id;
 	movimiento->origen_x = posx;
 	movimiento->origen_y = posy;
 	movimiento->destino_x = tripulante->posicionX;
@@ -594,7 +592,7 @@ void enviar_posicion_mongo(int posx,int posy, Tripulante* tripulante,int socket_
 	t_paquete* paquete = crear_paquete(MOVIMIENTO_MONGO);
 	agregar_paquete_movimiento_mongo(paquete,movimiento);
 
-	log_info(logger_conexiones,"Se envia el mensaje ENVIAR_POSICION a MONGOSTORE,id: %d %d|%d a %d|%d" ,movimiento->id_tripulante,movimiento->origen_x,movimiento->origen_y,movimiento->destino_x,movimiento->destino_y);
+	log_info(logger_conexiones,"Se envia el mensaje ENVIAR_POSICION a MONGOSTORE, %d|%d a %d|%d" ,movimiento->origen_x,movimiento->origen_y,movimiento->destino_x,movimiento->destino_y);
 	enviar_paquete(paquete,socket_cliente);
 	liberar_t_movimiento_mongo(movimiento);
 
@@ -622,14 +620,13 @@ void* moverTripulante(Tripulante* tripu)
 {
 	void* ret = "0";
 	int socket_miram = conectarse_Mi_Ram();
-	int socket_mongo = conectarse_mongo();
 	int posicion_actual_x = tripu->posicionX;
 	int posicion_actual_y = tripu->posicionY;
 
 	if (tripu->Tarea->posicion_x > tripu->posicionX) {
 		tripu->posicionX++;
 		enviar_posicion(tripu,socket_miram);
-		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
+//		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_miram);
 		return ret;
 
 	}
@@ -637,7 +634,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posicion_x < tripu->posicionX) {
 		tripu->posicionX--;
 		enviar_posicion(tripu,socket_miram);
-		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
+//		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_miram);
 
 		return ret;
 	}
@@ -645,7 +642,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posiciion_y < tripu->posicionY) {
 		tripu->posicionY--;
 		enviar_posicion(tripu,socket_miram);
-		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
+//		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_miram);
 
 		return ret;
 	}
@@ -653,7 +650,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posiciion_y > tripu->posicionY) {
 		tripu->posicionY++;
 		enviar_posicion(tripu,socket_miram);
-		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
+//		enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_miram);
 
 		return ret;
 	}
@@ -662,72 +659,71 @@ void* moverTripulante(Tripulante* tripu)
 
 void enviar_inicio_fin_mongo(Tripulante* enviar, char c){
 	char* mensaje;
-	int socket_mongostore = conectarse_mongo();
-	switch (c){
-	case 'I':;
-	t_paquete* paquete_inicio = crear_paquete(INICIO_TAREA);
-	t_pedido_mongo* mensaje_inicio = malloc(sizeof(t_pedido_mongo));
-	mensaje = strdup(enviar->Tarea->nombre);
-
-	mensaje_inicio-> id_tripulante= enviar->id;
-	mensaje_inicio-> tamanio_mensaje = strlen(mensaje)+1;
-	mensaje_inicio-> mensaje  = mensaje;
-
-	agregar_paquete_pedido_mongo(paquete_inicio,mensaje_inicio);
-	enviar_paquete(paquete_inicio,socket_mongostore);
-
-	liberar_t_pedido_mongo(mensaje_inicio);
-	break;
-
-	case 'F':;
-	t_paquete* paquete_fin = crear_paquete(FIN_TAREA);
-	t_pedido_mongo* mensaje_fin = malloc(sizeof(t_pedido_mongo));
-	mensaje = strdup(enviar->Tarea->nombre);
-
-	mensaje_fin-> id_tripulante= enviar->id;
-	mensaje_fin-> tamanio_mensaje = strlen(mensaje)+1;
-	mensaje_fin-> mensaje  = mensaje;
-
-	agregar_paquete_pedido_mongo(paquete_fin,mensaje_fin);
-	enviar_paquete(paquete_fin,socket_mongostore);
-
-	liberar_t_pedido_mongo(mensaje_fin);
-	break;
+//	int socket_mongostore = conectarse_mongo();
+//	switch (c){
+//	case 'I':;
+//	t_paquete* paquete_inicio = crear_paquete(INICIO_TAREA);
+//	t_pedido_mongo* mensaje_inicio = malloc(sizeof(t_pedido_mongo));
+//	mensaje = strdup(enviar->Tarea->nombre);
+//
+//	mensaje_inicio-> id_tripulante= enviar->id;
+//	mensaje_inicio-> tamanio_mensaje = strlen(mensaje)+1;
+//	mensaje_inicio-> mensaje  = mensaje;
+//
+//	agregar_paquete_pedido_mongo(paquete_inicio,mensaje_inicio);
+//	enviar_paquete(paquete_inicio,socket_mongostore);
+//
+//	liberar_t_pedido_mongo(mensaje_inicio);
+//	break;
+//
+//	case 'F':;
+//	t_paquete* paquete_fin = crear_paquete(FIN_TAREA);
+//	t_pedido_mongo* mensaje_fin = malloc(sizeof(t_pedido_mongo));
+//	mensaje = strdup(enviar->Tarea->nombre);
+//
+//	mensaje_fin-> id_tripulante= enviar->id;
+//	mensaje_fin-> tamanio_mensaje = strlen(mensaje)+1;
+//	mensaje_fin-> mensaje  = mensaje;
+//
+//	agregar_paquete_pedido_mongo(paquete_fin,mensaje_fin);
+//	enviar_paquete(paquete_fin,socket_mongostore);
+//
+//	liberar_t_pedido_mongo(mensaje_fin);
+//	break;
 
 	}
 
-
-
-
-}
 void enviar_consumir_recurso(Tripulante* tripulante){
-	int socket_mongostore = conectarse_mongo();
-	t_paquete* paquete = crear_paquete(CONSUMIR_RECURSO);
-	t_consumir_recurso* consumir = malloc(sizeof(consumir));
-	consumir->cantidad = tripulante->Tarea->parametro;
-	char** tarea_dividida = string_split(tripulante->Tarea->nombre,"_");
+//	int socket_mongostore = conectarse_mongo();
+//	t_paquete* paquete = crear_paquete(CONSUMIR_RECURSO);
+//	t_consumir_recurso* consumir = malloc(sizeof(consumir));
+//	consumir->cantidad = tripulante->Tarea->parametro;
+//	char** tarea_dividida = string_split(tripulante->Tarea->nombre,"_");
+//
+//	consumir->tipo = tarea_dividida[0][0];
+//	consumir->consumible = tarea_dividida[1][0];
+//
+//	agregar_paquete_consumir_recurso(paquete,consumir);
+//	enviar_paquete(paquete,socket_mongostore);
+//	liberar_t_consumir_recurso(consumir);
+//
+//	free(tarea_dividida[0]);
+//	free(tarea_dividida[1]);
+//	free(tarea_dividida);
+//}
 
-	consumir->tipo = tarea_dividida[0][0];
-	consumir->consumible = tarea_dividida[1][0];
 
-	agregar_paquete_consumir_recurso(paquete,consumir);
-	enviar_paquete(paquete,socket_mongostore);
-	liberar_t_consumir_recurso(consumir);
 
-	free(tarea_dividida[0]);
-	free(tarea_dividida[1]);
-	free(tarea_dividida);
 }
-
 void enviarMongoStore(Tripulante* enviar) {
 
 	//envia tarea al MONGO STORE
-	// char* ="22:09 inicio consumir_oxigeno"
+	// char* ="22:09 inicio consumir_oxigeno    "
 	//char[0], [O,B,C]ocigeno|comida|basura, parametro->tarea
 	esta_haciendo_IO=enviar;
 	enviar_inicio_fin_mongo(enviar,'I');
 
-	enviar_consumir_recurso(enviar);
+//	enviar_consumir_recurso(enviar);
 	while((enviar->espera!=0)&& enviar->vida)
 	{
 

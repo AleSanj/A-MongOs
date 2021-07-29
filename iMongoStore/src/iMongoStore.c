@@ -39,12 +39,12 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "../config/mongoStore.config"
-#define PATH_LOG "../config/archivoLogeo.log"
+//#define PATH_CONFIG "../config/mongoStore.config"
+//#define PATH_LOG "../config/archivoLogeo.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-//#define PATH_CONFIG "config/mongoStore.config"
-//#define PATH_LOG "config/archivoLogeo.log"
+#define PATH_CONFIG "config/mongoStore.config"
+#define PATH_LOG "config/archivoLogeo.log"
 //-------------------------------------
 
 
@@ -83,41 +83,6 @@ int main(void) {
 	string_append(&ruta_superbloque, "/Superbloque/Superbloque.ims");
 	string_append(&ruta_blocks, "/Blocks/Blocks.ims");
 
-		//prueba_servidor_sabotaje
-		//////////////////////////////////////
-		char* prueba_mandar = "3|1";
-
-		int socketCliente=crear_conexion(ipDiscordiador,puertoDicordiador);
-		t_pedido_mongo* posSabo=malloc(sizeof(t_pedido_mongo));
-		posSabo->mensaje=prueba_mandar;
-		posSabo->tamanio_mensaje=strlen(prueba_mandar)+1;
-
-		t_paquete* paquete_enviar= crear_paquete(SABOTAJE);
-		agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
-		char* bitacorear_sabo = enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
-		int id;
-		recv(socketCliente,&id,sizeof(uint8_t),0);
-		escribir_en_bitacora(id,bitacorear_sabo);
-
-		// aca arregla el sabotaje
-
-		// aca tendria que mandar discordiador que se arreglo
-
-		recv(socketCliente,bitacorear_sabo,strlen("FINALIZAR_SABOTAJE")+1,0);
-		escribir_en_bitacora(id,bitacorear_sabo);
-		free(bitacorear_sabo);
-
-		sabotaje_actual++;
-		//////////////////////////////////////
-
-
-		//////	SEMAFORO PARA TESTEAR //////
-		//todo
-		sem_t prueba;
-		sem_init(&prueba, 0, 0);
-		puts("ME QUEDO EN EL SEMAFORO DE PRUEBAS");
-		sem_wait(&prueba);
-		//////	SEMAFORO PARA TESTEAR //////
 	//Inicializamos File System
 	if(verificar_existencia(ruta_blocks) == 0 && verificar_existencia(ruta_superbloque) == 0){
 		inicializar_carpetas();
@@ -140,7 +105,6 @@ int main(void) {
 
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
-
 	int server_fs=crear_server("6667");//PUERTO HARCODEADO OJO !!!!!!!!!!!!!!!!!!!!!!
 
 	while(correr_programa)
@@ -298,7 +262,7 @@ void* sincronizar_blocks()
 			}
 			else
 			{
-				log_error(logger, "Sincronizacion exitosa con el bloque");
+				log_info(logger, "Sincronizacion exitosa con el bloque");
 		    }
 		}
 
@@ -368,7 +332,7 @@ void* atender_mensaje (int socketTripulante){
 	switch(paquete_recibido->codigo_operacion) {
 	case OBTENER_BITACORA:;
 		t_pedido_mongo* bitacora = deserializar_pedido_mongo(paquete_recibido);
-		char* devolver=obtener_bitacora(bitacora->id_tripulante);
+		char* devolver=obtener_bitacora((int) bitacora->id_tripulante);
 		uint32_t tamanio_bitacora = strlen(devolver)+1;
 		send(socketTripulante,&tamanio_bitacora,sizeof(uint32_t),0);
 		send(socketTripulante,devolver,tamanio_bitacora,0);
@@ -383,7 +347,9 @@ void* atender_mensaje (int socketTripulante){
 		char* bitacorear=string_new();
 		sprintf(bitacorear,"Se mueve de %d|%d a %d|%d", mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
 		string_append(&tiempo,bitacorear);
-		escribir_en_bitacora(mov->id_tripulante,tiempo);
+		printf("%s\n",tiempo);
+		imprimir_movimiento_mongo(mov);
+		escribir_en_bitacora((int) mov->id_tripulante,tiempo);
 		free(tiempo);
 		liberar_t_movimiento_mongo(mov);
 		liberar_conexion(socketTripulante);
@@ -406,7 +372,8 @@ void* atender_mensaje (int socketTripulante){
 		char* agregar= temporal_get_string_time("%H:%M:%S:%MS");
 		string_append(&agregar,"SE_INICIO_LA_TAREA_");
 		string_append(&agregar,inico->mensaje);
-		escribir_en_bitacora(inico->id_tripulante,agregar);
+		imprimir_pedido_mongo(inico);
+		escribir_en_bitacora((int) inico->id_tripulante,agregar);
 		free(agregar);
 		liberar_t_pedido_mongo(inico);
 		liberar_conexion(socketTripulante);
@@ -416,8 +383,8 @@ void* atender_mensaje (int socketTripulante){
 		char* agregare = temporal_get_string_time("%H:%M:%S:%MS");
 		string_append(&agregare,"SE_FINALIZA_LA_TAREA_");
 		string_append(&agregare,inicio->mensaje);
-		escribir_en_bitacora(inicio->id_tripulante,agregar);
-		free(agregar);
+		escribir_en_bitacora((int) inicio->id_tripulante,agregare);
+		free(agregare);
 		liberar_t_pedido_mongo(inicio);
 		liberar_conexion(socketTripulante);
 		break;
@@ -1271,7 +1238,6 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		log_info(logger, log);
 //		free(log);
 	}
-	else{
 		int longitud = strlen(texto);
 		//Escribe en la bitacora!
 		for (int i = 0; i < longitud; i++)
@@ -1280,7 +1246,6 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		}
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
-	}
 }
 
 
@@ -1454,7 +1419,7 @@ void agregarCaracter(int cantidad, char caracter){
 }
 
 t_log* iniciar_logger(char* logger_path){
-	t_log *logger= log_create(logger_path, "Mongo", 1, LOG_LEVEL_INFO);
+	t_log *logger= log_create(logger_path, "Mongo", 0, LOG_LEVEL_INFO);
 	if(logger  == NULL){
 		printf("No se puede leer el logger");
 		exit(1);
