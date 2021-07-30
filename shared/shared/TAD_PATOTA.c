@@ -62,7 +62,7 @@ struct pcb
 
 	Patota* devolverPatota = malloc(sizeof(Patota));
 	devolverPatota->id = id_patota;
-	devolverPatota->tareas = strdup(tareas);
+	devolverPatota->tareas = tareas;
 	devolverPatota->inicio = inicio;
 	devolverPatota->fin = inicio + fin - 1;
 	devolverPatota->cantidad_tripulantes = fin;

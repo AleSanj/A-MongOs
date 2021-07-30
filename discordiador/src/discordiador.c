@@ -300,22 +300,15 @@ void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 
 char* leer_tareas(char* path, int* cantidad_tareas){
 	FILE* archivo;
-//	path martin
-//	char* raiz = strdup("/home/utnso/Escritorio/tp-2021-1c-Cebollitas-subcampeon/discordiador/src/tareas/");
-
-//	path ale
 	char* raiz = strdup(PATH_TAREAS);
-
-//	path juan
-//	char* raiz = strdup("/home/utnso/Escritorio/Conexiones/discordiador/src/tareas/");
-
 	string_append(&raiz,path);
 	archivo = fopen(raiz,"r");
 
 
 	if (archivo==NULL){
-		puts("no se pudo leer el path ingresado");
-		return NULL;
+			puts("no se pudo leer el path ingresado");
+			free(raiz);
+			return NULL;
 	}
 	char* tareas = string_new();
 	char* leido = malloc(50);
@@ -573,7 +566,7 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 		pthread_mutex_unlock(&trip_comparar);
 		pthread_mutex_unlock(&sem_cola_bloqIO);
 		pthread_mutex_unlock(&sem_cola_exec);
-		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO ",trp->id, trp->estado);
+		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO_IO ",trp->id, trp->estado);
 		cambiar_estado(trp,"BLOQUEADO_IO");
 }
 
@@ -584,8 +577,8 @@ void bloqueado_a_ready(Tripulante* bloq)
 	pthread_mutex_unlock(&sem_cola_ready);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
-	log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
 	sem_post(&sem_tripulante_en_ready);
+	log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
 }
 
 void enviar_posicion_mongo(int posx,int posy, Tripulante* tripulante,int socket_cliente){
@@ -729,13 +722,11 @@ void enviarMongoStore(Tripulante* enviar) {
 	//envia tarea al MONGO STORE
 	// char* ="22:09 inicio consumir_oxigeno"
 	//char[0], [O,B,C]ocigeno|comida|basura, parametro->tarea
-	esta_haciendo_IO=enviar;
+	esta_haciendo_IO = enviar;
 	enviar_inicio_fin_mongo(enviar,'I');
-
 	enviar_consumir_recurso(enviar);
-	while((enviar->espera!=0)&& enviar->vida)
+	while((enviar->espera != 0 ) && enviar->vida)
 	{
-		//semaforo para parar ejecucion
 		sem_wait(&pararIo);
 		sleep(retardoCpu);
 		enviar->espera--;
@@ -813,9 +804,9 @@ void hacerFifo(Tripulante* tripu) {
 }
 void hacerRoundRobin(Tripulante* tripulant) {
 	int contadorQuantum = 0;
-	if (tripulant->kuantum!=0)
+	if (tripulant->kuantum != 0)
 	{
-		contadorQuantum=tripulant->kuantum;
+		contadorQuantum = tripulant->kuantum;
 	}
 	//obtener_parametros_tarea(tripulant, &tarea_x,&tarea_y);
 	//todo CREO QUE ESTE HACIA QUE SIEMPRE EJECUTE EL MISMO TRIPULANTE, SIN PASAR POR READY PARA QUE SE REPLANIFIQUE
@@ -867,7 +858,7 @@ void hacerRoundRobin(Tripulante* tripulant) {
 	{
 		return;
 	}
-	if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y && tripulant->espera==0 &&tripulant->vida)
+	if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y && tripulant->espera == 0 && tripulant->vida)
 	{
 		tripulant->kuantum=contadorQuantum;
 		enviar_inicio_fin_mongo(tripulant,'F');
@@ -892,12 +883,12 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exec);
 		pthread_mutex_unlock(&trip_comparar);
-		log_info(logger_discordiador,"Se mueve al tripulante %d de READY a %s",tripulant->id,tripulant->estado);
 		cambiar_estado(tripulant,"READY");
+		log_info(logger_discordiador,"Se mueve al tripulante %d de EXEC a %s",tripulant->id,tripulant->estado);
 	//le aviso al semaforo que libere un recurso para que mande otro tripulante
+		sem_post(&sem_tripulante_en_ready);
 		sem_post(&multiProcesamiento);
 		log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
-		sem_post(&sem_tripulante_en_ready);
 	}
 }
 
@@ -959,21 +950,13 @@ void* atender_sabotaje(char* posiciones)
 	free(inicio_sabotaje);
 
 
-	char* fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
-	uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-	send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
-	send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
-	free(inicio_sabotaje);
-	//////	SEMAFORO PARA TESTEAR //////
-	//todo
-	sem_t prueba;
-	sem_init(&prueba, 0, 0);
-	puts("ME QUEDO EN EL SEMAFORO DE PRUEBAS");
-	sem_wait(&prueba);
-	//////	SEMAFORO PARA TESTEAR //////
+//	char* fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
+//	uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
+//	send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+//	send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
+//	free(inicio_sabotaje);
 
-
-	Tripulante* mas_cerca = malloc(sizeof(Tripulante));
+	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
 	pthread_mutex_lock(&sem_cola_exec);
 	for(int i=0;i<list_size(execute);i++)
@@ -983,7 +966,7 @@ void* atender_sabotaje(char* posiciones)
 		iterado->estado="Bloqueado Sabotaje";
 		if(i==0)
 		{
-			Tripulante* mas_cerca=iterado;
+			Tripulante* mas_cerca = iterado;
 		}
 		if(calcular_distancia(iterado, posx, posy) < calcular_distancia(mas_cerca, posx, posy))
 		{
@@ -1302,27 +1285,16 @@ int hacerConsola() {
 	log_info(logger_discordiador,"Consola iniciada");
 	//SIEMPRE HAY QUE SER CORTEZ Y SALUDAR
 	puts("Bienvenido a A-MongOS de Cebollita Subcampeon \n");
-	char* linea = string_new();
-		//----- TRIPULANTE DE PRUEBA
-		/*Tripulante* tripu_prueba_mov = malloc (sizeof(Tripulante)); // CREAMOS UN TRIPULANTE PARA PROBAR LOS MOVIMIENTOS
-		tripu_prueba_mov->id = 88;
-		tripu_prueba_mov->idPatota = 88;
-		tripu_prueba_mov->posicionX = 0;
-		tripu_prueba_mov->posicionY = 0;
-		tripu_prueba_mov->Tarea = string_new();
-		tripu_prueba_mov->estado = string_new();*/
-
-		//----------------------------
-
-	while (1) {
+	int ejecucion = 1;
+	while (ejecucion) {
 //leo los comandos
-		linea = readline(">");
-		log_info(logger_discordiador,"comando %s ingresado",linea);
+		char* linea = readline(">");
 		char** codigo_dividido = string_n_split(linea,2," ");
+		log_info(logger_discordiador,"comando %s ingresado",linea);
 //		[0] CODIGO - [1] PARAMETROS - [2] NULL
 		string_to_upper(codigo_dividido[0]);
 
-		if (string_contains(codigo_dividido[0], "INICIAR_PATOTA")) {
+		if(string_contains(codigo_dividido[0], "INICIAR_PATOTA")) {
 			char** parametros_divididos = string_n_split(codigo_dividido[1],3," ");
 
 //			[0] CANTIDAD_TRIPULANTES - [1] PATH_ARCHIVO - [2] POSICIONES - [3] NULL
@@ -1344,11 +1316,22 @@ int hacerConsola() {
 				free(respuesta);
 				puts("no hay espacio en ram");
 				log_info(logger_discordiador,"NO HAY ESPACIO PARA LA NUEVA PATOTA");
+				free(parametros_divididos[0]);
+				free(parametros_divididos[1]);
+				free(parametros_divididos[2]);
+				free(parametros_divididos);
+				free(respuesta);
+				free(pato->tareas);
+
+				free(codigo_dividido[0]);
+				free(codigo_dividido[1]);
+				free(codigo_dividido);
+				free(linea);
+				list_clean(posiciones_iniciales);
+				free(posiciones_iniciales);
 				continue;
 			}
-			free(respuesta);
-//			luego de enviar las tareas leidas a miram ya no nos interesa tenerlas en el discordiador
-			free(pato->tareas);
+
 			list_add(listaPatotas,(void*) pato);
 			log_info(logger_discordiador,"Se creo la patota %d y se agrego a la lista de patotas", pato->id);
 
@@ -1386,12 +1369,14 @@ int hacerConsola() {
 			}
 			p_totales++;
 
+//			luego de enviar las tareas leidas a miram ya no nos interesa tenerlas en el discordiador
+			free(pato->tareas);
+			free(respuesta);
+			free(parametros_divididos[0]);
+			free(parametros_divididos[1]);
+			free(parametros_divididos[2]);
 			free(parametros_divididos);
-			/*
-			 * averiguar si es valido hacer
-			 * free(parametros_divididos[0])
-			 * free(parametros_divididos[1]) etc etc
-			 */
+
 			list_clean(posiciones_iniciales);
 			free(posiciones_iniciales);
 		}
@@ -1430,33 +1415,29 @@ int hacerConsola() {
 			//BUENO ACA UN PEQUEÑO INTENTO DE TU TAREA DE MANEJO DE STRINGS PILI
 			// FIJATE QUE SOLO SIRVE SI ES DE UN DIGIITO VAS A TENER QUE DIVIDIR EL ESTRING EN EL ESPACIO
 			// Y FIJARTE SI EL SUBSTRING TIENE 1 O 2 CARACTERES
-			char** obtener_id_trip=string_split(linea, " ");
-			int id_tripulante = strtol(obtener_id_trip[1],NULL,10);
+			int id_tripulante = strtol(codigo_dividido[1],NULL,10);
 			Tripulante* tripulante_rip = buscar_tripulante(id_tripulante);
 			if (tripulante_rip == NULL){
 				log_info(logger_discordiador,"El tripulante %d ingresado no existe",id_tripulante);
 				continue;
 			}
-			if (tripulante_rip->estado,"EXIT")
-
+			if (strcmp(tripulante_rip->estado,"EXIT")){
+				log_info(logger_discordiador,"El tripulante %d ya ha finalizado",id_tripulante);
+				continue;
+			}
 			log_info(logger_discordiador,"Se encontro al tripulante a expulsar: %d en %s",tripulante_rip->id,tripulante_rip->estado);
 			tripulante_rip->vida = false;
 			//sem_post(&(tripulante_rip->sem_pasaje_a_exec));
 
 			eliminarTripulante(tripulante_rip);
-
-			free(obtener_id_trip[0]);
-			free(obtener_id_trip[1]);
-			free(obtener_id_trip);
 		}
 
 		if (string_contains(linea,"OBTENER_BITACORA")){
 			int socket_bitacora = conectarse_mongo();
-
-			char** obtener_id = string_split(linea, " ");
-			int tripulante_id = strtol(obtener_id[1],NULL,10);
+			int tripulante_id = strtol(codigo_dividido[1],NULL,10);
 			t_paquete* paquete_bitacora= crear_paquete(OBTENER_BITACORA);
 			t_pedido_mongo* pedido_bitacora = malloc(sizeof(t_pedido_mongo));
+
 			pedido_bitacora->id_tripulante = tripulante_id;
 			pedido_bitacora->mensaje =string_new();
 			pedido_bitacora->tamanio_mensaje = strlen(pedido_bitacora->mensaje) + 1;
@@ -1466,16 +1447,12 @@ int hacerConsola() {
 			char* bitacora = enviar_paquete_respuesta_string(paquete_bitacora,socket_bitacora);
 			log_info(logger_conexiones, "el tripulante %d recibe su bitacora: %s",tripulante_id,bitacora);
 			liberar_t_pedido_mongo(pedido_bitacora);
-
-
-
-		free(obtener_id[0]);
-		free(obtener_id[1]);
-		free(obtener_id);
+			free(bitacora);
 		}
 
 		if (string_contains(linea,"EXIT") || linea[0] == '\0'){
-			int socket_miram=conectarse_Mi_Ram();
+			int socket_miram = conectarse_Mi_Ram();
+			int socket_mongo = conectarse_mongo();
 			t_paquete* paquete_miram = crear_paquete(FINALIZAR);
 			t_paquete* paquete_mongo = crear_paquete(FINALIZAR);
 
@@ -1487,17 +1464,19 @@ int hacerConsola() {
 
 			agregar_paquete_tripulante(paquete_miram,estructura);
 			agregar_paquete_tripulante(paquete_mongo,estructura);
-			log_info(logger_conexiones,"Se emvia mensaje de finalizacion a Mongostore y Miram");
+			log_info(logger_conexiones,"Se emvia mensaje de tipo FINALIZAR a Mongostore y Miram");
 			enviar_paquete(paquete_miram,socket_miram);
-			//enviar_paquete(paquete_mongo,estructura);
+			enviar_paquete(paquete_mongo,socket_mongo);
 
 			liberar_t_tripulante(estructura);
 			terminar_programa();
 		}
 
+		free(codigo_dividido[0]);
+		free(codigo_dividido[1]);
+		free(codigo_dividido);
+		free(linea);
 	}
-
-	free(linea);
 }
 int main(int argc, char* argv[]) {
 	ciclos_totales = 0;

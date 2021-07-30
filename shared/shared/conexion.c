@@ -112,6 +112,7 @@ int crear_conexion(char* ip, char* puerto)
 	    //printf("No se pudo crear el socket\n");
 	    return (-1);
 	  }
+	  freeaddrinfo(resultado);
 	  return socket_cliente;
 }
 
@@ -177,14 +178,13 @@ int enviar_paquete(t_paquete* paquete, int socket_cliente) {
 		recv(socket_cliente, &respuesta, sizeof(uint8_t), 0); // Recordar que aca se puede recibir cualquier estructura que se necesite, en este caso recibimos un int con el que verificamos que se envio \todo correctamente
 		if (respuesta) {
 //			puts("Respuesta recibida\n");
-
-
 		} else {
 			puts("No recibimos respuesta del servidor\n");
 		}
 	} else {
 		puts("No se pudo enviar el paquete\n");
 	}
+		free(a_enviar);
 		liberar_conexion(socket_cliente);
 		eliminar_paquete(paquete);
 	return respuesta;
@@ -228,6 +228,8 @@ char* enviar_paquete_respuesta_string(t_paquete* paquete,int socket){
 		} else {
 			puts("No se pudo enviar el paquete\n");
 		}
+		free(a_enviar);
+		liberar_conexion(socket);
 		eliminar_paquete(paquete);
 	return tarea;
 }
