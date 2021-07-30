@@ -14,7 +14,7 @@
 //#define PATH_CONFIG "src/mi_ram_hq.config"
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "src/mi_ram_hq.config"
+#define PATH_CONFIG "../src/mi_ram_hq.config"
 //-------------------------------------
 
 #include "mi_ram_hq.h"
@@ -48,7 +48,7 @@ int main(void) {
 	}else{
 		tipoDeGuardado = BESTFIT;
 	}
-	if((logger = log_create("log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 		{
 			printf(" No pude leer el logger\n");
 			exit(1);
@@ -398,7 +398,7 @@ void dumpDeMemoria(){
 					for(int k = 0; k<list_size(tablaAEvaluar->tablaDePaginas);k++){
 						paginaEnTabla_struct* paginaBuscada = malloc(sizeof(paginaEnTabla_struct));
 						paginaBuscada = list_get(tablaAEvaluar->tablaDePaginas,k);
-						if(paginaBuscada->frame == i){
+						if(paginaBuscada->frame == i && paginaBuscada->presencia==1){
 							fprintf(dmp,"Marco:%d  Estado:Ocupado  Proceso:%d  Pagina:%d\n",i,tablaAEvaluar->idPatota,k);
 						}
 					}
