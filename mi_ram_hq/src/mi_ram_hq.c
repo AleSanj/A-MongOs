@@ -14,7 +14,7 @@
 //#define PATH_CONFIG "src/mi_ram_hq.config"
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "src/mi_ram_hq.config"
+#define PATH_CONFIG "../src/mi_ram_hq.config"
 //-------------------------------------
 
 #include "mi_ram_hq.h"
@@ -48,7 +48,7 @@ int main(void) {
 	}else{
 		tipoDeGuardado = BESTFIT;
 	}
-	if((logger = log_create("log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 		{
 			printf(" No pude leer el logger\n");
 			exit(1);
@@ -120,8 +120,6 @@ void administrar_cliente(int socketCliente){
 			espacioNecesario = estructura_iniciar_patota->tamanio_tareas + (estructura_iniciar_patota->cantTripulantes*21)+8;
 			if(espacioLibre<espacioNecesario){
 				log_info(logger, "No tengo espacio en la memoria para guardar la patota %d\n",estructura_iniciar_patota->idPatota);
-				log_info(logger, "ESPACIO LIBRE: %d",espacioLibre);
-				log_info(logger, "ESPACIO NECESARIO: %d",espacioNecesario);
 
 				char* fault = strdup("fault");
 				uint32_t tamanio_fault = strlen(fault)+1;
@@ -187,7 +185,6 @@ void administrar_cliente(int socketCliente){
 			//printf("eliminar TRIPULANTE /n");
 				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
 
-				log_info(logger, "Voy a borrar el tripulante %d de la patota %d",tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota);
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
@@ -205,6 +202,7 @@ void administrar_cliente(int socketCliente){
 			//printf("PEDIR TAREA /n");
 				t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
 				//imprimir_paquete_tripulante(tripulante_solicitud);
+				log_info(logger,"El tripulante %d esta pidiendo tarea",tripulante_solicitud->id_tripulante);
 				char*tareas = string_new();
 				tareas = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
 				char **arrayTareas = string_split(tareas,"|");
@@ -219,10 +217,8 @@ void administrar_cliente(int socketCliente){
 					totalDeTareas++;
 					i++;
 				}
-				log_info(logger, "Encontre las tareas: %s\n",tareas);
 				if(tripulanteATraer->proxTarea==totalDeTareas){
 					char* fault = strdup("fault");
-					log_info(logger, "Entre al if para mandar tarea fault");
 					uint32_t tamanio_fault = strlen(fault)+1;
 					send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
 					send(socketCliente, fault,tamanio_fault,0);
@@ -234,7 +230,6 @@ void administrar_cliente(int socketCliente){
 					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
 					if(strcmp(esquemaMemoria,"PAGINACION")==0){
-						log_info(logger, "Entre al esquema de paginacion para mandar");
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_paginacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
@@ -398,7 +393,7 @@ void dumpDeMemoria(){
 					for(int k = 0; k<list_size(tablaAEvaluar->tablaDePaginas);k++){
 						paginaEnTabla_struct* paginaBuscada = malloc(sizeof(paginaEnTabla_struct));
 						paginaBuscada = list_get(tablaAEvaluar->tablaDePaginas,k);
-						if(paginaBuscada->frame == i){
+						if(paginaBuscada->frame == i && paginaBuscada->presencia==1){
 							fprintf(dmp,"Marco:%d  Estado:Ocupado  Proceso:%d  Pagina:%d\n",i,tablaAEvaluar->idPatota,k);
 						}
 					}
