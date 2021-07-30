@@ -120,8 +120,6 @@ void administrar_cliente(int socketCliente){
 			espacioNecesario = estructura_iniciar_patota->tamanio_tareas + (estructura_iniciar_patota->cantTripulantes*21)+8;
 			if(espacioLibre<espacioNecesario){
 				log_info(logger, "No tengo espacio en la memoria para guardar la patota %d\n",estructura_iniciar_patota->idPatota);
-				log_info(logger, "ESPACIO LIBRE: %d",espacioLibre);
-				log_info(logger, "ESPACIO NECESARIO: %d",espacioNecesario);
 
 				char* fault = strdup("fault");
 				uint32_t tamanio_fault = strlen(fault)+1;
@@ -187,8 +185,6 @@ void administrar_cliente(int socketCliente){
 			//printf("eliminar TRIPULANTE /n");
 				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
 
-				log_info(logger, "Voy a borrar el tripulante %d de la patota %d",tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota);
-				log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
@@ -200,7 +196,6 @@ void administrar_cliente(int socketCliente){
 					}
 				}
 				log_info(logger, "Borre el tripulante %d\n",tripulante_a_eliminar->id_tripulante);
-				log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 				break;
 
 		case PEDIR_TAREA:;
@@ -222,10 +217,8 @@ void administrar_cliente(int socketCliente){
 					totalDeTareas++;
 					i++;
 				}
-				log_info(logger, "Encontre las tareas: %s\n",tareas);
 				if(tripulanteATraer->proxTarea==totalDeTareas){
 					char* fault = strdup("fault");
-					log_info(logger, "Entre al if para mandar tarea fault");
 					uint32_t tamanio_fault = strlen(fault)+1;
 					send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
 					send(socketCliente, fault,tamanio_fault,0);
@@ -237,7 +230,6 @@ void administrar_cliente(int socketCliente){
 					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
 					if(strcmp(esquemaMemoria,"PAGINACION")==0){
-						log_info(logger, "Entre al esquema de paginacion para mandar");
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_paginacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
@@ -319,11 +311,9 @@ void administrar_cliente(int socketCliente){
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
-			log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
-			log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 			break;
 
 		default:;
