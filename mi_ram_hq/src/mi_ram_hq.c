@@ -207,6 +207,7 @@ void administrar_cliente(int socketCliente){
 			//printf("PEDIR TAREA /n");
 				t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
 				//imprimir_paquete_tripulante(tripulante_solicitud);
+				log_info(logger,"El tripulante %d esta pidiendo tarea",tripulante_solicitud->id_tripulante);
 				char*tareas = string_new();
 				tareas = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
 				char **arrayTareas = string_split(tareas,"|");

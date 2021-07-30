@@ -163,8 +163,8 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         while (payLoadYaGuardado<tamPayload) {
             int frameDisponible = encontrarFrameDisponible();
             if (frameDisponible == -1){
-                guardar_en_swap(payload,idElemento,tamPayload-payLoadYaGuardado,pid,tipo);
-                break;
+                frameDisponible = sacarPaginaDeMemoria();
+            	//guardar_en_swap(payload,idElemento,tamPayload-payLoadYaGuardado,pid,tipo);
             }
             paginaReemplazable3->nroFrame = frameDisponible;
             direccionFisica = (int)memoria + (int)(frameDisponible * tamPagina);
@@ -190,8 +190,9 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         paginaReemplazable->uso=1;
         paginaReemplazable->PID=pid;
         if (frameDisponible == -1) {
-            guardar_en_swap(payload, idElemento, tamPayload, pid, tipo);
-        } else{
+            frameDisponible = sacarPaginaDeMemoria();
+        	//guardar_en_swap(payload, idElemento, tamPayload, pid, tipo);
+        }
             int *direccionFisica = memoria + (frameDisponible * tamPagina);
             memcpy(direccionFisica, payload, menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina));
             paginaEnTabla_struct *nuevaPagina = malloc(sizeof(paginaEnTabla_struct));
@@ -215,9 +216,10 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
                 paginaReemplazable2->PID=pid;
                 int frameDisponible = encontrarFrameDisponible();
                 if (frameDisponible == -1) {
-                    guardar_en_swap(payload, idElemento, tamPayload-payLoadYaGuardado, pid, tipo);
-                    break;
-                }else{
+                	frameDisponible = sacarPaginaDeMemoria();
+                	//guardar_en_swap(payload, idElemento, tamPayload-payLoadYaGuardado, pid, tipo);
+                    //break;
+                }
 					int *direccionFisica = memoria + (frameDisponible * tamPagina);
 					memcpy(direccionFisica, payload, menorEntreDos(tamPayload - payLoadYaGuardado, tamPagina));
 					paginaEnTabla_struct *nuevaPagina = malloc(sizeof(paginaEnTabla_struct));
@@ -230,23 +232,10 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
 					paginaReemplazable2->nroPagina = list_add(tablaCorrespondiente->tablaDePaginas, nuevaPagina);
 					queue_push(tablaDeFrames, paginaReemplazable2);
 					bitarrayMemoria[frameDisponible] = 1;
-                }
+
             }
-        }
+
     }
-    /*memcpy(memoria,payload, tamPayload/2);
-    printf("Memoria: %d \n", memoria);
-    printf("memoria + 500: %d \n", memoria+500);
-    payload += tamPayload/2;
-    memcpy(memoria+200,payload, tamPayload/2);
-    void* payloadRecompuesto = malloc(tamPayload);
-    printf("payloadRecompuesto puntero inicial: %d\n", payloadRecompuesto);
-    memcpy(payloadRecompuesto,memoria, tamPayload/2);
-    memcpy((payloadRecompuesto+tamPayload/2),memoria+200, tamPayload/2);
-    tripulante_struct *payloadMegaCasteado = malloc(tamPayload);
-    payloadMegaCasteado = payloadRecompuesto;
-    printf("puntero payload recompuesto: %d\n",payloadRecompuesto);
-    printf("Pos X del payload recompuesto: %d \n",payloadMegaCasteado->posx);*/
 }
 
 
@@ -1490,4 +1479,54 @@ void actualizar_lista_elementos_segmentacion(int segmentoAgregado,int PID){
 			list_replace(listaElementos,i,elementoIterante);
 		}
 	}
+}
+
+int sacarPaginaDeMemoria(){
+	paginaParaReemplazar_struct *paginaAReemplazar = malloc(sizeof(paginaParaReemplazar_struct));
+	if (strcmp(alg_remplazo,"LRU")==0){
+		paginaAReemplazar = queue_pop(tablaDeFrames);
+	} else{
+		list_sort(tablaDeFrames->elements,ordenar_por_nro_frame);
+		while (1) {
+			paginaAReemplazar = list_get(tablaDeFrames->elements, punteroReemplazo);
+			// //log_info(logger, "PID de la pagina a reemplazar: %d\n",paginaAReemplazar->PID);
+			if (paginaAReemplazar->uso==1){
+				paginaAReemplazar->uso = 0;
+				////log_info(logger, "PID de la pagina a reemplazar 2: %d\n",paginaAReemplazar->PID);
+				list_replace(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar);
+				if (punteroReemplazo+1 == queue_size(tablaDeFrames)){
+					punteroReemplazo = 0;
+				} else{
+					punteroReemplazo++;
+				}
+			} else{
+				list_remove(tablaDeFrames->elements,punteroReemplazo);
+				if(punteroReemplazo == queue_size(tablaDeFrames)){
+					punteroReemplazo = 0;
+				}
+				break;
+			}
+		}
+
+	}
+	int frameEnSwap = encontrarFrameEnSwapDisponible();
+	int* direccionFisicaPaginaEnSwap = (int)memoriaSwap + (frameEnSwap * tamPagina);
+	int* direccionFisicaPaginaEnMemoria = (int) memoria + (paginaAReemplazar->nroFrame * tamPagina);
+	memcpy(direccionFisicaPaginaEnSwap,direccionFisicaPaginaEnMemoria,tamPagina);
+	bitarraySwap[frameEnSwap]=1;
+	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	t_list *tablaDePaginasBuscada;
+	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+		tablaBuscada = list_get(listaDeTablasDePaginas,i);
+		if (tablaBuscada->idPatota == paginaAReemplazar->PID){
+			tablaDePaginasBuscada = tablaBuscada->tablaDePaginas;
+			break;
+		}
+	}
+	paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
+	paginaAActualizar =list_get(tablaDePaginasBuscada,paginaAReemplazar->nroPagina);
+	paginaAActualizar->presencia = 0;
+	paginaAActualizar->frame = frameEnSwap;
+	list_replace(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar);
+	return paginaAReemplazar->nroFrame;
 }

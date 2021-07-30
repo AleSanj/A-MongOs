@@ -83,6 +83,7 @@ bool filtrarPorTipo(void*);
 void *buscar_de_memoria_segmentacion(int,int,char);
 char tipoUniversal;
 void guardar_en_memoria_general(void* ,int ,int ,int ,char );
+int sacarPaginaDeMemoria();
 void guardar_en_memoria_paginacion(void*,int,int,int,char);
 void* buscar_en_memoria_paginacion(int,int, char);
 void *borrar_de_memoria_paginacion(int, int, char);
