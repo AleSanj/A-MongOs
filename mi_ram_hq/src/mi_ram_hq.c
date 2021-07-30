@@ -188,6 +188,7 @@ void administrar_cliente(int socketCliente){
 				t_tripulante* tripulante_a_eliminar = deserializar_tripulante(paquete_recibido);
 
 				log_info(logger, "Voy a borrar el tripulante %d de la patota %d",tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota);
+				log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
@@ -199,6 +200,7 @@ void administrar_cliente(int socketCliente){
 					}
 				}
 				log_info(logger, "Borre el tripulante %d\n",tripulante_a_eliminar->id_tripulante);
+				log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 				break;
 
 		case PEDIR_TAREA:;
@@ -316,9 +318,11 @@ void administrar_cliente(int socketCliente){
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
+			log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
+			log_info(logger,"Tamanio de la tabla de frames %d",list_size(tablaDeFrames->elements));
 			break;
 
 		default:;
