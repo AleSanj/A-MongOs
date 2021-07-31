@@ -925,6 +925,18 @@ void* vivirTripulante(Tripulante* tripulante) {
 	eliminarTripulante(tripulante);
 	return NULL;
 }
+
+void postear_exec(){
+	if (list_is_empty(execute)){
+		return;
+	}
+	int i;
+	for (i = 0; i < list_size(execute); i++) {
+		Tripulante* tripulante = (Tripulante*) list_get(execute,i);
+		sem_post(&(tripulante->hilosEnEjecucion));
+	}
+}
+
 void* atender_sabotaje(char* posiciones)
 {
 	//separo los parametros del sabotaje
@@ -938,18 +950,9 @@ void* atender_sabotaje(char* posiciones)
 	free(posiciones_divididas);
 	free(posiciones);
 
-	char* inicio_sabotaje = strdup("INICIO_DE_SABOTAJE");
-	uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
-	send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
-	send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
-	free(inicio_sabotaje);
+	char* inicio_sabotaje;
+	char* fin_sabotaje;
 
-
-	char* fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
-	uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-	send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
-	send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
-	free(inicio_sabotaje);
 
 	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
@@ -958,7 +961,8 @@ void* atender_sabotaje(char* posiciones)
 	{
 		Tripulante* iterado=(Tripulante*)list_get(execute,i);
 
-		iterado->estado="Bloqueado Sabotaje";
+		free(iterado->estado);
+		iterado->estado=strdup("BLOQUEADO_SABOTAJE");
 		if(i==0)
 		{
 			Tripulante* mas_cerca = iterado;
@@ -977,7 +981,8 @@ void* atender_sabotaje(char* posiciones)
 			while(in<queue_size(ready))
 			{
 				Tripulante* trip_agregar=queue_pop(ready);
-				trip_agregar->estado="Bloqueado Sabotaje";
+				free(trip_agregar->estado);
+				trip_agregar->estado = strdup("BLOQUEADO_SABOTAJE");
 				if(in==0)
 				{
 					auxiliar= trip_agregar;
@@ -995,44 +1000,20 @@ void* atender_sabotaje(char* posiciones)
 			while(in<queue_size(bloqueados))
 				{
 				   Tripulante* trip_agregar=queue_pop(bloqueados);
-				   trip_agregar->estado="Bloqueado Sabotaje";
-					queue_push(bloqueados,trip_agregar);
-					in++;
+
+				   free(trip_agregar->estado);
+				   trip_agregar->estado = strdup("BLOQUEADO_SABOTAJE");
+				   queue_push(bloqueados,trip_agregar);
+				   in++;
 				}
 			pthread_mutex_unlock(&sem_cola_bloqIO);
-			esta_haciendo_IO->estado="Bloqueado Sabotaje";
-
+			free(esta_haciendo_IO->estado);
+			esta_haciendo_IO->estado = strdup("BLOQUEADO_SABOTAJE");
 			int tiempo_sabota=tiempo_sabotaje;
-			inicio_sabotaje = NULL;
-			fin_sabotaje = NULL;
 
 		if(calcular_distancia(mas_cerca, posx, posy)<calcular_distancia(auxiliar,posx,posy))
 		{
 			while(mas_cerca->posicionX!=posx||mas_cerca->posicionY!=posy)
-			{
-			sleep(retardoCpu);
-			moverTripulante(mas_cerca);
-			}
-//			inicio_sabotaje = strdup("INICIO_DE_SABOTAJE");
-//			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
-//			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
-//			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
-//			free(inicio_sabotaje);
-
-			while(tiempo_sabota!=0)
-			{
-				sleep(retardoCpu);
-				tiempo_sabotaje--;
-			}
-//			fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
-//			uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-//			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
-//			send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
-//			free(inicio_sabotaje);
-		}
-		else
-		{
-			while(auxiliar->posicionX!=posx||auxiliar->posicionY!=posy)
 			{
 			sleep(retardoCpu);
 			moverTripulante(mas_cerca);
@@ -1046,7 +1027,31 @@ void* atender_sabotaje(char* posiciones)
 			while(tiempo_sabota!=0)
 			{
 				sleep(retardoCpu);
-				tiempo_sabotaje--;
+				tiempo_sabota--;
+			}
+			fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
+			uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+			send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
+			free(inicio_sabotaje);
+		}
+		else
+		{
+			while(auxiliar->posicionX!=posx||auxiliar->posicionY!=posy)
+			{
+			sleep(retardoCpu);
+			moverTripulante(auxiliar);
+			}
+			inicio_sabotaje = strdup("INICIO_DE_SABOTAJE");
+			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
+			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
+			free(inicio_sabotaje);
+
+			while(tiempo_sabota!=0)
+			{
+				sleep(retardoCpu);
+				tiempo_sabota--;
 			}
 			fin_sabotaje = strdup("FIN_DE_SABOTAJE");
 			uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
@@ -1054,26 +1059,29 @@ void* atender_sabotaje(char* posiciones)
 			send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
 			free(inicio_sabotaje);
 		}
+
 		pthread_mutex_lock(&sem_cola_exec);
 
 			for(int i=0;i<list_size(execute);i++)
 			{
 				Tripulante* iterado=(Tripulante*)list_get(execute,i);
-
-
+				free(iterado->estado);
 				iterado->estado = strdup("EXEC");
 			}
 		pthread_mutex_unlock(&sem_cola_exec);
-		int a = 0;
 		//DEFINO UN SEM CONTADOR QUE NOS VA A SERVIR PARA PAUSAR LA PLANIFICACION DONDE QUERAMOS DESPUES
+		estado_planificacion = 1;
 		postear_exec();
+
+
 
 		 in=0;
 				pthread_mutex_lock(&sem_cola_ready);
 				while(in<queue_size(ready))
 				{
 					Tripulante* trip_agregar=queue_pop(ready);
-					trip_agregar->estado="READY";
+					free(trip_agregar->estado);
+					trip_agregar->estado = strdup("READY");
 					queue_push(ready,trip_agregar);
 					in++;
 				}
@@ -1085,50 +1093,16 @@ void* atender_sabotaje(char* posiciones)
 				while(in<queue_size(bloqueados))
 					{
 					   Tripulante* trip_agregar=queue_pop(bloqueados);
-					   trip_agregar->estado="BLOQUEADO IO";
-						queue_push(bloqueados,trip_agregar);
+					   free(trip_agregar->estado);
+					   trip_agregar->estado = strdup("BLOQUEADO_IO");
+
+					   queue_push(bloqueados,trip_agregar);
 						in++;
 					}
 				pthread_mutex_unlock(&sem_cola_bloqIO);
-				esta_haciendo_IO->estado="Bloqueado IO";
-
 				sem_post(&pararIo);
 				liberar_conexion(cliente_sabotaje);
 	return NULL;
-}
-
-void eliminar_patota(Patota* patota){
-	free(patota);
-}
-
-void eliminar_tripulante(Tripulante* tripulante){
-	free(tripulante->estado);
-	free(tripulante->Tarea->nombre);
-	free(tripulante->Tarea);
-	free(tripulante);
-}
-
-void liberar_lista_patotas() {
-	list_destroy_and_destroy_elements(listaPatotas,&eliminar_patota);
-	free(listaPatotas);
-}
-void liberar_lista_tripulantes() {
-	list_destroy_and_destroy_elements(finalizado,&eliminarTripulante);
-	free(finalizado);
-
-}
-
-
-void terminar_programa(){
-	liberar_lista_tripulantes();
-	liberar_lista_patotas();
-
-	log_destroy(logger_discordiador);
-	log_destroy(logger_conexiones);
-	log_destroy(logger_tripulante);
-	config_destroy(config);
-	puts("NOS VIMOOO");
-	exit(1);
 }
 
 char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
@@ -1198,16 +1172,7 @@ void recorrer_lista(t_list* lista){
 	puts("");
 }
 
-void postear_exec(){
-	if (list_is_empty(execute)){
-		return;
-	}
-	int i;
-	for (i = 0; i < list_size(execute); i++) {
-		Tripulante* tripulante = (Tripulante*) list_get(execute,i);
-		sem_post(&(tripulante->hilosEnEjecucion));
-	}
-}
+
 
 void waitear_exec(){
 	if (list_is_empty(execute)){
@@ -1495,7 +1460,6 @@ int hacerConsola() {
 			enviar_paquete(paquete_mongo,socket_mongo);
 
 			liberar_t_tripulante(estructura);
-			terminar_programa();
 		}
 
 		free(codigo_dividido[0]);
@@ -1594,37 +1558,36 @@ int main(int argc, char* argv[]) {
 
 	pthread_t consola;
 	pthread_create(&consola, NULL, (void *) hacerConsola, NULL);
-	pthread_join(consola,NULL);
+//	pthread_join(consola,NULL);
 
-//	int socket_sabotaje = crear_server(puertoSabotaje);
-//	log_info(logger_conexiones,"Servidor abierto con el socket %d\n",socket_sabotaje);
-//	while(correr_programa)
-//	{
-//		cliente_sabotaje = esperar_cliente(socket_sabotaje,5);
-//		if (cliente_sabotaje == -1)
-//			continue;
-//
-//		log_info(logger_conexiones, "Nueva conexion recibida con el socket: %d",cliente_sabotaje);
-//		int respuesta;
-//		t_paquete* paquete_recibido = recibir_paquete(cliente_sabotaje, &respuesta);
-//		log_info(logger_conexiones, "paquete recibido de tipo: %d",paquete_recibido->codigo_operacion);
-//		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
-//			liberar_conexion(cliente_sabotaje);
-//			eliminar_paquete(paquete_recibido);
-//
-//		}
-//
-//		printf("SABOTAJE RECIBIDO: %d\n",paquete_recibido->codigo_operacion);
-//		t_pedido_mongo* posiciciones_sabotaje = deserializar_pedido_mongo(paquete_recibido);
-//		int parar_todo_sabotaje=0;
-//
-//		waitear_exec();
-//		sem_wait(&pararIo);
-//		sem_wait(&(pararPlanificacion[0]));
-//
-//		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
-//		pthread_join(&hilo_sabotaje,NULL);
-//	}
+	int socket_sabotaje = crear_server(puertoSabotaje);
+	log_info(logger_conexiones,"Servidor abierto con el socket %d\n",socket_sabotaje);
+	while(correr_programa)
+	{
+		cliente_sabotaje = esperar_cliente(socket_sabotaje,5);
+		if (cliente_sabotaje == -1)
+			continue;
+
+		log_info(logger_conexiones, "Nueva conexion recibida con el socket: %d",cliente_sabotaje);
+		int respuesta;
+		t_paquete* paquete_recibido = recibir_paquete(cliente_sabotaje, &respuesta);
+		log_info(logger_conexiones, "paquete recibido de tipo: %d",paquete_recibido->codigo_operacion);
+		if (paquete_recibido->codigo_operacion == -1 || respuesta == ERROR) {
+			liberar_conexion(cliente_sabotaje);
+			eliminar_paquete(paquete_recibido);
+
+		}
+
+		printf("SABOTAJE RECIBIDO: %d\n",paquete_recibido->codigo_operacion);
+		t_pedido_mongo* posiciciones_sabotaje = deserializar_pedido_mongo(paquete_recibido);
+		estado_planificacion=0;
+		sem_wait(&pararIo);
+		sem_wait(&(pararPlanificacion[0]));
+
+		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
+		pthread_join(&hilo_sabotaje,NULL);
+		liberar_t_pedido_mongo(posiciciones_sabotaje);
+	}
 
 	return 0;
 }
