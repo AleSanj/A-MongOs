@@ -40,11 +40,17 @@ int blocks_sabot;
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
 //#define PATH_CONFIG "../config/mongoStore.config"
-//#define PATH_LOG "../config/archivoLogeo.log"
+//#define PATH_LOG_G "../config/log_general.log"
+//#define PATH_LOG_B "../config/log_bitacoras.log"
+//#define PATH_LOG_SE "../config/log_server.log"
+//#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
 #define PATH_CONFIG "config/mongoStore.config"
-#define PATH_LOG "config/archivoLogeo.log"
+#define PATH_LOG_G "config/log_general.log"
+#define PATH_LOG_B "config/log_bitacoras.log"
+#define PATH_LOG_SE "config/log_server.log"
+#define PATH_LOG_SA "config/log_sabotaje.log"
 //-------------------------------------
 
 
@@ -59,7 +65,10 @@ int main(void) {
 
 	printf("Checkpoint 2");
 
-	logger = iniciar_logger(PATH_LOG);
+	logger = iniciar_logger(PATH_LOG_G);
+	log_bitacoras = iniciar_logger(PATH_LOG_B);
+	log_mensaje = iniciar_logger(PATH_LOG_SE);
+	log_sabotaje = iniciar_logger(PATH_LOG_SA);
 
 	printf("Checkpoint 3");
 
@@ -105,6 +114,7 @@ int main(void) {
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 //
+
 
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
@@ -335,10 +345,12 @@ void* atender_mensaje (int socketTripulante){
 	switch(paquete_recibido->codigo_operacion) {
 	case OBTENER_BITACORA:;
 		t_pedido_mongo* bitacora = deserializar_pedido_mongo(paquete_recibido);
+		log_info(log_mensaje,"Se PIDIO la bitacora del tripulante %d", bitacora->id_tripulante);
 		char* devolver=obtener_bitacora((int) bitacora->id_tripulante);
 		uint32_t tamanio_bitacora = strlen(devolver)+1;
 		send(socketTripulante,&tamanio_bitacora,sizeof(uint32_t),0);
 		send(socketTripulante,devolver,tamanio_bitacora,0);
+		log_info(log_mensaje,"Se ENVIO la bitacora del tripulante %d", bitacora->id_tripulante);
 		free(devolver);
 
 		liberar_t_pedido_mongo(bitacora);
@@ -346,6 +358,7 @@ void* atender_mensaje (int socketTripulante){
 		break;
 	case MOVIMIENTO_MONGO:;
 		t_movimiento_mongo* mov= deserializar_movimiento_mongo(paquete_recibido);
+		log_info(log_mensaje,"Se se movio el tripulante %d", mov->id_tripulante);
 		char* tiempo= temporal_get_string_time("%H:%M:%S:%MS");
 		char* bitacorear=string_new();
 		string_append(&bitacorear,tiempo);
@@ -362,16 +375,18 @@ void* atender_mensaje (int socketTripulante){
 		//string_append(&tiempo,bitacorear);
 		printf("%s\n",bitacorear);
 		//imprimir_movimiento_mongo(mov);
-		log_info(logger,"voy a escribir rn bitacora %d", mov->id_tripulante);
+		log_info(log_bitacoras,"voy a escribir rn bitacora %d", mov->id_tripulante);
 		escribir_en_bitacora((int) mov->id_tripulante,bitacorear);
-		log_info(logger,"se escribio bien la bitacora %d", mov->id_tripulante);
+		log_info(log_bitacoras,"se escribio bien la bitacora %d", mov->id_tripulante);
 		free(bitacorear);
+		free(tiempo);
 		//free(tiempo);
 		liberar_t_movimiento_mongo(mov);
 		liberar_conexion(socketTripulante);
 		break;
 	case CONSUMIR_RECURSO:;
 		t_consumir_recurso* consu= deserializar_consumir_recurso(paquete_recibido);
+		log_info(log_mensaje,"Se pidio modificar el recurso %c", consu->consumible);
 		if(consu->tipo=='C')
 		{
 			eliminarCaracter((int)consu->cantidad, consu->consumible);
@@ -380,11 +395,13 @@ void* atender_mensaje (int socketTripulante){
 		{
 			agregarCaracter((int)consu->cantidad,consu->consumible);
 		}
+		log_info(log_mensaje,"Se modifico el recurso %c", consu->consumible);
 		liberar_t_consumir_recurso(consu);
 		liberar_conexion(socketTripulante);
 		break;
 	case INICIO_TAREA:;
 		t_pedido_mongo* inico = deserializar_pedido_mongo(paquete_recibido);
+		log_info(logger,"INICIO de tarea del tripulante %d", inico->id_tripulante);
 		char* guardar=string_new();
 		char* agregar= temporal_get_string_time("%H:%M:%S:%MS");
 		string_append(&guardar,agregar);
@@ -393,12 +410,14 @@ void* atender_mensaje (int socketTripulante){
 		imprimir_pedido_mongo(inico);
 		escribir_en_bitacora((int) inico->id_tripulante,guardar);
 		free(guardar);
-		//free(agregar);
+		free(agregar);
 		liberar_t_pedido_mongo(inico);
+
 		liberar_conexion(socketTripulante);
 		break;
 	case FIN_TAREA:;
 		t_pedido_mongo* inicio = deserializar_pedido_mongo(paquete_recibido);
+		log_info(logger,"FIN de tarea del tripulante %d", inicio->id_tripulante);
 		char* agregare = temporal_get_string_time("%H:%M:%S:%MS");
 		string_append(&agregare,"SE_FINALIZA_LA_TAREA_");
 		string_append(&agregare,inicio->mensaje);
@@ -407,11 +426,19 @@ void* atender_mensaje (int socketTripulante){
 		liberar_t_pedido_mongo(inicio);
 		liberar_conexion(socketTripulante);
 		break;
-//	case FINALIZAR:;
-//		correr_programa=false;
-//		pthread_exit(&sabo);
-//		pthread_exit(&sincro);
-//		break;
+	case FINALIZAR:;
+		eliminar_paquete(paquete_recibido);
+		pthread_exit(&sabo);
+		pthread_exit(&sincro);
+		free(copiaBlock);
+		bitarray_destroy(bitmap);
+		log_destroy(logger);
+		log_destroy(log_bitacoras);
+		log_destroy(log_mensaje);
+		log_destroy(log_sabotaje);
+		free(superbloque);
+		correr_programa=false;
+		break;
 	}
 
 	return NULL;
@@ -540,6 +567,7 @@ void validar_y_arreglar_file(char* rutinni)
 			string_append(&bloquesBienOcupados, "]");
 			actualizar_metadata(bloquesBienOcupados,string_itoa(tamanoSize),string_itoa(countBloques),rutinni,caracter);
 			char** bloquesbien=string_get_string_as_array(bloquesBienOcupados);
+			free(bloquesBienOcupados);//si rompe al solucionar sabotaje es por estoooooooooo
 			bloquesOcupados=bloquesbien;
 
 	}
@@ -578,7 +606,7 @@ void validar_y_arreglar_file(char* rutinni)
 	free(mfive);
 	free(md);
 	free(valor_md);
-	free(bloquesOcupados);
+	free(bloquesOcupados);;
 	free(MD);
 	free(caracter);
 }
@@ -723,7 +751,7 @@ void arreglar_sabotaje(void)
 }
 void interrupt_handler(int signal)
 {
-	printf("vanis bien wachin");
+	log_info(log_sabotaje,"Se capto la señal del Sabotaje");
 	/*
 	 * aca tiramos un conectar al discordiador
 	 * acale mandamos la posicion del sabotaje
@@ -744,15 +772,20 @@ void interrupt_handler(int signal)
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
 	recv(socketCliente,&id,sizeof(uint8_t),0);
+	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
 	escribir_en_bitacora(id,bitacorear_sabo);
 	// aca arregla el sabotaje
+	log_info(log_sabotaje,"Procedo a arreglar el FileSystem");
 	arreglar_sabotaje();
+	log_info(log_sabotaje,"Se arreglo exitosamente el Sabotaje");
+
 	// aca tendria que mandar discordiador que se arreglo
 	recv(socketCliente,bitacorear_sabo,strlen("FINALIZAR_SABOTAJE")+1,0);
 	escribir_en_bitacora(id,bitacorear_sabo);
 	free(bitacorear_sabo);
 
 	sabotaje_actual++;
+	free(pocicion_sabotaje);
 
 
 }
@@ -1049,10 +1082,11 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 
 	actualizar_metadata(bloquesNuevosPostBorrado, actualizarSize, actualizarCantidad, rutita, caracterLlenado);
 
-	free(config_o2);
+	config_destroy(config_o2);
 	free(bloquesUsados);
 	free(bloquesNuevosPostBorrado);
 	free(actualizarCantidad);
+	free(caracterLlenado);
 	free(actualizarSize);
 
 	//log_info(logger, "Ya se consumieron todos los recursos posibles");
@@ -1138,6 +1172,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 					cantidadDeCaracteresEscritas++;
 
 				}
+				free(bloque_nuevo);
 			}
 		}
 	}
@@ -1165,6 +1200,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 						bitarray_set_bit(bitmap, i);
 						msync(&bitmap -> bitarray, tamanioBitmap, MS_SYNC);
 						i = bloquesDelSistema;
+						free(bloqueNuevo);
 					}
 				}
 			}
@@ -1205,6 +1241,12 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 		{
 			actualizar_bitacora(actualizarBloques, actualizarSize, actualizarCantidad, rutita);
 		}
+		free(bloquesUsados);
+		free(caracterLlenado);
+		free(actualizarCantidad);
+		free(actualizarBloques);
+		free(actualizarSize);
+		free(actualizar_bloques);
 
 }
 
@@ -1237,22 +1279,22 @@ void generar_bitacora(int idTripulante){
 	dictionary_put(bitacora_config->properties, "BLOCKS", "[]");
 
 	config_save(bitacora_config);
-
+	dictionary_destroy(bitacora_config->properties);
 //	fclose(metadata_fd);
 	free(bitacora_config);
+	free(ruta_bitacora);
 
 }
 
 
 void escribir_en_bitacora(int idTripulante, char* texto){
 	char* id_trip = string_itoa(idTripulante);
-	log_info(logger,"bitacora id %d", idTripulante);
 	char* ruta_bitacora = string_new();
 	string_append(&ruta_bitacora, punto_montaje);
 	string_append(&ruta_bitacora, "/Files/Bitacoras/Tripulante");
 	string_append(&ruta_bitacora, id_trip);
 	string_append(&ruta_bitacora, ".ims");
-	log_info(logger, "se qiere bitacorear %s", texto);
+	log_info(log_bitacoras, "se qiere bitacorear %s en la bitiacora del tripulante %d", texto,idTripulante);
 	pthread_mutex_lock(&mutexBitacoras);
 	if(verificar_existencia(ruta_bitacora) != 1)
 	{
@@ -1271,6 +1313,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
 		pthread_mutex_unlock(&mutexBitacoras);
+		free(ruta_bitacora);
 }
 
 
@@ -1320,6 +1363,8 @@ void crear_metadata(char* archivo, char* valor){
 	config_save(metadata_config);
 	fclose(metadata_fd);
 	free(mfive);
+	dictionary_destroy(metadata_config->properties);
+	free(metadata_config);
 	free(ruta_metadata);
 
 }
@@ -1365,6 +1410,7 @@ void actualizar_metadata(char* valorBlocks, char* valorSize, char* valorBlockCou
 	config_save(metadata_config);
 	free(mfive);
 	fclose(metadata_fd);
+	dictionary_destroy(metadata_config->properties);
 	free(metadata_config);
 	free(calculo_md);
 	free(valor_md);
@@ -1383,6 +1429,7 @@ void actualizar_bitacora(char* valorBlocks, char* valorSize, char* valorBlockCou
 
 	config_save(bitacora_config);
 //	fclose(bita);
+	dictionary_destroy(bitacora_config->properties);
 	free(bitacora_config);
 
 }
@@ -1444,7 +1491,7 @@ void agregarCaracter(int cantidad, char caracter){
 }
 
 t_log* iniciar_logger(char* logger_path){
-	t_log *logger= log_create(logger_path, "Mongo", 0, LOG_LEVEL_INFO);
+	t_log *logger= log_create(logger_path, "iMongoStore", 0, LOG_LEVEL_INFO);
 	if(logger  == NULL){
 		printf("No se puede leer el logger");
 		exit(1);
