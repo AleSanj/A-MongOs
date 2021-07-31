@@ -954,9 +954,12 @@ void* atender_sabotaje(char* posiciones)
 	char* fin_sabotaje;
 
 
+	log_info(logger_discordiador,"Se recibe un sabotaje en la posicion %d|%d",posx,posy);
 	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
+	puts("estoy por pasar el sem_exec");
 	pthread_mutex_lock(&sem_cola_exec);
+	puts("pase el semafoto cola_exec");
 	for(int i=0;i<list_size(execute);i++)
 	{
 		Tripulante* iterado=(Tripulante*)list_get(execute,i);
@@ -1011,6 +1014,7 @@ void* atender_sabotaje(char* posiciones)
 			esta_haciendo_IO->estado = strdup("BLOQUEADO_SABOTAJE");
 			int tiempo_sabota=tiempo_sabotaje;
 
+
 		if(calcular_distancia(mas_cerca, posx, posy)<calcular_distancia(auxiliar,posx,posy))
 		{
 			while(mas_cerca->posicionX!=posx||mas_cerca->posicionY!=posy)
@@ -1022,6 +1026,7 @@ void* atender_sabotaje(char* posiciones)
 			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
 			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
 			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
+			send(cliente_sabotaje,&(mas_cerca->id),sizeof(uint8_t),0);
 			free(inicio_sabotaje);
 
 			while(tiempo_sabota!=0)
@@ -1046,6 +1051,7 @@ void* atender_sabotaje(char* posiciones)
 			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
 			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
 			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
+			send(cliente_sabotaje,&(auxiliar->id),sizeof(uint8_t),0);
 			free(inicio_sabotaje);
 
 			while(tiempo_sabota!=0)
@@ -1580,9 +1586,11 @@ int main(int argc, char* argv[]) {
 
 		printf("SABOTAJE RECIBIDO: %d\n",paquete_recibido->codigo_operacion);
 		t_pedido_mongo* posiciciones_sabotaje = deserializar_pedido_mongo(paquete_recibido);
-		estado_planificacion=0;
-		sem_wait(&pararIo);
-		sem_wait(&(pararPlanificacion[0]));
+		if(estado_planificacion){
+			estado_planificacion = 0;
+			sem_wait(&pararIo);
+		}
+
 
 		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
 		pthread_join(&hilo_sabotaje,NULL);

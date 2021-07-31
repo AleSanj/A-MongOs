@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-//#define PATH_CONFIG "../config/mongoStore.config"
-//#define PATH_LOG_G "../config/log_general.log"
-//#define PATH_LOG_B "../config/log_bitacoras.log"
-//#define PATH_LOG_SE "../config/log_server.log"
-//#define PATH_LOG_SA "../config/log_sabotaje.log"
+#define PATH_CONFIG "../config/mongoStore.config"
+#define PATH_LOG_G "../config/log_general.log"
+#define PATH_LOG_B "../config/log_bitacoras.log"
+#define PATH_LOG_SE "../config/log_server.log"
+#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-#define PATH_CONFIG "config/mongoStore.config"
-#define PATH_LOG_G "config/log_general.log"
-#define PATH_LOG_B "config/log_bitacoras.log"
-#define PATH_LOG_SE "config/log_server.log"
-#define PATH_LOG_SA "config/log_sabotaje.log"
+//#define PATH_CONFIG "config/mongoStore.config"
+//#define PATH_LOG_G "config/log_general.log"
+//#define PATH_LOG_B "config/log_bitacoras.log"
+//#define PATH_LOG_SE "config/log_server.log"
+//#define PATH_LOG_SA "config/log_sabotaje.log"
 //-------------------------------------
 
 
@@ -762,7 +762,7 @@ void interrupt_handler(int signal)
 	//char* a mandar al discordaidor
 	char* posicion_mandar=pocicion_sabotaje[sabotaje_actual];
 
-	int socketCliente=crear_conexion(ipDiscordiador,puertoDicordiador);
+	int socketCliente = crear_conexion(ipDiscordiador,puertoDicordiador);
 	t_pedido_mongo* posSabo=malloc(sizeof(t_pedido_mongo));
 	posSabo->mensaje=posicion_mandar;
 	posSabo->tamanio_mensaje=strlen(posicion_mandar)+1;
@@ -771,6 +771,8 @@ void interrupt_handler(int signal)
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
+	printf("recibi un %s",bitacorear_sabo);
+	printf("recibi un id %d\n",id);
 	recv(socketCliente,&id,sizeof(uint8_t),0);
 	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
 	escribir_en_bitacora(id,bitacorear_sabo);
@@ -1115,7 +1117,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	 char** bloquesUsados = config_get_array_value(config_o2, "BLOCKS");
 	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
 
-	char* caracterLlenado;
+	char* caracterLlenado = string_new();
 	if(esMetadataRecurso(rutita)){
 		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
 	}
@@ -1301,7 +1303,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		generar_bitacora(idTripulante);
 		//char*log=string_new();
 
-		log_info(logger, "Se cro exitosamente la bitacora %d", idTripulante);
+		log_info(logger, "Se creo exitosamente la bitacora %d", idTripulante);
 //		free(log);
 	}
 		int longitud = strlen(texto);
