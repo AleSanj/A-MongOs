@@ -146,13 +146,6 @@ int esperar_cliente(int,int);
 void* serializar_paquete(t_paquete* paquete, int bytes);
 
 //---------------------------- INICIAR_PATOTA ----------------------------
-/*
- * Hay que ver bien como se mandan los FILE*, o si mandamos un char*
- */
-
-//void serializar_iniciar_patota(t_iniciar_patota* tareaPatota, int socket); //todo//todavia no lo borre, preguntar por las dudas
-//iniciar_patota* deserializar_iniciar_patota(t_buffer* buffer);
-
 void agregar_paquete_iniciar_patota(t_paquete* paquete, t_iniciar_patota* estructura);
 t_iniciar_patota* deserializar_iniciar_patota(t_paquete* paquete);
 void imprimir_paquete_iniciar_patota(t_iniciar_patota* estructura);
@@ -161,28 +154,16 @@ void liberar_t_iniciar_patota(t_iniciar_patota* estructura);
 
 
 //--------------------------- TRIPULANTE -----------------------------
-void serializar_tripulante(Tripulante* unTripulante, int socket);			//todo//todavia no lo borre, preguntar por las dudas
-//Tripulante* deserializar_tripulante(t_buffer* buffer);
-
 void agregar_paquete_tripulante(t_paquete* paquete, t_tripulante* estructura);
 t_tripulante* deserializar_tripulante(t_paquete* paquete);
 void imprimir_paquete_tripulante(t_tripulante* estructura);
 void liberar_t_tripulante(t_tripulante* estructura);
 
 //--------------- ELIMINAR_TRIPULANTE ----------------------------------------
-// usamos el mismo mensaje T_TRIPULANTE
-void serializar_eliminar_tripulante(int idTripulante, int socket);			//todo//todavia no lo borre, preguntar por las dudas
-//int deserializar_eliminar_tripulante(t_buffer* buffer);
 
 //--------------- MOVIMIENTO_TRIPULANTE ----------------------------------------
-// Se puede utilizar el mismo mensaje T_TRIPULANTE, pero cambiando el codigo de operacion
-void serializar_id_and_pos(Tripulante* pos, int socket);
-id_and_pos* deserializar_id_and_pos(t_buffer* buffer);
 
 //------------------- CAMBIO_ESTADO -------------------------------------
-void serializar_cambio_estado(Tripulante* estado, int socket);				//todo//todavia no lo borre, preguntar por las dudas
-//cambio_estado* deserializar_cambio_estado(t_buffer* buffer);
-
 void agregar_paquete_cambio_estado(t_paquete* paquete, t_cambio_estado* estructura);
 t_cambio_estado* deserializar_cambio_estado(t_paquete* paquete);
 void imprimir_paquete_cambio_estado(t_cambio_estado* estructura);
@@ -190,7 +171,6 @@ void liberar_t_cambio_estado(t_cambio_estado* estructura);
 
 
 //---------------------- SOLICITAR TAREA ----------------------------------
-void serializar_tarea_tripulante( Tripulante* tareaTrip, int socket);
 char* enviar_paquete_respuesta_string(t_paquete* paquete,int socket);
 
 /*

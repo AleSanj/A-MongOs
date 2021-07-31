@@ -508,11 +508,6 @@ void eliminarTripulante(Tripulante* tripulante)
 //	enviar_paquete(paquete,socket_mongo);
 
 	liberar_t_tripulante(estructura);
-	if (tripulante->Tarea != NULL){
-		free(tripulante->Tarea->nombre);
-		free(tripulante->Tarea);
-	}
-
 	mover_a_finalizado(tripulante);
 	cambiar_estado(tripulante,"EXIT");
 	Patota* patota_a_eliminar = buscar_patota(tripulante->idPatota);
@@ -950,11 +945,11 @@ void* atender_sabotaje(char* posiciones)
 	free(inicio_sabotaje);
 
 
-//	char* fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
-//	uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-//	send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
-//	send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
-//	free(inicio_sabotaje);
+	char* fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
+	uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
+	send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+	send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
+	free(inicio_sabotaje);
 
 	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
@@ -1008,8 +1003,8 @@ void* atender_sabotaje(char* posiciones)
 			esta_haciendo_IO->estado="Bloqueado Sabotaje";
 
 			int tiempo_sabota=tiempo_sabotaje;
-//			char* inicio_sabotaje = NULL;
-//			char* fin_sabotaje = NULL;
+			inicio_sabotaje = NULL;
+			fin_sabotaje = NULL;
 
 		if(calcular_distancia(mas_cerca, posx, posy)<calcular_distancia(auxiliar,posx,posy))
 		{
@@ -1101,8 +1096,39 @@ void* atender_sabotaje(char* posiciones)
 				liberar_conexion(cliente_sabotaje);
 	return NULL;
 }
-void terminar_programa(){
 
+void eliminar_patota(Patota* patota){
+	free(patota);
+}
+
+void eliminar_tripulante(Tripulante* tripulante){
+	free(tripulante->estado);
+	free(tripulante->Tarea->nombre);
+	free(tripulante->Tarea);
+	free(tripulante);
+}
+
+void liberar_lista_patotas() {
+	list_destroy_and_destroy_elements(listaPatotas,&eliminar_patota);
+	free(listaPatotas);
+}
+void liberar_lista_tripulantes() {
+	list_destroy_and_destroy_elements(finalizado,&eliminarTripulante);
+	free(finalizado);
+
+}
+
+
+void terminar_programa(){
+	liberar_lista_tripulantes();
+	liberar_lista_patotas();
+
+	log_destroy(logger_discordiador);
+	log_destroy(logger_conexiones);
+	log_destroy(logger_tripulante);
+	config_destroy(config);
+	puts("NOS VIMOOO");
+	exit(1);
 }
 
 char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
