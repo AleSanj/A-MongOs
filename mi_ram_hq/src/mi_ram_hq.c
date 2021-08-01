@@ -49,10 +49,18 @@ int main(void) {
 		tipoDeGuardado = BESTFIT;
 	}
 	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
-		{
-			printf(" No pude leer el logger\n");
-			exit(1);
-		}
+	{
+		printf(" No pude leer el logger\n");
+		exit(1);
+	}
+
+
+	if((logger2 = log_create("../log_tablaDeFrames.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	{
+		printf(" No pude leer el logger\n");
+		exit(1);
+	}
+
 	memoria = malloc(tamMemoria);
 	listaElementos = list_create();
 	listaDeTablasDePaginas = list_create();
@@ -154,6 +162,8 @@ void administrar_cliente(int socketCliente){
 				guardar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,sizeof(pcb),estructura_iniciar_patota->idPatota,'P');
 				log_info(logger, "Guarde el PCB de la patota %d\n",estructura_iniciar_patota->idPatota);
 			}
+			liberar_t_iniciar_patota(estructura_iniciar_patota);
+			liberar_conexion(socketCliente);
 			break;
 		case TRIPULANTE:;
 			//printf("CASE TRIPULANTE /n");
@@ -178,7 +188,7 @@ void administrar_cliente(int socketCliente){
 				log_info(logger, "Guarde el tripulante %d\n",estructura_tripulante->id_tripulante);
 				//printf("CREE UN TRIPULANTE: %d\n",nuevoTripulante->id);
 
-		//		liberar_tripulante(estructura_tripulante);
+				liberar_t_tripulante(estructura_tripulante);
 				liberar_conexion(socketCliente);
 				break;
 		case ELIMINAR_TRIPULANTE:;
@@ -196,6 +206,10 @@ void administrar_cliente(int socketCliente){
 					}
 				}
 				log_info(logger, "Borre el tripulante %d\n",tripulante_a_eliminar->id_tripulante);
+				log_info(logger2,"Borro el tripulante %d",tripulante_a_eliminar->id_tripulante);
+				loggearTablaDeFrames();
+				liberar_conexion(socketCliente);
+				liberar_t_tripulante(tripulante_a_eliminar);
 				break;
 
 		case PEDIR_TAREA:;
@@ -225,7 +239,7 @@ void administrar_cliente(int socketCliente){
 					free(fault);
 					log_info(logger, "Mande la tarea fault\n");
 				}else{
-					log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
+					//log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
 					int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
 					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
@@ -246,7 +260,7 @@ void administrar_cliente(int socketCliente){
 					tablaBuscada = list_get(listaDeTablasDePaginas,i);
 				}
 				liberar_conexion(socketCliente);
-
+				liberar_t_tripulante(tripulante_solicitud);
 				break;
 
 
@@ -284,6 +298,8 @@ void administrar_cliente(int socketCliente){
 					tablaEnLista_struct *tablaBuscada= malloc(sizeof(tablaEnLista_struct));
 					tablaBuscada = list_get(listaDeTablasDePaginas,i);
 				}
+				liberar_conexion(socketCliente);
+				liberar_t_tripulante(tripulante_a_mover);
 				break;
 
 		case ACTUALIZAR_ESTADO:;
@@ -301,6 +317,8 @@ void administrar_cliente(int socketCliente){
 					pthread_mutex_unlock(&mutexMemoria);
 				}
 				log_info(logger, "Actualice el estado del tripulante %d a %c\n",tripulante_a_actualizar->id_tripulante, tripulante_a_actualizar->estado);
+				liberar_conexion(socketCliente);
+				liberar_t_cambio_estado(tripulante_a_actualizar);
 				break;
 
 		case FINALIZAR:;
@@ -308,12 +326,17 @@ void administrar_cliente(int socketCliente){
 		t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
 			free(tripulante_a_liberar);
 			terminar_programa();
+			liberar_t_tripulante(tripulante_a_liberar);
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
+			log_info(logger2,"Borro la patota %d",patota_a_eliminar->id_patota);
+			loggearTablaDeFrames();
+			liberar_conexion(socketCliente);
+			liberar_t_tripulante(patota_a_eliminar);
 			break;
 
 		default:;
@@ -394,7 +417,7 @@ void dumpDeMemoria(){
 						paginaEnTabla_struct* paginaBuscada = malloc(sizeof(paginaEnTabla_struct));
 						paginaBuscada = list_get(tablaAEvaluar->tablaDePaginas,k);
 						if(paginaBuscada->frame == i && paginaBuscada->presencia==1){
-							fprintf(dmp,"Marco:%d  Estado:Ocupado  Proceso:%d  Pagina:%d\n",i,tablaAEvaluar->idPatota,k);
+							fprintf(dmp,"Marco:%d  Estado:Ocupado  Proceso:%d  Pagina:%d espacio ocupado: %d\n",i,tablaAEvaluar->idPatota,k,paginaBuscada->espacioOcupado);
 						}
 					}
 				}
@@ -414,6 +437,15 @@ void dumpDeMemoria(){
 	}
 
 	fclose(dmp);
+}
+
+void loggearTablaDeFrames(){
+	for (int i = 0;i<list_size(tablaDeFrames->elements);i++){
+		paginaParaReemplazar_struct *framePrinteable = malloc(sizeof(paginaParaReemplazar_struct));
+		framePrinteable = list_get(tablaDeFrames->elements,i);
+		log_info(logger2,"PID: %d, Nro frame: %d, Nro Pagina: %d, Uso: %d",framePrinteable->PID,framePrinteable->nroFrame,framePrinteable->nroPagina,framePrinteable->uso);
+	}
+	log_info(logger2,"\n");
 }
 
 void manejoDump(int signal){

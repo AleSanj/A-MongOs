@@ -1,0 +1,54 @@
+[INFO] 01:05:25:240 Memoria/(23161:23294): Segmento en el que guardo las tareas: 0 y el tipo: A
+[INFO] 01:05:25:240 Memoria/(23161:23294): Guarde las tareas de la patota 1
+
+[INFO] 01:05:25:240 Memoria/(23161:23294): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 01:05:25:240 Memoria/(23161:23294): Tipo de lo que guardo: P
+[INFO] 01:05:25:240 Memoria/(23161:23294): Segmento que le pongo a la lista de elementos: 1
+[INFO] 01:05:25:240 Memoria/(23161:23294): Inicio del segmento en la lista de segmentos: 140653164
+[INFO] 01:05:25:240 Memoria/(23161:23294): Inicio del segmento en la lista global de segmentos: 140653164
+[INFO] 01:05:25:240 Memoria/(23161:23294): Guarde el PCB de la patota 1
+
+[INFO] 01:07:34:995 Memoria/(23161:23604): Tipo de lo que guardo: A
+[INFO] 01:07:34:995 Memoria/(23161:23604): Segmento que le pongo a la lista de elementos: 0
+[INFO] 01:07:34:995 Memoria/(23161:23604): Inicio del segmento en la lista de segmentos: 140653172
+[INFO] 01:07:34:995 Memoria/(23161:23604): Inicio del segmento en la lista global de segmentos: 140653172
+[INFO] 01:07:34:995 Memoria/(23161:23604): Entre al maldito if
+[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
+[INFO] 01:07:34:996 Memoria/(23161:23604): Guarde las tareas de la patota 1
+
+[INFO] 01:07:34:996 Memoria/(23161:23604): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 01:07:34:996 Memoria/(23161:23604): Tipo de lo que guardo: P
+[INFO] 01:07:34:996 Memoria/(23161:23604): Segmento que le pongo a la lista de elementos: 1
+[INFO] 01:07:34:996 Memoria/(23161:23604): Inicio del segmento en la lista de segmentos: 140653272
+[INFO] 01:07:34:996 Memoria/(23161:23604): Inicio del segmento en la lista global de segmentos: 140653272
+[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
+[INFO] 01:07:34:996 Memoria/(23161:23604): Entre al maldito if
+[INFO] 01:07:34:996 Memoria/(23161:23604): Guarde el PCB de la patota 1
+
+[INFO] 01:10:21:901 Memoria/(24211:24239): Segmento en el que guardo las tareas: 0 y el tipo: A
+[INFO] 01:10:21:901 Memoria/(24211:24239): Guarde las tareas de la patota 1
+
+[INFO] 01:10:21:901 Memoria/(24211:24239): Tareas: A00;1;1;5|A01;1;1;5|A02;1;1;5|A03;1;1;5|A04;1;1;5|A05;1;1;5|A06;1;1;5|A07;1;1;5|A08;1;1;5|A09;1;1;5
+
+[INFO] 01:10:21:901 Memoria/(24211:24239): Tipo de lo que guardo: P
+[INFO] 01:10:21:901 Memoria/(24211:24239): Segmento que le pongo a la lista de elementos: 1
+[INFO] 01:10:21:901 Memoria/(24211:24239): Inicio del segmento en la lista de segmentos: 147305068
+[INFO] 01:10:21:901 Memoria/(24211:24239): Inicio del segmento en la lista global de segmentos: 147305068
+[INFO] 01:10:21:901 Memoria/(24211:24239): Guarde el PCB de la patota 1
+
+[INFO] 01:10:21:901 Memoria/(24211:24241): Tipo de lo que guardo: T
+[INFO] 01:10:21:901 Memoria/(24211:24241): Segmento que le pongo a la lista de elementos: 2
+[INFO] 01:10:21:901 Memoria/(24211:24241): Inicio del segmento en la lista de segmentos: 147305076
+[INFO] 01:10:21:901 Memoria/(24211:24241): Inicio del segmento en la lista global de segmentos: 147305076
+[INFO] 01:10:21:901 Memoria/(24211:24241): Guarde el tripulante 1
+
+[INFO] 01:10:35:743 Memoria/(24211:24273): Voy a borrar el tripulante 1 de la patota 1
+[INFO] 01:10:35:746 Memoria/(24211:24273): Entro al borrar, para borrar el elemento 1 de tipo T
+[INFO] 01:10:35:746 Memoria/(24211:24273): Borre el tripulante 1
+
+[INFO] 01:10:35:746 Memoria/(24211:24276): Voy a borrar el tripulante 1 de la patota 1
+[INFO] 01:10:35:746 Memoria/(24211:24276): Entro al borrar, para borrar el elemento 1 de tipo T
+[INFO] 01:10:35:746 Memoria/(24211:24276): Borre el tripulante 1
+

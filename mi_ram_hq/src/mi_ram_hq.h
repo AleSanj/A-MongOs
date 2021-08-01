@@ -57,6 +57,7 @@ void manejoCompactacion(int);
 NIVEL* nivel;
 t_config* config;
 t_log* logger;
+t_log* logger2;
 int vectorIdTripulantes[94];
 int tamMemoria;
 char* esquemaMemoria;

@@ -182,6 +182,8 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
             queue_push(tablaDeFrames,paginaReemplazable3);
             bitarrayMemoria[frameDisponible] = 1;
             paginaParaReemplazar_struct *paginaDePrueba = malloc(sizeof(paginaParaReemplazar_struct));
+            log_info(logger2,"guardo la pagina %d del proceso %d",paginaReemplazable3->nroPagina,paginaReemplazable3->PID);
+            loggearTablaDeFrames();
 
         }
 
@@ -213,6 +215,8 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
             bitarrayMemoria[frameDisponible] = 1;
             log_info(logger,"Uso de la pagina que pushea: %d",paginaReemplazable->uso);
             queue_push(tablaDeFrames, paginaReemplazable);
+            log_info(logger2,"guardo la pagina %d del proceso %d",paginaReemplazable->nroPagina,paginaReemplazable->PID);
+            loggearTablaDeFrames();
             while (payLoadYaGuardado < tamPayload) {
                 paginaParaReemplazar_struct *paginaReemplazable2 = malloc(sizeof(paginaParaReemplazar_struct));
                 paginaReemplazable2->uso=1;
@@ -236,6 +240,8 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
 					log_info(logger,"Uso de la pagina que pushea: %d",paginaReemplazable2->uso);
 					queue_push(tablaDeFrames, paginaReemplazable2);
 					bitarrayMemoria[frameDisponible] = 1;
+					log_info(logger2,"guardo la pagina %d del proceso %d",paginaReemplazable2->nroPagina,paginaReemplazable2->PID);
+					loggearTablaDeFrames();
 
             }
 
@@ -436,6 +442,8 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 		queue_push(tablaDeFrames,paginaAReponer);
 		bitarrayMemoria[frameDisponible]=1;
 		log_info(logger, "Eligio como 'Victima' una pagina libre");
+		log_info(logger2,"Meto la pagina %d del proceso en un lugar libre",paginaAReponer->nroPagina,paginaAReponer->PID);
+		loggearTablaDeFrames();
 	}else{
 		int frameEnSwap = paginaATraer->frame;
 		paginaParaReemplazar_struct *paginaAReemplazar = malloc(sizeof(paginaParaReemplazar_struct));
@@ -466,7 +474,8 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 					break;
 				}
 			}
-
+			log_info(logger2,"Reemplazo la pagina %d del proceso %d",paginaAReemplazar->nroPagina,paginaAReemplazar->PID);
+			loggearTablaDeFrames();
 		}
 		log_info(logger, "Pagina elegida como victima: %d del proceso %d",paginaAReemplazar->nroPagina,paginaAReemplazar->PID);
 		int* direccionFisicaPaginaEnSwap = (int)memoriaSwap + (paginaATraer->frame * tamPagina);
@@ -537,7 +546,9 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     int movimientoDepagina=1;
     paginaDeLectura = list_get(tablaDePaginas,paginaInicial);
     if (paginaDeLectura->presencia == 0){
-        traerPaginaAMemoria(paginaDeLectura,tablaDePaginas,paginaInicial,PID);
+    	log_info(logger2,"Debo traer la pagina %d del proceso %d",paginaInicial,PID);
+    	loggearTablaDeFrames();
+    	traerPaginaAMemoria(paginaDeLectura,tablaDePaginas,paginaInicial,PID);
         msync(memoriaSwap, tamSwap, MS_SYNC);
         paginaDeLectura = list_get(tablaDePaginas,paginaInicial);
     }else if(paginaDeLectura->presencia == 1){
@@ -561,7 +572,8 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
     while(tamanioPorGuardar>0){
         paginaDeLectura = list_get(tablaDePaginas,paginaInicial+movimientoDepagina);
         if (paginaDeLectura->presencia == 0){
-            //printf("Frame a traer de swap a memoria: %d\n",paginaDeLectura->frame);
+        	log_info(logger2,"Debo traer la pagina %d del proceso %d",paginaInicial,PID);
+        	loggearTablaDeFrames();
         	traerPaginaAMemoria(paginaDeLectura,tablaDePaginas, paginaInicial+movimientoDepagina,PID);
             msync(memoriaSwap, tamSwap, MS_SYNC);
             paginaDeLectura = list_get(tablaDePaginas,paginaInicial+movimientoDepagina);
@@ -638,7 +650,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
             offset = elementoEvaluado->offsetEnPagina;
             tamanioPayload = elementoEvaluado->tamanio;
             posicionElementoEvaluado = i;
-            break;
+
         }
     }
     espacioLibre += tamanioPayload;
@@ -670,7 +682,8 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         	paginaABorrar = list_get(tablaDeFrames->elements,i);
         	if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
         		list_remove(tablaDeFrames->elements,i);
-        		break;
+        		log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+        		loggearTablaDeFrames();
         	}
         }
         list_remove(listaElementos,posicionElementoEvaluado);
@@ -697,6 +710,9 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
     				list_remove(tablaDeFrames->elements,i);
+    				log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+    				loggearTablaDeFrames();
+
     			}
     		}
     	}else{
@@ -726,6 +742,8 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 
         		if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
         			list_remove(tablaDeFrames->elements,i);
+        			log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+        			loggearTablaDeFrames();
         		}
         	}
         }else{
@@ -753,6 +771,8 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     			paginaABorrar = list_get(tablaDeFrames->elements,i);
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
     				list_remove(tablaDeFrames->elements,i);
+    				log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+    				loggearTablaDeFrames();
     			}
     		}
 
@@ -785,6 +805,8 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     			paginaABorrar = list_get(tablaDeFrames->elements,i);
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
     				list_remove(tablaDeFrames->elements,i);
+    				log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+    				loggearTablaDeFrames();
     			}
     		}
     		borroPagina=true;
@@ -793,7 +815,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     	}else if(tamanioPayload -  payloadBorrado < tamPagina){
     		paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
         	paginaAActualizar =	list_get(tablaDePaginas,paginaInicial);
-        	paginaAActualizar->espacioOcupado -= tamanioPayload;
+        	paginaAActualizar->espacioOcupado -= (tamanioPayload-payloadBorrado);
         	if (paginaAActualizar->espacioOcupado == 0){
         		if (paginaAActualizar->presencia == 1){
         		   bitarrayMemoria[paginaAActualizar->frame] = 0;
@@ -810,6 +832,8 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         			paginaABorrar = list_get(tablaDeFrames->elements,i);
         			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
         				list_remove(tablaDeFrames->elements,i);
+        				log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
+        				loggearTablaDeFrames();
         			}
         		}
         	}else{
@@ -1446,25 +1470,35 @@ int sacarPaginaDeMemoria(){
 		paginaAReemplazar = queue_pop(tablaDeFrames);
 	} else{
 		list_sort(tablaDeFrames->elements,ordenar_por_nro_frame);
+		log_info(logger2, "Puntero reemplazo: %d",punteroReemplazo);
+		for (int i=0;i<list_size(tablaDeFrames->elements);i++){
+			paginaParaReemplazar_struct *paginaDePrueba = malloc(sizeof(paginaParaReemplazar_struct));
+			paginaDePrueba = list_get(tablaDeFrames->elements,i);
+			log_info(logger, "Bit de uso de la pagina %d de la patota %d: %d",paginaDePrueba->nroPagina,paginaDePrueba->PID,paginaDePrueba->uso);
+		}
 		while (1) {
+
 			paginaAReemplazar = list_get(tablaDeFrames->elements, punteroReemplazo);
 			if (paginaAReemplazar->uso==1){
 				paginaAReemplazar->uso = 0;
 				list_replace(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar);
 				if (punteroReemplazo+1 == queue_size(tablaDeFrames)){
 					punteroReemplazo = 0;
-				} else{
+				}else{
 					punteroReemplazo++;
 				}
 			} else{
 				list_remove(tablaDeFrames->elements,punteroReemplazo);
 				if(punteroReemplazo == queue_size(tablaDeFrames)){
 					punteroReemplazo = 0;
+				}else{
+					punteroReemplazo++;
 				}
 				break;
 			}
 		}
-
+		log_info(logger2,"Voy a sacar la pagina %d del proceso %d",paginaAReemplazar->nroPagina,paginaAReemplazar->PID);
+		loggearTablaDeFrames();
 	}
 	int frameEnSwap = encontrarFrameEnSwapDisponible();
 	int* direccionFisicaPaginaEnSwap = (int)memoriaSwap + (frameEnSwap * tamPagina);

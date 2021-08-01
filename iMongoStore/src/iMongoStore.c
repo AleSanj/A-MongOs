@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "../config/mongoStore.config"
-#define PATH_LOG_G "../config/log_general.log"
-#define PATH_LOG_B "../config/log_bitacoras.log"
-#define PATH_LOG_SE "../config/log_server.log"
-#define PATH_LOG_SA "../config/log_sabotaje.log"
+//#define PATH_CONFIG "../config/mongoStore.config"
+//#define PATH_LOG_G "../config/log_general.log"
+//#define PATH_LOG_B "../config/log_bitacoras.log"
+//#define PATH_LOG_SE "../config/log_server.log"
+//#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-//#define PATH_CONFIG "config/mongoStore.config"
-//#define PATH_LOG_G "config/log_general.log"
-//#define PATH_LOG_B "config/log_bitacoras.log"
-//#define PATH_LOG_SE "config/log_server.log"
-//#define PATH_LOG_SA "config/log_sabotaje.log"
+#define PATH_CONFIG "config/mongoStore.config"
+#define PATH_LOG_G "config/log_general.log"
+#define PATH_LOG_B "config/log_bitacoras.log"
+#define PATH_LOG_SE "config/log_server.log"
+#define PATH_LOG_SA "config/log_sabotaje.log"
 //-------------------------------------
 
 
