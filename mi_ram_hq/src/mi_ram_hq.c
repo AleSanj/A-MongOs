@@ -207,7 +207,7 @@ void administrar_cliente(int socketCliente){
 				}
 				log_info(logger, "Borre el tripulante %d\n",tripulante_a_eliminar->id_tripulante);
 				log_info(logger2,"Borro el tripulante %d",tripulante_a_eliminar->id_tripulante);
-				loggearTablaDeFrames();
+				//loggearTablaDeFrames();
 				liberar_conexion(socketCliente);
 				liberar_t_tripulante(tripulante_a_eliminar);
 				break;
@@ -334,7 +334,7 @@ void administrar_cliente(int socketCliente){
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
 			log_info(logger2,"Borro la patota %d",patota_a_eliminar->id_patota);
-			loggearTablaDeFrames();
+			//loggearTablaDeFrames();
 			liberar_conexion(socketCliente);
 			liberar_t_tripulante(patota_a_eliminar);
 			break;

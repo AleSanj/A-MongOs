@@ -1113,7 +1113,8 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
 
 void compactacion(){
 	for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
-        if(i==0){
+        log_info(logger,"Tamanio de la lista global de segmentos: %d",list_size(listaGlobalDeSegmentos));
+		if(i==0){
             segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));
             primerSegmento = list_get(listaGlobalDeSegmentos,0);
             if(primerSegmento->inicio != memoria){
