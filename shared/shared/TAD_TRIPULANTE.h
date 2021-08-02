@@ -48,6 +48,7 @@ typedef struct {
 	pthread_t hilo_vida;
 	sem_t sem_pasaje_a_exec;
 	sem_t hilosEnEjecucion;
+	bool primer_inicio;
 } Tripulante;
 
 typedef struct {

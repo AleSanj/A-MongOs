@@ -774,7 +774,10 @@ void hacerFifo(Tripulante* tripu) {
 	}
 	else {
 		//una vez que llego donde tenia que llegar espera lo que tenia que esperar
-		enviar_inicio_fin_mongo(tripu,'I');
+		if (tripu->primer_inicio){
+			enviar_inicio_fin_mongo(tripu,'I');
+			tripu->primer_inicio = false;
+		}
 		while((tripu->espera !=0) && tripu->vida)
 		{
 			if (!estado_planificacion)
@@ -832,7 +835,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		tripulant->kuantum=0;
 		hacerTareaIO(tripulant);
 	}
-	enviar_inicio_fin_mongo(tripulant,'I');
+	if (tripulant->primer_inicio){
+		enviar_inicio_fin_mongo(tripulant,'I');
+		tripulant->primer_inicio = false;
+	}
 	while ((contadorQuantum < quantum) && tripulant->vida && tripulant->espera > 0)
 	{
 		if (!estado_planificacion){
@@ -909,6 +915,7 @@ void* vivirTripulante(Tripulante* tripulante) {
 
 		if (tripulante->Tarea == NULL){
 			pedir_tarea(tripulante);
+			tripulante->primer_inicio = true;
 			tripulante->espera = tripulante->Tarea->duracion;
 		}
 
@@ -1418,7 +1425,7 @@ int hacerConsola() {
 				log_info(logger_discordiador,"El tripulante %d ingresado no existe",id_tripulante);
 				continue;
 			}
-			if (strcmp(tripulante_rip->estado,"EXIT")){
+			if (!strcmp(tripulante_rip->estado,"EXIT")){
 				log_info(logger_discordiador,"El tripulante %d ya ha finalizado",id_tripulante);
 				continue;
 			}
