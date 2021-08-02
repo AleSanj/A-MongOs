@@ -434,7 +434,7 @@ bool filtrarPorTipo(void* elemento){
 }
 bool filtrarPorTamanioValido(void* elemento){
 	huecoLibreEnLista_struct *comparador = elemento;
-    return comparador->tamanio <= tamPayloadUniversal;
+    return comparador->tamanio >= tamPayloadUniversal;
 }
 void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePaginas,int indiceDeLaPaginaATraer,int PID){
 	int frameDisponible = encontrarFrameDisponible();
@@ -893,6 +893,29 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
         elementoNuevo->ID = idElemento;
         elementoNuevo->PID=pid;
         list_add(listaElementos,elementoNuevo);
+        if (tipoDeGuardado == BESTFIT){
+        	huecoLibreEnLista_struct* mejorEspacio = list_get(listaHuecosLibres,0);
+        	int *posicionHuecoLibre = mejorEspacio->inicio;
+        	if(mejorEspacio->tamanio == tamPayload){
+        		for (int i = 0; i < list_size(listaHuecosLibres); ++i) {
+        			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
+        			if(huecoIterante->inicio == mejorEspacio->inicio){
+        				list_remove(listaHuecosLibres,i);
+        				break;
+        			}
+        		}
+        	}else if (mejorEspacio->tamanio > tamPayload) {
+        		log_info(logger,"Entra al if");
+        		for (int i = 0; i < list_size(listaHuecosLibres); ++i) {
+        			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
+        			if(huecoIterante->inicio == mejorEspacio->inicio){
+        				mejorEspacio->inicio = (int) mejorEspacio->inicio + tamPayload;
+        				mejorEspacio->tamanio -= tamPayload;
+        				list_replace(listaHuecosLibres,i,mejorEspacio);
+        			}
+        		}
+        	}
+        }
     }
     else
     {
@@ -969,19 +992,29 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
             }
 
             case BESTFIT:{
+            	log_info(logger,"Entra al case");
             	t_list *listaHuecosLibresFiltrada;
             	tamPayloadUniversal = tamPayload;
             	listaHuecosLibresFiltrada = list_filter(listaHuecosLibres,filtrarPorTamanioValido);
+            	log_info(logger,"Tamanio de la lista filtrada: %d y sin filtrar: %d",list_size(listaHuecosLibresFiltrada),list_size(listaHuecosLibres));
+            	if (list_is_empty(listaHuecosLibresFiltrada) == 1){
+            		log_info(logger,"Entra a la compactacion");
+            		compactacion();
+            		listaHuecosLibresFiltrada = list_filter(listaHuecosLibres,filtrarPorTamanioValido);
+            	}
             	huecoLibreEnLista_struct* mejorEspacio = list_get_minimum(listaHuecosLibresFiltrada,minimo_hueco_libre_mejorado);
+            	int *posicionHuecoLibre = mejorEspacio->inicio;
             	if(mejorEspacio->tamanio == tamPayload){
             		for (int i = 0; i < list_size(listaHuecosLibres); ++i) {
             			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
             			if(huecoIterante->inicio == mejorEspacio->inicio){
+            				log_info(logger,"Tamanio del mejor lugar: %d y posicion: %d",mejorEspacio->tamanio,mejorEspacio->inicio);
             				list_remove(listaHuecosLibres,i);
             				break;
             			}
 					}
-            	}else if (mejorEspacio->tamanio > payload) {
+            	}else if (mejorEspacio->tamanio > tamPayload) {
+            		log_info(logger,"Tamanio del mejor lugar: %d",mejorEspacio->tamanio);
             		for (int i = 0; i < list_size(listaHuecosLibres); ++i) {
             			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
             			if(huecoIterante->inicio == mejorEspacio->inicio){
@@ -1025,36 +1058,34 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 
 
                 }*/
-                if (list_is_empty(listaHuecosLibresFiltrada) == 1){
-                    compactacion();
 
-                }
-                else{
-                    //espacio_struct *punteroHuecoMinimo;
-                    //punteroHuecoMinimo = list_get_minimum(listaDeEspaciosLibres,minimo_hueco_libre);
-                    //*(tripulante_struct *) punteroHuecoMinimo->ptrHuecoLibre = tcb;
-                    memcpy(mejorEspacio->inicio,payload,tamPayload);
-                    segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
-                    segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
-                    nuevoSegmentoGlobal->inicio=mejorEspacio->inicio;
-                    nuevoSegmentoGlobal->tamanio=tamPayload;
-                    nuevoSegmentoGlobal->idPatota=pid;
-                    nuevoSegmento->inicio = mejorEspacio->inicio;
-                    nuevoSegmento->tamanio = tamPayload;
-                    elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
-                    int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
-                    elementoNuevo->segmentoOPagina = segmentoGuardado;
-                    nuevoSegmentoGlobal->segmentoEnLocal = elementoNuevo->segmentoOPagina;
-                    list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
-                    elementoNuevo->offsetEnPagina=0;
-                    elementoNuevo->tipo = tipo;
-                    elementoNuevo->tamanio = tamPayload;
-                    elementoNuevo->ID = idElemento;
-                    elementoNuevo->PID = pid;
-                    actualizar_lista_elementos_segmentacion(elementoNuevo->segmentoOPagina,pid);
-                    list_add(listaElementos,elementoNuevo);
 
-                }
+            	//espacio_struct *punteroHuecoMinimo;
+            	//punteroHuecoMinimo = list_get_minimum(listaDeEspaciosLibres,minimo_hueco_libre);
+            	//*(tripulante_struct *) punteroHuecoMinimo->ptrHuecoLibre = tcb;
+            	log_info(logger,"Posicion donde se hace el memcpy: %d",posicionHuecoLibre);
+            	memcpy(posicionHuecoLibre,payload,tamPayload);
+            	segmentoEnTabla_struct *nuevoSegmento = malloc(sizeof(segmentoEnTabla_struct));
+            	segmentoEnTablaGlobal_struct *nuevoSegmentoGlobal = malloc(sizeof(segmentoEnTablaGlobal_struct));
+            	nuevoSegmentoGlobal->inicio=posicionHuecoLibre;
+            	nuevoSegmentoGlobal->tamanio=tamPayload;
+            	nuevoSegmentoGlobal->idPatota=pid;
+            	nuevoSegmento->inicio = posicionHuecoLibre;
+            	nuevoSegmento->tamanio = tamPayload;
+            	elementoEnLista_struct *elementoNuevo = malloc(sizeof(elementoEnLista_struct));
+            	int segmentoGuardado = list_add_sorted(listaSegmentos,nuevoSegmento,ordenar_por_posicion_local);
+            	elementoNuevo->segmentoOPagina = segmentoGuardado;
+            	nuevoSegmentoGlobal->segmentoEnLocal = elementoNuevo->segmentoOPagina;
+            	list_add_sorted(listaGlobalDeSegmentos,nuevoSegmentoGlobal,ordenar_por_posicion_global);
+            	elementoNuevo->offsetEnPagina=0;
+            	elementoNuevo->tipo = tipo;
+            	elementoNuevo->tamanio = tamPayload;
+            	elementoNuevo->ID = idElemento;
+            	elementoNuevo->PID = pid;
+            	actualizar_lista_elementos_segmentacion(elementoNuevo->segmentoOPagina,pid);
+            	list_add(listaElementos,elementoNuevo);
+
+
                 //list_destroy(listaDeEspaciosLibres);
                 break;
             }
@@ -1086,6 +1117,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
                     	nuevoHuecoLibre->inicio = segmentoGlobalIterante->inicio;
                     	nuevoHuecoLibre->tamanio = segmentoGlobalIterante->tamanio;
                     	list_add(listaHuecosLibres,nuevoHuecoLibre);
+                    	log_info(logger,"Tamanio de la lista sin filtrar: %d",list_size(listaHuecosLibres));
                     	list_remove(listaGlobalDeSegmentos,j);
                         actualizarListaElementos(elementoEvaluado->segmentoOPagina,idPatota);
                         actualizarListaGlobalDeSegmentos(elementoEvaluado->segmentoOPagina,idPatota);
@@ -1134,6 +1166,7 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
             if (elementoEvaluado->ID == idElementoABuscar && elementoEvaluado->tipo == 'A'){
                 memcpy(elementoABuscar,segmentoEvaluado->inicio, elementoEvaluado->tamanio);
+                log_info(logger,"Direccion donde encontro las tareas: %d",segmentoEvaluado->inicio);
                 return elementoABuscar;
 
             }
@@ -1208,7 +1241,7 @@ void compactacion(){
             }
         }
     }
-	list_clean(listaHuecosLibres);
+	list_clean_and_destroy_elements(listaHuecosLibres,free);
 	int ultimoIndice = list_size(listaGlobalDeSegmentos)-1;
 	segmentoEnTablaGlobal_struct* segmentoParaCrearHueco = malloc(sizeof(segmentoEnTablaGlobal_struct));
 	segmentoParaCrearHueco = list_get(listaGlobalDeSegmentos,ultimoIndice);

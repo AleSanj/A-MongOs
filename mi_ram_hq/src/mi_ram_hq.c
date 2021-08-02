@@ -62,6 +62,7 @@ int main(void) {
 	}
 
 	memoria = malloc(tamMemoria);
+	log_info(logger,"Direccion inicial de memoria: %d",memoria);
 	listaElementos = list_create();
 	listaDeTablasDePaginas = list_create();
 	if (strcmp(esquemaMemoria,"PAGINACION")==0){
@@ -159,13 +160,14 @@ void administrar_cliente(int socketCliente){
 					nuevaListaDeTablasDePaginas->idPatota=estructura_iniciar_patota->idPatota;
 					list_add(listaDeTablasDePaginas,nuevaListaDeTablasDePaginas);
 				}
-				log_info(logger, "TAMANIO DE TAREAS:  %d\n",estructura_iniciar_patota->tamanio_tareas);
-				guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
-				log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
-				nuevaPatota->tareas =  calcular_direccion_logica_archivo(estructura_iniciar_patota->idPatota);
+				nuevaPatota->tareas = 0; //calcular_direccion_logica_archivo(estructura_iniciar_patota->idPatota);
 				log_info(logger, "Tareas: %s\n",estructura_iniciar_patota->Tareas);
 				guardar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,sizeof(pcb),estructura_iniciar_patota->idPatota,'P');
 				log_info(logger, "Guarde el PCB de la patota %d\n",estructura_iniciar_patota->idPatota);
+				log_info(logger, "TAMANIO DE TAREAS:  %d\n",estructura_iniciar_patota->tamanio_tareas);
+				guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
+				log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
+
 			}
 			liberar_t_iniciar_patota(estructura_iniciar_patota);
 			liberar_conexion(socketCliente);
@@ -327,7 +329,6 @@ void administrar_cliente(int socketCliente){
 				break;
 
 		case FINALIZAR:;
-		log_info(logger,"Voy a cerrar el programa");
 		t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
 			free(tripulante_a_liberar);
 			terminar_programa();
@@ -449,6 +450,15 @@ void loggearTablaDeFrames(){
 		paginaParaReemplazar_struct *framePrinteable = malloc(sizeof(paginaParaReemplazar_struct));
 		framePrinteable = list_get(tablaDeFrames->elements,i);
 		log_info(logger2,"PID: %d, Nro frame: %d, Nro Pagina: %d, Uso: %d",framePrinteable->PID,framePrinteable->nroFrame,framePrinteable->nroPagina,framePrinteable->uso);
+	}
+	log_info(logger2,"\n");
+}
+
+void loggearHuecosLibres(){
+	for (int i=0;i<list_size(listaHuecosLibres);i++){
+		huecoLibreEnLista_struct* huecoLibreAPrintear = malloc(sizeof(huecoLibreEnLista_struct));
+		huecoLibreAPrintear = list_get(listaHuecosLibres,i);
+		log_info(logger2,"Inicio del espacio libre; %d / Inicio del espacio libre: %d",huecoLibreAPrintear->inicio,huecoLibreAPrintear->tamanio);
 	}
 	log_info(logger2,"\n");
 }
