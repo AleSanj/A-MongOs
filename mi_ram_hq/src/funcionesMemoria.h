@@ -65,14 +65,20 @@ typedef struct{
     int nroPagina;
     unsigned int uso;
 }paginaParaReemplazar_struct;
+typedef struct{
+	int tamanio;
+	int *inicio;
+}huecoLibreEnLista_struct;
 t_list *listaDeTablasDePaginas;
 t_list *listaGlobalDeSegmentos;
 t_list *listaSegmentos;
 t_list *listaElementos;
+t_list *listaHuecosLibres;
 t_queue *tablaDeFrames;
 void compactacion();
 int calcular_direccion_logica_archivo(int);
 int calcular_direccion_logica_patota(int);
+int espacioLibre;
 void *minimo_segmentos_en_tabla(void *, void *);
 void *minimo_hueco_libre(void *, void *);
 void guardar_en_memoria_segmentacion(void*,int,int,uint32_t,char,int);
@@ -82,6 +88,7 @@ bool encontrarTablaDePaginas(void*);
 bool filtrarPorTipo(void*);
 void *buscar_de_memoria_segmentacion(int,int,char);
 char tipoUniversal;
+int tamPayloadUniversal;
 void guardar_en_memoria_general(void* ,int ,int ,int ,char );
 int sacarPaginaDeMemoria();
 void guardar_en_memoria_paginacion(void*,int,int,int,char);

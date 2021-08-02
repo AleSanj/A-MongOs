@@ -67,7 +67,6 @@ char* path_swap;
 char* alg_remplazo;
 char* crit_seleccion;
 char* puerto;
-int espacioLibre;
 bool funcionando;
 
 pthread_mutex_t mutexMemoria;

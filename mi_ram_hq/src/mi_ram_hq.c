@@ -81,6 +81,11 @@ int main(void) {
 
 
 	}else if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
+		listaHuecosLibres = list_create();
+		huecoLibreEnLista_struct *primerHueco = malloc(sizeof(huecoLibreEnLista_struct));
+		primerHueco->inicio = memoria;
+		primerHueco->tamanio = tamMemoria;
+		list_add(listaHuecosLibres,primerHueco);
 		listaSegmentos = list_create();
 		espacioLibre = tamMemoria;
 		listaGlobalDeSegmentos = list_create();
