@@ -276,10 +276,7 @@ void cambiar_estado(Tripulante* tripulante,char* estado){
 
 void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 {
-	if (posiciones == NULL)
-		return;
-	string_trim(&posiciones);
-	if(posiciones[0] == '\0')
+	if (posiciones == NULL || posiciones[0] == '\0')
 		return;
 
 	char** pares_xy = string_split(posiciones," ");
@@ -294,6 +291,11 @@ void completar_posiciones_iniciales(char* posiciones, t_list* poci)
 		free(get_posicion[0]);		// No se si es necesario liberar cada posicion especifica
 		free(get_posicion[1]); 		// No se si es necesario liberar cada posicion especific
 		free(get_posicion);
+	}
+
+	for(int i=0 ; pares_xy[i] != NULL; i++)
+	{
+		free(pares_xy[i]);
 	}
 		free(pares_xy);					// No se cuantas posiciones especificas hay
 }
@@ -723,6 +725,7 @@ void enviarMongoStore(Tripulante* enviar) {
 	while((enviar->espera != 0 ) && enviar->vida)
 	{
 		sem_wait(&pararIo);
+		log_info(logger_tripulante,"El tripulante %d consume un ciclo para realizar tarea IO",enviar->id);
 		sleep(retardoCpu);
 		enviar->espera--;
 		sem_post(&pararIo);
@@ -748,9 +751,6 @@ void hacerTareaIO(Tripulante* io) {
 
 }
 void hacerFifo(Tripulante* tripu) {
-	//tu tarea es es transformar la taera de sstring en dos int posicion y un int de espera
-	// mover al 15|65 20
-	//obtener_parametros_tarea(tripu,&tarea_x,&tarea_y);
 	while ((tripu->posicionX != tripu->Tarea->posicion_x || tripu->posicionY != tripu->Tarea->posiciion_y) && tripu->vida) {
 		//este es el semaforo para pausar laejecucion
 		if (!estado_planificacion)
@@ -758,9 +758,9 @@ void hacerFifo(Tripulante* tripu) {
 			sem_wait(&(tripu->hilosEnEjecucion));
 			continue;
 		}
+		log_info(logger_tripulante,"El tripulante %d consume un ciclo para moverse",tripu->id);
 		sleep(retardoCpu);
 		moverTripulante(tripu);
-		//le tiroun post al semaforo que me permite frenar la ejecucion
 
 	}
 
@@ -785,6 +785,7 @@ void hacerFifo(Tripulante* tripu) {
 				sem_wait(&(tripu->hilosEnEjecucion));
 				continue;
 			}
+			log_info(logger_tripulante,"El tripulante %d consume un ciclo para realizar su tarea",tripu->id);
 			sleep(retardoCpu);
 			tripu->espera --;
 		}
@@ -794,6 +795,7 @@ void hacerFifo(Tripulante* tripu) {
 		}
 		enviar_inicio_fin_mongo(tripu,'F');
 		free(tripu->Tarea->nombre);
+		free(tripu->Tarea);
 		tripu->Tarea->nombre = NULL;
 		tripu->Tarea =NULL;
 		sem_post(&tripu->sem_pasaje_a_exec);
@@ -821,9 +823,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 			sem_wait(&(tripulant->hilosEnEjecucion));
 			continue;
 		}
+		log_info(logger_tripulante,"N°Q:%d El tripulante %d consume un ciclo para moverse",contadorQuantum,tripulant->id);
 		sleep(retardoCpu);
 		ciclos_totales++;
-		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
+//		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		moverTripulante(tripulant);
 		contadorQuantum++;
 		//le tiroun post al semaforo que me permite frenar la ejecucion
@@ -845,9 +848,10 @@ void hacerRoundRobin(Tripulante* tripulant) {
 			sem_wait(&(tripulant->hilosEnEjecucion));
 			continue;
 		}
+		log_info(logger_tripulante,"N°Q:%d El tripulante %d consume un ciclo para realizar su tarea",contadorQuantum,tripulant->id);
 		sleep(retardoCpu);
 		ciclos_totales++;
-		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
+//		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y){
 		tripulant->espera--;
 		} else {
@@ -861,16 +865,18 @@ void hacerRoundRobin(Tripulante* tripulant) {
 	}
 	if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y && tripulant->espera == 0 && tripulant->vida)
 	{
+		log_info(logger_tripulante,"N°Q:%d El tripulante %d finaliza su tarea %s",contadorQuantum,tripulant->id,tripulant->Tarea->nombre);
 		tripulant->kuantum=contadorQuantum;
 		enviar_inicio_fin_mongo(tripulant,'F');
-		free(tripulant->Tarea->nombre);
-		free(tripulant->Tarea);
+//		free(tripulant->Tarea->nombre);
+//		free(tripulant->Tarea);
 		tripulant->Tarea->nombre = NULL;
-		tripulant->Tarea =NULL;
+		tripulant->Tarea = NULL;
 
 		sem_post(&(tripulant->sem_pasaje_a_exec));
 	}else
 	{
+		log_info(logger_tripulante,"N°Q:%d El tripulante es desalojado de exec",contadorQuantum,tripulant->id);
 		tripulant->kuantum = 0;
 		//protejo las colas o listas
 
@@ -906,15 +912,15 @@ void hacerTarea(Tripulante* trip)
 }
 // LARGA VIDA TRIPULANTE ESPEREMOS CADA TRIPULANTE VIVA UNA VIDA FELIZ Y PLENA
 void* vivirTripulante(Tripulante* tripulante) {
-	printf("%d Inicio su hilo\n",tripulante->id);
+	log_info(logger_tripulante,"El tripulante %d inicializo su hilo",tripulante->id);
 
 	while (tripulante->vida) {
 		sem_wait(&(tripulante->sem_pasaje_a_exec));
 		if(tripulante->vida == false)
 			break;
-
 		if (tripulante->Tarea == NULL){
 			pedir_tarea(tripulante);
+			log_info(logger_tripulante,"Al tripulante %d le llego la tarea: %s",tripulante->id,tripulante->Tarea->nombre);
 			tripulante->primer_inicio = true;
 			tripulante->espera = tripulante->Tarea->duracion;
 		}
@@ -929,6 +935,7 @@ void* vivirTripulante(Tripulante* tripulante) {
 
 			hacerTarea(tripulante);
 	}
+	log_info(logger_tripulante,"El tripulante %d finalizo su ejecucion",tripulante->id);
 	eliminarTripulante(tripulante);
 	return NULL;
 }
@@ -1275,9 +1282,6 @@ void pedir_tarea(Tripulante* tripulante){
 		return;
 	}
 	tarea_tripulante* tarea_convertida = convertir_tarea(tarea);
-	if(tripulante->Tarea != NULL)
-		free(tripulante->Tarea->nombre);
-	free(tripulante->Tarea);
 	tripulante->Tarea = tarea_convertida;
 	free(tarea);
 
@@ -1331,8 +1335,7 @@ int hacerConsola() {
 				free(codigo_dividido[1]);
 				free(codigo_dividido);
 				free(linea);
-				list_clean(posiciones_iniciales);
-				free(posiciones_iniciales);
+				list_destroy(posiciones_iniciales);
 				continue;
 			}
 
@@ -1343,9 +1346,9 @@ int hacerConsola() {
 			for(int i=0 ; i< cantidad_tripulantes;i++){
 				uint8_t posicionX = obtener_pos(posiciones_iniciales);
 				uint8_t posicionY = obtener_pos(posiciones_iniciales);
-
+				printf("EStoy por crear al tripulante: %d en %d|%d\n",t_totales,posicionX,posicionY);
 				nuevo_tripulante = crear_tripulante(t_totales, p_totales, posicionX, posicionY);
-
+				puts("en teoria se pudo crear\n");
 				pthread_mutex_lock(&sem_cola_new);
 				queue_push(new,nuevo_tripulante);
 				pthread_mutex_unlock(&sem_cola_new);
@@ -1380,9 +1383,7 @@ int hacerConsola() {
 			free(parametros_divididos[1]);
 			free(parametros_divididos[2]);
 			free(parametros_divididos);
-
-			list_clean(posiciones_iniciales);
-			free(posiciones_iniciales);
+			list_destroy(posiciones_iniciales);
 		}
 
 
@@ -1455,6 +1456,7 @@ int hacerConsola() {
 		}
 
 		if (string_contains(linea,"EXIT") || linea[0] == '\0'){
+			ejecucion = 0;
 			int socket_miram = conectarse_Mi_Ram();
 			int socket_mongo = conectarse_mongo();
 			t_paquete* paquete_miram = crear_paquete(FINALIZAR);
@@ -1480,6 +1482,7 @@ int hacerConsola() {
 		free(codigo_dividido);
 		free(linea);
 	}
+	exit(1);
 }
 int main(int argc, char* argv[]) {
 	ciclos_totales = 0;

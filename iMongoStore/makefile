@@ -43,10 +43,10 @@ release: clean
 release: all
 
 memcheck: all
-	valgrind --leak-check=full --log-file="bin/$@_$(PROJECT).log" $(BINARY) discordiador.config
+	valgrind --leak-check=full --log-file="bin/$@_$(PROJECT).log" $(BINARY)
 
 helgrind: all
-	valgrind --tool=helgrind --log-file="bin/$@_$(PROJECT).log" $(BINARY) discordiador.config
+	valgrind --tool=helgrind --log-file="bin/$@_$(PROJECT).log" $(BINARY)
 
 # ==============================================================================================================
 

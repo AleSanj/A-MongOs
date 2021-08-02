@@ -77,16 +77,16 @@ int crear_conexion(char* ip, char* puerto)
 {
 	int socket_cliente;
 
-	  struct addrinfo mi_info;
+	  struct addrinfo* mi_info = malloc(sizeof(struct addrinfo));
 
-	  memset(&mi_info, 0, sizeof(struct addrinfo));
-	  mi_info.ai_family = AF_INET;
-	  mi_info.ai_socktype = SOCK_STREAM;
-	  mi_info.ai_protocol = IPPROTO_TCP;
+	  memset(mi_info, 0, sizeof(struct addrinfo));
+	  mi_info->ai_family = AF_INET;
+	  mi_info->ai_socktype = SOCK_STREAM;
+	  mi_info->ai_protocol = IPPROTO_TCP;
 
 	  struct addrinfo* resultado;
 
-	  if (getaddrinfo(ip, puerto, &mi_info, &resultado) != 0) {
+	  if (getaddrinfo(ip, puerto, mi_info, &resultado) != 0) {
 	   //printf("Error al parsear la direccion del socket\n");
 	    return (-1);
 	  }
@@ -104,15 +104,22 @@ int crear_conexion(char* ip, char* puerto)
 	      } else {
 	        //printf("No se pudo crear la conexion al socket\n");
 	        close(socket_cliente);
+			freeaddrinfo(mi_info);
+			freeaddrinfo(resultado);
 	        return (-1);
 	      }
 	    }
 	  }
 	  if (aux_resultado == NULL) {
+		freeaddrinfo(mi_info);
+		freeaddrinfo(resultado);
 	    //printf("No se pudo crear el socket\n");
 	    return (-1);
 	  }
+	  freeaddrinfo(mi_info);
 	  freeaddrinfo(resultado);
+//	  free(resultado);
+//	  free(mi_info);
 	  return socket_cliente;
 }
 
