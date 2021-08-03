@@ -42,6 +42,8 @@ t_log* logger_tripulante;
 char* PATH_CONEXIONES_LOG;
 t_log* logger_conexiones;
 
+
+t_log* log_roto;
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
 //PATH_CONFIG "../discordiador.config"
@@ -151,7 +153,7 @@ Tripulante* buscar_tripulante(int tripulante_buscado){
 	pthread_mutex_unlock(&sem_cola_bloqIO);
 	return encontrado;
 }
-
+char* log_rotoo;
 void iniciar_paths(char* s){
 	if (!strcmp(s,"eclipse")){
 		PATH_CONFIG = "discordiador.config";
@@ -159,6 +161,8 @@ void iniciar_paths(char* s){
 		PATH_DISCORDIADOR_LOG = "src/logs/DISCORDIADOR.log";
 		PATH_TRIPULANTE_LOG = "src/logs/TRIPULANTE.log";
 		PATH_CONEXIONES_LOG = "src/logs/CONEXIONES.log";
+		log_rotoo = "src/logs/log_roto.logo";
+
 	} else {
 		PATH_CONFIG = "../discordiador.config";
 		PATH_TAREAS = "../src/tareas/";
@@ -528,12 +532,14 @@ void* iniciar_Planificacion()
 		if(!estado_planificacion)
 			sem_wait(&(pararPlanificacion[0]));
 
+//		log_info(log_roto,"me quedo en el semaforo sem_trip_en_ready");
 		sem_wait(&sem_tripulante_en_ready);
 		if(list_size(ready->elements)==0)
 		{
 			continue;
 		}
 		log_info(logger_discordiador,"Se espera signal para ver mover elementos de READY");
+//		log_info(log_roto,"me quedo en el semaforo multiprocesamiento");
 		sem_wait(&multiProcesamiento);
 
 
@@ -542,13 +548,14 @@ void* iniciar_Planificacion()
 		//este para proteger la lista de ejecutados
 		pthread_mutex_lock(&sem_cola_exec);
 		//AGREGO A LISTA DE EJECUCION
-		Tripulante* tripulante= (Tripulante*) queue_pop(ready);
-		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a EXEC",tripulante->id,tripulante->estado);
+		Tripulante* tripulante = (Tripulante*) queue_pop(ready);
+//		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a EXEC",tripulante->id,tripulante->estado);
 		cambiar_estado(tripulante,"EXEC");
 		list_add(execute, tripulante);
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exec);
 		sem_post(&(tripulante->sem_pasaje_a_exec));
+//		log_info(log_roto,"le tiuro un post a semaforo sem_pasaje_A_exec");
 
 	}
 }
@@ -826,7 +833,7 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_tripulante,"N°Q:%d El tripulante %d consume un ciclo para moverse",contadorQuantum,tripulant->id);
 		sleep(retardoCpu);
 		ciclos_totales++;
-//		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
+		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		moverTripulante(tripulant);
 		contadorQuantum++;
 		//le tiroun post al semaforo que me permite frenar la ejecucion
@@ -837,6 +844,7 @@ void hacerRoundRobin(Tripulante* tripulant) {
 	{
 		tripulant->kuantum=0;
 		hacerTareaIO(tripulant);
+		return;
 	}
 	if (tripulant->primer_inicio){
 		enviar_inicio_fin_mongo(tripulant,'I');
@@ -851,7 +859,7 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_tripulante,"N°Q:%d El tripulante %d consume un ciclo para realizar su tarea",contadorQuantum,tripulant->id);
 		sleep(retardoCpu);
 		ciclos_totales++;
-//		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
+		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y){
 		tripulant->espera--;
 		} else {
@@ -868,22 +876,23 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_tripulante,"N°Q:%d El tripulante %d finaliza su tarea %s",contadorQuantum,tripulant->id,tripulant->Tarea->nombre);
 		tripulant->kuantum=contadorQuantum;
 		enviar_inicio_fin_mongo(tripulant,'F');
-//		free(tripulant->Tarea->nombre);
-//		free(tripulant->Tarea);
+		free(tripulant->Tarea->nombre);
+		free(tripulant->Tarea);
 		tripulant->Tarea->nombre = NULL;
 		tripulant->Tarea = NULL;
 
 		sem_post(&(tripulant->sem_pasaje_a_exec));
+		log_info(log_roto,"le tire un post a sem_pasaje_A_exec");
 	}else
 	{
-		log_info(logger_tripulante,"N°Q:%d El tripulante es desalojado de exec",contadorQuantum,tripulant->id);
+		log_info(logger_tripulante,"N°Q:%d El tripulante %d es desalojado de exec",contadorQuantum,tripulant->id);
 		tripulant->kuantum = 0;
 		//protejo las colas o listas
 
 		pthread_mutex_lock(&sem_cola_ready);
 		pthread_mutex_lock(&sem_cola_exec);
-		//termino su quantum lo agrego a ready
 		pthread_mutex_lock(&trip_comparar);
+
 		trip_cmp=tripulant;
 		queue_push(ready,list_remove_by_condition(execute,esElMismoTripulante));
 
@@ -894,7 +903,9 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_discordiador,"Se mueve al tripulante %d de EXEC a %s",tripulant->id,tripulant->estado);
 	//le aviso al semaforo que libere un recurso para que mande otro tripulante
 		sem_post(&sem_tripulante_en_ready);
+		log_info(log_roto,"le tire un post a sem_tripulante_en_ready");
 		sem_post(&multiProcesamiento);
+		log_info(log_roto,"le tire un post a multiprocesamiento");
 		log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
 	}
 }
@@ -915,6 +926,7 @@ void* vivirTripulante(Tripulante* tripulante) {
 	log_info(logger_tripulante,"El tripulante %d inicializo su hilo",tripulante->id);
 
 	while (tripulante->vida) {
+		log_info(log_roto,"%d en sem_pasaje_A_exec",tripulante->id);
 		sem_wait(&(tripulante->sem_pasaje_a_exec));
 		if(tripulante->vida == false)
 			break;
@@ -1488,6 +1500,7 @@ int main(int argc, char* argv[]) {
 	ciclos_totales = 0;
 	estado_planificacion= 0;
 	iniciar_paths(argv[1]);
+	log_roto = log_create(log_rotoo,"LOG_ROTO",false,LOG_LEVEL_INFO);
 	//=========== LOGS ===============
 	logger_discordiador = log_create(PATH_DISCORDIADOR_LOG, "DISCORDIADOR", false, LOG_LEVEL_INFO);		// Creamos log
 	if (logger_discordiador == NULL) {

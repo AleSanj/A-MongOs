@@ -128,6 +128,7 @@ int main(void) {
 
 			pthread_t hiloTripulante;
 			pthread_create(&hiloTripulante,NULL,(void*)atender_mensaje,(void*)socketTripulante);
+			pthread_detach(hiloTripulante);
 
 
 	}
