@@ -577,7 +577,7 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 void bloqueado_a_ready(Tripulante* bloq)
 {
 	pthread_mutex_lock(&sem_cola_ready);
-	queue_push(ready,bloq);
+	queue_push(ready,queue_pop(bloqueados));
 	pthread_mutex_unlock(&sem_cola_ready);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
@@ -726,7 +726,6 @@ void enviarMongoStore(Tripulante* enviar) {
 	//envia tarea al MONGO STORE
 	// char* ="22:09 inicio consumir_oxigeno"
 	//char[0], [O,B,C]ocigeno|comida|basura, parametro->tarea
-	esta_haciendo_IO = enviar;
 	enviar_inicio_fin_mongo(enviar,'I');
 	enviar_consumir_recurso(enviar);
 	while((enviar->espera != 0 ) && enviar->vida)
@@ -751,9 +750,10 @@ void hacerTareaIO(Tripulante* io) {
 	//ACA ME PASE UN POQUITO CON LOS SEMAFOROS REVISARRRR
 	ejecutando_a_bloqueado(io);
 	//libero el recurso de multiprocesamiento porque me voy a io
+	t_list* cola_bloq = bloqueados->elements;
 	sem_post(&multiProcesamiento);
 	pthread_mutex_lock(&mutexIO);
-	enviarMongoStore(buscar_tripulante(io->id));
+	enviarMongoStore(list_get(cola_bloq,0));
 	pthread_mutex_unlock(&mutexIO);
 
 }
@@ -876,8 +876,8 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_tripulante,"N°Q:%d El tripulante %d finaliza su tarea %s",contadorQuantum,tripulant->id,tripulant->Tarea->nombre);
 		tripulant->kuantum=contadorQuantum;
 		enviar_inicio_fin_mongo(tripulant,'F');
-		free(tripulant->Tarea->nombre);
-		free(tripulant->Tarea);
+//		free(tripulant->Tarea->nombre);
+//		free(tripulant->Tarea);
 		tripulant->Tarea->nombre = NULL;
 		tripulant->Tarea = NULL;
 
