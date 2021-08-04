@@ -1181,73 +1181,66 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
 }
 
 void compactacion(){
-	huecoLibreEnLista_struct* nuevoGranHuecoLibre = malloc(sizeof(huecoLibreEnLista_struct));
-	for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
-        log_info(logger,"Tamanio de la lista global de segmentos: %d",list_size(listaGlobalDeSegmentos));
-		if(i==0){
-            segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));
-            primerSegmento = list_get(listaGlobalDeSegmentos,0);
-            if(primerSegmento->inicio != memoria){
-                memcpy(memoria,primerSegmento->inicio,primerSegmento->tamanio);
-                primerSegmento->inicio = memoria;
-                list_replace(listaGlobalDeSegmentos,0,primerSegmento);
-
-
-                t_list *listaSegmentosLocal = malloc(sizeof(tablaEnLista_struct));
-                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
-                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
-                    tablaIterante = list_get(listaDeTablasDePaginas,i);
-                    if (tablaIterante->idPatota == primerSegmento->idPatota){
-                        listaSegmentosLocal=tablaIterante->tablaDePaginas;
-                    }
-                }
-                segmentoEnTabla_struct *primerSegmentoLocal = list_get(listaSegmentosLocal,0);
-                primerSegmentoLocal->inicio=memoria;
-                list_replace(listaSegmentosLocal,0,primerSegmentoLocal);
-
-            }
-        }else{
-            segmentoEnTablaGlobal_struct *segmentoActual = list_get(listaGlobalDeSegmentos,i);
-            segmentoEnTablaGlobal_struct *segmentoAnterior = list_get(listaGlobalDeSegmentos,i-1);
-            if ((int)segmentoActual->inicio != ((int)segmentoAnterior->inicio + segmentoAnterior->tamanio)){
-                memcpy((int)segmentoAnterior->inicio+segmentoAnterior->tamanio,segmentoActual->inicio,segmentoActual->tamanio);
-                segmentoActual->inicio = (int)segmentoAnterior->inicio+segmentoAnterior->tamanio;
-                list_replace(listaGlobalDeSegmentos,i,segmentoActual);
-
-
-                t_list *listaSegmentosLocalActual = malloc(sizeof(tablaEnLista_struct));
-                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
-                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
-                    tablaIterante = list_get(listaDeTablasDePaginas,i);
-                    if (tablaIterante->idPatota == segmentoActual->idPatota){
-                        listaSegmentosLocalActual=tablaIterante->tablaDePaginas;
-                    }
-                }
-
-                t_list *listaSegmentosLocalAnterior = malloc(sizeof(tablaEnLista_struct));
-                for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
-                    tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
-                    tablaIterante = list_get(listaDeTablasDePaginas,i);
-                    if (tablaIterante->idPatota == segmentoAnterior->idPatota){
-                        listaSegmentosLocalAnterior=tablaIterante->tablaDePaginas;
-                    }
-                }
-
-                segmentoEnTabla_struct *segmentoLocalActual = list_get(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal);
-                segmentoLocalActual->inicio=segmentoActual->inicio;
-                list_replace(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal,segmentoLocalActual);
-
-
-            }
-        }
-    }
-	list_clean_and_destroy_elements(listaHuecosLibres,free);
-	int ultimoIndice = list_size(listaGlobalDeSegmentos)-1;
-	segmentoEnTablaGlobal_struct* segmentoParaCrearHueco = malloc(sizeof(segmentoEnTablaGlobal_struct));
-	segmentoParaCrearHueco = list_get(listaGlobalDeSegmentos,ultimoIndice);
-	nuevoGranHuecoLibre->inicio = (int)segmentoParaCrearHueco->inicio + segmentoParaCrearHueco->tamanio;
-	nuevoGranHuecoLibre->tamanio = espacioLibre;
-	list_add(listaHuecosLibres,nuevoGranHuecoLibre);
+	if(list_is_empty(listaGlobalDeSegmentos)!=1){
+		huecoLibreEnLista_struct* nuevoGranHuecoLibre = malloc(sizeof(huecoLibreEnLista_struct));
+		for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
+			log_info(logger,"Tamanio de la lista global de segmentos: %d",list_size(listaGlobalDeSegmentos));
+			if(i==0){
+				segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));
+				primerSegmento = list_get(listaGlobalDeSegmentos,0);
+				if(primerSegmento->inicio != memoria){
+					memcpy(memoria,primerSegmento->inicio,primerSegmento->tamanio);
+					primerSegmento->inicio = memoria;
+					list_replace(listaGlobalDeSegmentos,0,primerSegmento);
+					t_list *listaSegmentosLocal = malloc(sizeof(tablaEnLista_struct));
+					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+						tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+						tablaIterante = list_get(listaDeTablasDePaginas,i);
+						if (tablaIterante->idPatota == primerSegmento->idPatota){
+							listaSegmentosLocal=tablaIterante->tablaDePaginas;
+						}
+					}
+					segmentoEnTabla_struct *primerSegmentoLocal = list_get(listaSegmentosLocal,0);
+					primerSegmentoLocal->inicio=memoria;
+					list_replace(listaSegmentosLocal,0,primerSegmentoLocal);
+				}
+			}else{
+				segmentoEnTablaGlobal_struct *segmentoActual = list_get(listaGlobalDeSegmentos,i);
+				segmentoEnTablaGlobal_struct *segmentoAnterior = list_get(listaGlobalDeSegmentos,i-1);
+				if ((int)segmentoActual->inicio != ((int)segmentoAnterior->inicio + segmentoAnterior->tamanio)){
+					memcpy((int)segmentoAnterior->inicio+segmentoAnterior->tamanio,segmentoActual->inicio,segmentoActual->tamanio);
+					segmentoActual->inicio = (int)segmentoAnterior->inicio+segmentoAnterior->tamanio;
+					list_replace(listaGlobalDeSegmentos,i,segmentoActual);
+					t_list *listaSegmentosLocalActual = malloc(sizeof(tablaEnLista_struct));
+					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+						tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+						tablaIterante = list_get(listaDeTablasDePaginas,i);
+						if (tablaIterante->idPatota == segmentoActual->idPatota){
+							listaSegmentosLocalActual=tablaIterante->tablaDePaginas;
+						}
+					}
+					t_list *listaSegmentosLocalAnterior = malloc(sizeof(tablaEnLista_struct));
+					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
+						tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
+						tablaIterante = list_get(listaDeTablasDePaginas,i);
+						if (tablaIterante->idPatota == segmentoAnterior->idPatota){
+							listaSegmentosLocalAnterior=tablaIterante->tablaDePaginas;
+						}
+					}
+					segmentoEnTabla_struct *segmentoLocalActual = list_get(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal);
+					segmentoLocalActual->inicio=segmentoActual->inicio;
+					list_replace(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal,segmentoLocalActual);
+				}
+			}
+		}
+		list_clean_and_destroy_elements(listaHuecosLibres,free);
+		int ultimoIndice = list_size(listaGlobalDeSegmentos)-1;
+		segmentoEnTablaGlobal_struct* segmentoParaCrearHueco = malloc(sizeof(segmentoEnTablaGlobal_struct));
+		segmentoParaCrearHueco = list_get(listaGlobalDeSegmentos,ultimoIndice);
+		nuevoGranHuecoLibre->inicio = (int)segmentoParaCrearHueco->inicio + segmentoParaCrearHueco->tamanio;
+		nuevoGranHuecoLibre->tamanio = espacioLibre;
+		list_add(listaHuecosLibres,nuevoGranHuecoLibre);
+	}
 }
 
 void actualizar_estado_paginacion(uint32_t idElemento, uint32_t idPatota, char nuevoEstado){
