@@ -103,7 +103,7 @@ int main(void) {
 
 			pthread_t hiloCliente;
 			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
-			pthread_join(hiloCliente,NULL);
+			pthread_detach(hiloCliente);
 	}
 
 
@@ -161,13 +161,23 @@ void administrar_cliente(int socketCliente){
 					list_add(listaDeTablasDePaginas,nuevaListaDeTablasDePaginas);
 				}
 				nuevaPatota->tareas = 0; //calcular_direccion_logica_archivo(estructura_iniciar_patota->idPatota);
-				log_info(logger, "Tareas: %s\n",estructura_iniciar_patota->Tareas);
 				guardar_en_memoria_general(nuevaPatota,estructura_iniciar_patota->idPatota,sizeof(pcb),estructura_iniciar_patota->idPatota,'P');
 				log_info(logger, "Guarde el PCB de la patota %d\n",estructura_iniciar_patota->idPatota);
-				log_info(logger, "TAMANIO DE TAREAS:  %d\n",estructura_iniciar_patota->tamanio_tareas);
-				guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
-				log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
-
+				if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
+					//log_info(logger, "Tareas: %s\n",estructura_iniciar_patota->Tareas);
+					log_info(logger, "TAMANIO DE TAREAS:  %d\n",estructura_iniciar_patota->tamanio_tareas);
+					guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
+					log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
+				}else{
+					char **arrayTareas = string_split(estructura_iniciar_patota->Tareas,"|");
+					log_info(logger,"Tarea 1: %s",arrayTareas[1]);
+					int i =0;
+					while(arrayTareas[i]!=NULL){
+						guardar_en_memoria_general(arrayTareas[i],i,strlen(arrayTareas[i]),estructura_iniciar_patota->idPatota,'A');
+						log_info(logger,"Guarde la tarea %s",arrayTareas[i]);
+						i++;
+					}
+				}
 			}
 			liberar_t_iniciar_patota(estructura_iniciar_patota);
 			liberar_conexion(socketCliente);
@@ -223,45 +233,60 @@ void administrar_cliente(int socketCliente){
 			//printf("PEDIR TAREA /n");
 				t_tripulante* tripulante_solicitud = deserializar_tripulante(paquete_recibido);
 				//imprimir_paquete_tripulante(tripulante_solicitud);
-				log_info(logger,"El tripulante %d esta pidiendo tarea",tripulante_solicitud->id_tripulante);
-				char*tareas = string_new();
-				tareas = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
-				char **arrayTareas = string_split(tareas,"|");
 				tcb *tripulanteATraer = malloc(sizeof(tcb));
 				tripulanteATraer = buscar_en_memoria_general(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota,'T');
-				pcb* patotaATraer = malloc(sizeof(pcb));
-				patotaATraer = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'P');
-
-				int i=0;
 				int totalDeTareas=0;
-				while(arrayTareas[i]!=NULL){
-					totalDeTareas++;
-					i++;
-				}
-				if(tripulanteATraer->proxTarea==totalDeTareas){
-					char* fault = strdup("fault");
-					uint32_t tamanio_fault = strlen(fault)+1;
-					send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
-					send(socketCliente, fault,tamanio_fault,0);
-					free(fault);
-					log_info(logger, "Mande la tarea fault\n");
-				}else{
-					//log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
-					int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
-					send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
-					send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
 					if(strcmp(esquemaMemoria,"PAGINACION")==0){
+						log_info(logger,"Entre al if de la busqueda en la paginacion");
+						totalDeTareas = contarTareas(tripulante_solicitud->id_patota);
+						log_info(logger,"Cantidad de tareas: %d",totalDeTareas);
+						if(tripulanteATraer->proxTarea==totalDeTareas){
+							char* fault = strdup("fault");
+							uint32_t tamanio_fault = strlen(fault)+1;
+							send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
+							send(socketCliente, fault,tamanio_fault,0);
+							free(fault);
+							log_info(logger, "Mande la tarea fault\n");
+						}else{
+							log_info(logger, "Voy a buscar la tarea");
+							char *tarea = string_new();
+							tarea = buscar_en_memoria_general(tripulanteATraer->proxTarea,tripulante_solicitud->id_patota,'A');
+							log_info(logger,"Tarea que voy a mandar: %s",tarea);
+							int tamanio_tarea = strlen(tarea)+1;
+							send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
+							send(socketCliente, tarea,tamanio_tarea,0);
+							log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",tarea,tripulanteATraer->proxTarea,tripulanteATraer->id);
+						}
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_paginacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
 					}else if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
+						char*tareas = string_new();
+						tareas = buscar_en_memoria_general(tripulante_solicitud->id_patota,tripulante_solicitud->id_patota,'A');
+						char **arrayTareas = string_split(tareas,"|");
+						int i=0;
+						while(arrayTareas[i]!=NULL){
+							totalDeTareas++;
+							i++;
+						}
+						if(tripulanteATraer->proxTarea==totalDeTareas){
+							char* fault = strdup("fault");
+							uint32_t tamanio_fault = strlen(fault)+1;
+							send(socketCliente,&tamanio_fault,sizeof(uint32_t),0);
+							send(socketCliente, fault,tamanio_fault,0);
+							free(fault);
+							log_info(logger, "Mande la tarea fault\n");
+						}else{
+							//log_info(logger, "Soy el tripulante %d, estoy en x=%d y=%d\n",tripulanteATraer->id,tripulanteATraer->posX,tripulanteATraer->posY);
+							int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
+							send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
+							send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
+						}
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_segmentacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
+						log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",arrayTareas[tripulanteATraer->proxTarea],tripulanteATraer->proxTarea,tripulanteATraer->id);
 					}
-					log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",arrayTareas[tripulanteATraer->proxTarea],tripulanteATraer->proxTarea,tripulanteATraer->id);
-				}
-
 				for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
 				    tablaEnLista_struct *tablaBuscada= malloc(sizeof(tablaEnLista_struct));
 					tablaBuscada = list_get(listaDeTablasDePaginas,i);
@@ -330,7 +355,7 @@ void administrar_cliente(int socketCliente){
 
 		case FINALIZAR:;
 		t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
-			free(tripulante_a_liberar);
+
 			terminar_programa();
 			liberar_t_tripulante(tripulante_a_liberar);
 			break;

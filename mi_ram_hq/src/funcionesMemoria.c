@@ -483,6 +483,8 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 					list_remove(tablaDeFrames->elements,punteroReemplazo);
 					if(punteroReemplazo == queue_size(tablaDeFrames)){
 						punteroReemplazo = 0;
+					}else{
+						punteroReemplazo ++;
 					}
 					break;
 				}
@@ -541,6 +543,7 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
         }
     }
     if (paginaInicial == -1){
+    	log_info(logger,"No encontre el elemento buscado");
     	return 0;
     }
     tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
@@ -1591,4 +1594,15 @@ int sacarPaginaDeMemoria(){
 	paginaAActualizar->frame = frameEnSwap;
 	list_replace(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar);
 	return paginaAReemplazar->nroFrame;
+}
+
+bool filtrar_Tareas_patota(void* elemento){
+    elementoEnLista_struct *comparador = elemento;
+    return (comparador->tipo == 'A' && comparador->PID == patotaUniversal);
+}
+
+int contarTareas(int idPatota){
+	patotaUniversal = idPatota;
+	t_list* listaFiltrada = list_filter(listaElementos,filtrar_Tareas_patota);
+	return list_size(listaFiltrada);
 }

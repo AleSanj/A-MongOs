@@ -88,6 +88,7 @@ bool encontrarTablaDePaginas(void*);
 bool filtrarPorTipo(void*);
 void *buscar_de_memoria_segmentacion(int,int,char);
 char tipoUniversal;
+int patotaUniversal;
 int tamPayloadUniversal;
 void guardar_en_memoria_general(void* ,int ,int ,int ,char );
 int sacarPaginaDeMemoria();
