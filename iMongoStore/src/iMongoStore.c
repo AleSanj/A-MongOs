@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-//#define PATH_CONFIG "../config/mongoStore.config"
-//#define PATH_LOG_G "../config/log_general.log"
-//#define PATH_LOG_B "../config/log_bitacoras.log"
-//#define PATH_LOG_SE "../config/log_server.log"
-//#define PATH_LOG_SA "../config/log_sabotaje.log"
+#define PATH_CONFIG "../config/mongoStore.config"
+#define PATH_LOG_G "../config/log_general.log"
+#define PATH_LOG_B "../config/log_bitacoras.log"
+#define PATH_LOG_SE "../config/log_server.log"
+#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-#define PATH_CONFIG "config/mongoStore.config"
-#define PATH_LOG_G "config/log_general.log"
-#define PATH_LOG_B "config/log_bitacoras.log"
-#define PATH_LOG_SE "config/log_server.log"
-#define PATH_LOG_SA "config/log_sabotaje.log"
+//#define PATH_CONFIG "config/mongoStore.config"
+//#define PATH_LOG_G "config/log_general.log"
+//#define PATH_LOG_B "config/log_bitacoras.log"
+//#define PATH_LOG_SE "config/log_server.log"
+//#define PATH_LOG_SA "config/log_sabotaje.log"
 //-------------------------------------
 
 
@@ -920,6 +920,7 @@ void eliminarCaracter(int cantidad, char caracter){
 	//SE INVOCA PARA CONSUMIR UN RECURSO
 	char* rutita = string_new();
 	string_append(&rutita, punto_montaje);
+	pthread_mutex_lock(&mutexBitacoras);
 
 	switch (caracter){
 		case 'O':
@@ -960,7 +961,7 @@ void eliminarCaracter(int cantidad, char caracter){
 			printf("No se selecciono un caracter correcto");
 			break;
 	}
-
+	pthread_mutex_unlock(&mutexBitacoras);
 	free(rutita);
 }
 
@@ -1013,6 +1014,10 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	 *
 	 **/
 	int cantidad_a_borrar=cantidad;
+	if (cantidad >= cantidadDeCaracteresRestantes)
+	{
+		cantidad_a_borrar=cantidadDeCaracteresRestantes;
+	}
 	if(cantidadDeCaracteresRestantes%tamanio_bloque!=0)
 	{
 		cantidad_a_borrar-=cantidadDeCaracteresRestantes%tamanio_bloque;
@@ -1453,7 +1458,7 @@ void agregarCaracter(int cantidad, char caracter){
 
 	char* rutita = string_new();
 	string_append(&rutita, punto_montaje);
-
+	pthread_mutex_lock(&mutexBitacoras);
 	switch (caracter){
 		case 'O':
 			string_append(&rutita, "/Files/Oxigeno.ims");
@@ -1489,6 +1494,7 @@ void agregarCaracter(int cantidad, char caracter){
 			printf("No se selecciono un caracter correcto");
 			break;
 	}
+	pthread_mutex_lock(&mutexBitacoras);
 
 	free(rutita);
 }
