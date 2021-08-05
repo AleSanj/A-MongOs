@@ -103,7 +103,7 @@ int main(void) {
 
 			pthread_t hiloCliente;
 			pthread_create(&hiloCliente,NULL,(void*)administrar_cliente,socketCliente);
-			pthread_detach(hiloCliente);
+			pthread_detach(hiloCliente,NULL);
 	}
 
 
@@ -354,18 +354,22 @@ void administrar_cliente(int socketCliente){
 				break;
 
 		case FINALIZAR:;
-		t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
-
+			t_tripulante* tripulante_a_liberar = deserializar_tripulante(paquete_recibido);
 			terminar_programa();
 			liberar_t_tripulante(tripulante_a_liberar);
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
-			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
-			log_info(logger, "Elimine la patota %d",patota_a_eliminar->id_patota);
-			log_info(logger2,"Borro la patota %d",patota_a_eliminar->id_patota);
-			//loggearTablaDeFrames();
+			if(strcmp(esquemaMemoria,"PAGINACION")==0){
+				int cantTareas = contarTareas(patota_a_eliminar->id_patota);
+				for(int i =0;i<cantTareas;i++){
+					borrar_de_memoria_general(i, patota_a_eliminar->id_patota,'A');
+				}
+			}else{
+				borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
+			}
+
 			liberar_conexion(socketCliente);
 			liberar_t_tripulante(patota_a_eliminar);
 			break;

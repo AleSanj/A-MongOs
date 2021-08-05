@@ -1099,7 +1099,6 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char tipoDeElemento){
 
     tipoUniversal = tipoDeElemento;
-    huecoLibreEnLista_struct *nuevoHuecoLibre = malloc(sizeof(huecoLibreEnLista_struct));
     t_list *listaSegmentos;
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
         tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
@@ -1116,7 +1115,8 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
         		segmentoEnTablaGlobal_struct *segmentoGlobalIterante = malloc(sizeof(segmentoGlobalIterante));
                 for (int j = 0; j < list_size(listaGlobalDeSegmentos); ++j) {
                 	segmentoGlobalIterante = list_get(listaGlobalDeSegmentos,j);
-                    if ((segmentoGlobalIterante->idPatota == idPatota)&&(segmentoGlobalIterante->segmentoEnLocal == elementoEvaluado->segmentoOPagina)){
+                    if ((segmentoGlobalIterante->idPatota == idPatota) && (segmentoGlobalIterante->segmentoEnLocal == elementoEvaluado->segmentoOPagina)){
+                    	huecoLibreEnLista_struct *nuevoHuecoLibre = malloc(sizeof(huecoLibreEnLista_struct));
                     	nuevoHuecoLibre->inicio = segmentoGlobalIterante->inicio;
                     	nuevoHuecoLibre->tamanio = segmentoGlobalIterante->tamanio;
                     	list_add(listaHuecosLibres,nuevoHuecoLibre);
@@ -1161,9 +1161,6 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
             memcpy(elementoABuscar,segmentoEvaluado->inicio, sizeof(tcb));
             if (elementoABuscar->id == idElementoABuscar && elementoEvaluado->tipo=='T'){
                 return elementoABuscar;
-            }else{
-                //free(elementoEvaluado);
-                //free(segmentoEvaluado);
             }
         }else if(tipoDeElemento == 'A'){
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
@@ -1187,7 +1184,7 @@ void compactacion(){
 	if(list_is_empty(listaGlobalDeSegmentos)!=1){
 		huecoLibreEnLista_struct* nuevoGranHuecoLibre = malloc(sizeof(huecoLibreEnLista_struct));
 		for (int i =0;i<list_size(listaGlobalDeSegmentos);i++){
-			log_info(logger,"Tamanio de la lista global de segmentos: %d",list_size(listaGlobalDeSegmentos));
+			//log_info(logger,"Tamanio de la lista global de segmentos: %d",list_size(listaGlobalDeSegmentos));
 			if(i==0){
 				segmentoEnTablaGlobal_struct *primerSegmento = malloc(sizeof(segmentoEnTablaGlobal_struct));
 				primerSegmento = list_get(listaGlobalDeSegmentos,0);
