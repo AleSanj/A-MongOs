@@ -197,7 +197,7 @@ int calcular_distancia(Tripulante* tripulante, int x, int y)
 
 bool es_tarea_IO(char* tarea)
 {
-	return (string_contains(tarea, "GENERAR") || string_contains(tarea,"CONSUMIR"));
+	return (string_contains(tarea, "GENERAR") || string_contains(tarea,"CONSUMIR") || string_contains(tarea,"DESCARTAR_BASURA") );
 }
 
 
@@ -577,7 +577,9 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 void bloqueado_a_ready(Tripulante* bloq)
 {
 	pthread_mutex_lock(&sem_cola_ready);
+	pthread_mutex_lock(&sem_cola_bloqIO);
 	queue_push(ready,queue_pop(bloqueados));
+	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&sem_cola_ready);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
@@ -752,6 +754,7 @@ void hacerTareaIO(Tripulante* io) {
 	//libero el recurso de multiprocesamiento porque me voy a io
 	t_list* cola_bloq = bloqueados->elements;
 	sem_post(&multiProcesamiento);
+
 	pthread_mutex_lock(&mutexIO);
 	enviarMongoStore(list_get(cola_bloq,0));
 	pthread_mutex_unlock(&mutexIO);
@@ -803,7 +806,7 @@ void hacerFifo(Tripulante* tripu) {
 		enviar_inicio_fin_mongo(tripu,'F');
 		free(tripu->Tarea->nombre);
 		free(tripu->Tarea);
-		tripu->Tarea->nombre = NULL;
+//		tripu->Tarea->nombre = NULL;
 		tripu->Tarea =NULL;
 		sem_post(&tripu->sem_pasaje_a_exec);
 	}
@@ -844,6 +847,12 @@ void hacerRoundRobin(Tripulante* tripulant) {
 	{
 		tripulant->kuantum=0;
 		hacerTareaIO(tripulant);
+		log_info(logger_tripulante,"N°Q:%d El tripulante %d finaliza su tarea %s",contadorQuantum,tripulant->id,tripulant->Tarea->nombre);
+		tripulant->kuantum=contadorQuantum;
+		free(tripulant->Tarea->nombre);
+		free(tripulant->Tarea);
+//		tripulant->Tarea->nombre = NULL;
+		tripulant->Tarea = NULL;
 		return;
 	}
 	if (tripulant->primer_inicio){
@@ -876,9 +885,9 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		log_info(logger_tripulante,"N°Q:%d El tripulante %d finaliza su tarea %s",contadorQuantum,tripulant->id,tripulant->Tarea->nombre);
 		tripulant->kuantum=contadorQuantum;
 		enviar_inicio_fin_mongo(tripulant,'F');
-//		free(tripulant->Tarea->nombre);
-//		free(tripulant->Tarea);
-		tripulant->Tarea->nombre = NULL;
+		free(tripulant->Tarea->nombre);
+		free(tripulant->Tarea);
+//		tripulant->Tarea->nombre = NULL;
 		tripulant->Tarea = NULL;
 
 		sem_post(&(tripulant->sem_pasaje_a_exec));
@@ -1385,6 +1394,7 @@ int hacerConsola() {
 				sem_init(&(nuevo_tripulante->sem_pasaje_a_exec),NULL,0);
 				sem_init(&(nuevo_tripulante->hilosEnEjecucion), 0, 0);
 				pthread_create(&(nuevo_tripulante->hilo_vida), NULL, (void*) vivirTripulante, (void*) nuevo_tripulante);
+				pthread_detach(nuevo_tripulante->hilo_vida);
 				t_totales++;
 			}
 			p_totales++;
@@ -1406,6 +1416,7 @@ int hacerConsola() {
 			if(primerInicio)
 			{
 				pthread_create(&firstInit,NULL,(void*) iniciar_Planificacion,NULL);
+
 
 				primerInicio=false;
 			} else {
