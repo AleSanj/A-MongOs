@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
+//#define PATH_CONFIG "../config/mongoStore.config"
+//#define PATH_LOG_G "../config/log_general.log"
+//#define PATH_LOG_B "../config/log_bitacoras.log"
+//#define PATH_LOG_SE "../config/log_server.log"
+//#define PATH_LOG_SA "../config/log_sabotaje.log"
+//-------------------------------------
+//PARA EJECUTAR DESDE ECLIPSE USAR:
 #define PATH_CONFIG "config/mongoStore.config"
 #define PATH_LOG_G "config/log_general.log"
 #define PATH_LOG_B "config/log_bitacoras.log"
 #define PATH_LOG_SE "config/log_server.log"
 #define PATH_LOG_SA "config/log_sabotaje.log"
-//-------------------------------------
-//PARA EJECUTAR DESDE ECLIPSE USAR:
-//#define PATH_CONFIG "config/mongoStore.config"
-//#define PATH_LOG_G "config/log_general.log"
-//#define PATH_LOG_B "config/log_bitacoras.log"
-//#define PATH_LOG_SE "config/log_server.log"
-//#define PATH_LOG_SA "config/log_sabotaje.log"
 //-------------------------------------
 
 
@@ -113,8 +113,6 @@ int main(void) {
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
-//
-
 
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
@@ -388,7 +386,7 @@ void* atender_mensaje (int socketTripulante){
 	case CONSUMIR_RECURSO:;
 		t_consumir_recurso* consu= deserializar_consumir_recurso(paquete_recibido);
 		log_info(log_mensaje,"Se pidio modificar el recurso %c", consu->consumible);
-		if(consu->tipo=='C')
+		if(consu->tipo=='C'|| consu->tipo == 'D')
 		{
 			eliminarCaracter((int)consu->cantidad, consu->consumible);
 		}
@@ -935,16 +933,12 @@ void eliminarCaracter(int cantidad, char caracter){
 
 		case 'B':
 			string_append(&rutita, "/Files/Basura.ims");
-			t_config* config_o2 = leer_config(rutita);
-			int cantidadDeCaracteresRestantes = config_get_int_value(config_o2, "SIZE");
-			eliminarEnBloque(cantidadDeCaracteresRestantes, caracter, rutita);
+			remove(rutita);
 			break;
 
 		case 'b':
 			string_append(&rutita, "/Files/Basura.ims");
-			t_config* config_o22 = leer_config(rutita);
-			int cantidadDeCaracteresRestantess = config_get_int_value(config_o22, "SIZE");
-			eliminarEnBloque(cantidadDeCaracteresRestantess, 'B', rutita);
+			remove(rutita);
 			break;
 
 		case 'C':
@@ -973,7 +967,7 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:
-	t_config* config_o2 = leer_config(rutita);
+	t_config* config_o2 = config_create(rutita);
 	int cantidadDeCaracteresRestantes = config_get_int_value(config_o2, "SIZE");
 
 	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
@@ -1116,7 +1110,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:
-	t_config* config_o2 = leer_config(rutita);
+	t_config* config_o2 = config_create(rutita);
 	int cantidadDeCaracteresEscritas = config_get_int_value(config_o2, "SIZE");
 
 	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
@@ -1127,7 +1121,9 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	if(esMetadataRecurso(rutita)){
 		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
 	}
-	config_destroy(config_o2);
+	free(config_o2->properties);
+	free(config_o2->path);
+	free(config_o2);
 
 	//Cantidad de caracteres escritos
 	int cantidadEscrita = 0;
@@ -1212,7 +1208,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 					}
 				}
 			}
-			pthread_mutex_lock(&mutexEscrituraBloques);
+		pthread_mutex_lock(&mutexEscrituraBloques);
 			memcpy(copiaBlock + (bloqueAUsar * tamanio_bloque) + (cantidadDeCaracteresEscritas % tamanio_bloque), &caracter, sizeof(char));
 			pthread_mutex_unlock(&mutexEscrituraBloques);
 			cantidadDeCaracteresEscritas++;
@@ -1472,11 +1468,19 @@ void agregarCaracter(int cantidad, char caracter){
 
 		case 'B':
 			string_append(&rutita, "/Files/Basura.ims");
+			if(verificar_existencia(rutita)!=1)
+			{
+				crear_metadata("Basura", "B");
+			}
 			escribirEnBloque(cantidad, caracter, rutita);
 			break;
 
 		case 'b':
 			string_append(&rutita, "/Files/Basura.ims");
+			if(verificar_existencia(rutita)!=1)
+			{
+				crear_metadata("Basura", "B");
+			}
 			escribirEnBloque(cantidad, 'B', rutita);
 			break;
 
@@ -1494,7 +1498,7 @@ void agregarCaracter(int cantidad, char caracter){
 			printf("No se selecciono un caracter correcto");
 			break;
 	}
-	pthread_mutex_lock(&mutexBitacoras);
+	pthread_mutex_unlock(&mutexBitacoras);
 
 	free(rutita);
 }

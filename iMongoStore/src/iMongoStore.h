@@ -20,6 +20,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <semaphore.h>
 #include <sys/stat.h>
 #include <commons/bitarray.h>
 #include <string.h>
