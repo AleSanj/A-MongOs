@@ -1157,6 +1157,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	log_info(logger_conexiones,"Se envia mensaje INICIAR_PATOTA id: %d, cantidad:%d y tareas: %s",estructura->idPatota,estructura->cantTripulantes,estructura->Tareas);
 //	enviar_paquete(paquete,socket_iniciar_patota);
 	char* respuesta = enviar_paquete_respuesta_string(paquete,socket_iniciar_patota);
+	liberar_conexion(socket_iniciar_patota);
 	log_info(logger_conexiones,"Se recibie la respuesta: %s",respuesta);
 	liberar_t_iniciar_patota(estructura);
 	return respuesta;
@@ -1462,6 +1463,7 @@ int hacerConsola() {
 			agregar_paquete_pedido_mongo(paquete_bitacora,pedido_bitacora);
 			log_info(logger_conexiones, "el tripulante %d envia el mensaje OBTENER_BITCORA a MONGOSTORE",tripulante_id);
 			char* bitacora = enviar_paquete_respuesta_string(paquete_bitacora,socket_bitacora);
+			liberar_conexion(socket_bitacora);
 			log_info(logger_conexiones, "el tripulante %d recibe su bitacora: %s",tripulante_id,bitacora);
 			liberar_t_pedido_mongo(pedido_bitacora);
 			free(bitacora);

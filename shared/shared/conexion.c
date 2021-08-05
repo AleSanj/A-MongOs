@@ -236,7 +236,7 @@ char* enviar_paquete_respuesta_string(t_paquete* paquete,int socket){
 			puts("No se pudo enviar el paquete\n");
 		}
 		free(a_enviar);
-		liberar_conexion(socket);
+//		liberar_conexion(socket);
 		eliminar_paquete(paquete);
 	return tarea;
 }
