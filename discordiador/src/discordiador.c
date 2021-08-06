@@ -735,6 +735,8 @@ void enviarMongoStore(Tripulante* enviar) {
 		sem_wait(&pararIo);
 		log_info(logger_tripulante,"El tripulante %d consume un ciclo para realizar tarea IO",enviar->id);
 		sleep(retardoCpu);
+//		ciclos_totales++;
+//		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		enviar->espera--;
 		sem_post(&pararIo);
 	}
@@ -770,6 +772,8 @@ void hacerFifo(Tripulante* tripu) {
 		}
 		log_info(logger_tripulante,"El tripulante %d consume un ciclo para moverse",tripu->id);
 		sleep(retardoCpu);
+		ciclos_totales++;
+		printf("%d ciclo actual %d\n",tripu->id,ciclos_totales);
 		moverTripulante(tripu);
 
 	}
@@ -777,6 +781,12 @@ void hacerFifo(Tripulante* tripu) {
 	if ((tripu->Tarea->es_io) && tripu->vida)
 	{
 		hacerTareaIO(tripu);
+		log_info(logger_tripulante,"El tripulante %d finaliza su tarea %s",tripu->id,tripu->Tarea->nombre);
+		free(tripu->Tarea->nombre);
+		free(tripu->Tarea);
+//		tripu->Tarea->nombre = NULL;
+		tripu->Tarea = NULL;
+		return;
 	}
 	if(!tripu->vida)
 	{
@@ -797,6 +807,8 @@ void hacerFifo(Tripulante* tripu) {
 			}
 			log_info(logger_tripulante,"El tripulante %d consume un ciclo para realizar su tarea",tripu->id);
 			sleep(retardoCpu);
+			ciclos_totales++;
+			printf("%d ciclo actual %d\n",tripu->id,ciclos_totales);
 			tripu->espera --;
 		}
 		if(!tripu->vida)
@@ -1606,7 +1618,7 @@ int main(int argc, char* argv[]) {
 	log_info(logger_conexiones,"Servidor abierto con el socket %d\n",socket_sabotaje);
 	while(correr_programa)
 	{
-		cliente_sabotaje = esperar_cliente(socket_sabotaje,5);
+		cliente_sabotaje = esperar_cliente(socket_sabotaje,10);
 		if (cliente_sabotaje == -1)
 			continue;
 
