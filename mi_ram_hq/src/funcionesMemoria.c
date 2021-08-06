@@ -165,7 +165,7 @@ void guardar_en_memoria_paginacion(void* payload,int idElemento,int tamPayload,i
         payLoadYaGuardado += menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         payload = (int)payload + menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         paginaParcialmenteLlena->espacioOcupado += menorEntreDos(tamPayload,tamPagina - paginaParcialmenteLlena->espacioOcupado);
-        list_replace_and_destroy_element(tablaCorrespondiente->tablaDePaginas,indicePaginaCorrespondiente,paginaParcialmenteLlena,free);
+        list_replace(tablaCorrespondiente->tablaDePaginas,indicePaginaCorrespondiente,paginaParcialmenteLlena);
         while (payLoadYaGuardado<tamPayload) {
             int frameDisponible = encontrarFrameDisponible();
             if (frameDisponible == -1){
@@ -321,7 +321,7 @@ void guardar_en_swap(void* payload,int idElemento,int tamPayload,int pid,char ti
         payLoadYaGuardado += menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         payload = (int)payload + menorEntreDos(tamPayload,tamPagina-paginaParcialmenteLlena->espacioOcupado);
         paginaParcialmenteLlena->espacioOcupado += menorEntreDos(tamPayload,tamPagina - paginaParcialmenteLlena->espacioOcupado);
-        list_replace_and_destroy_element(tablaCorrespondiente->tablaDePaginas,indicePaginaCorrespondiente,paginaParcialmenteLlena,free);
+        list_replace(tablaCorrespondiente->tablaDePaginas,indicePaginaCorrespondiente,paginaParcialmenteLlena);
         while (payLoadYaGuardado<tamPayload) {
             int frameDisponible = encontrarFrameEnSwapDisponible();
             direccionFisica = (int)memoriaSwap + (int)(frameDisponible * tamPagina);
@@ -453,7 +453,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 		paginaAActualizar->presencia = 1;
 		paginaAActualizar->frame = frameDisponible;
 		paginaAActualizar->espacioOcupado = paginaATraer->espacioOcupado;
-		list_replace_and_destroy_element(tablaDePaginas,indiceDeLaPaginaATraer,paginaAActualizar,free);
+		list_replace(tablaDePaginas,indiceDeLaPaginaATraer,paginaAActualizar);
 		paginaParaReemplazar_struct *paginaAReponer = malloc(sizeof(paginaParaReemplazar_struct));
 		paginaAReponer->nroFrame = frameDisponible;
 		paginaAReponer->nroPagina = indiceDeLaPaginaATraer; //list_add(tablaDePaginas,paginaAActualizar);
@@ -480,14 +480,14 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 				paginaAReemplazar = list_get(tablaDeFrames->elements, punteroReemplazo);
 				if (paginaAReemplazar->uso==1){
 					paginaAReemplazar->uso = 0;
-					list_replace_and_destroy_element(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar,free);
+					list_replace(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar);
 					if (punteroReemplazo+1 == queue_size(tablaDeFrames)){
 						punteroReemplazo = 0;
 					} else{
 						punteroReemplazo++;
 					}
 				} else{
-					list_remove_and_destroy_element(tablaDeFrames->elements,punteroReemplazo,free);
+					list_remove(tablaDeFrames->elements,punteroReemplazo);
 					if(punteroReemplazo == queue_size(tablaDeFrames)){
 						punteroReemplazo = 0;
 					}else{
@@ -510,7 +510,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
 		paginaAActualizar = list_get(tablaDePaginas,indiceDeLaPaginaATraer);
 		paginaAActualizar->presencia = 1;
 		paginaAActualizar->frame = paginaAReemplazar->nroFrame;
-		list_replace_and_destroy_element(tablaDePaginas,indiceDeLaPaginaATraer,paginaAActualizar,free);
+		list_replace(tablaDePaginas,indiceDeLaPaginaATraer,paginaAActualizar);
 		paginaParaReemplazar_struct *paginaAReponer = malloc(sizeof(paginaParaReemplazar_struct));
 		paginaAReponer->nroFrame = paginaAActualizar->frame;
 		paginaAReponer->nroPagina = indiceDeLaPaginaATraer;
@@ -530,7 +530,7 @@ void traerPaginaAMemoria(paginaEnTabla_struct* paginaATraer, t_list* tablaDePagi
     paginaAActualizar2 = list_get(tablaDePaginasBuscada,paginaAReemplazar->nroPagina);
     paginaAActualizar2->presencia = 0;
     paginaAActualizar2->frame = frameEnSwap;
-    list_replace_and_destroy_element(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar2,free);
+    list_replace(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar2);
     }
 }
 
@@ -631,9 +631,9 @@ void actualizarListaElementos(int paginaEliminada,int PID){
         if((elementoIterante->segmentoOPagina > paginaEliminada) && (elementoIterante->PID == PID)){
         	elementoIterante->segmentoOPagina -= 1;
         	//log_info("Tipo %c y tamanio %d",elementoIterante->tipo,elementoIterante->tamanio);
-        	list_replace_and_destroy_element(listaElementos,i,elementoIterante,free);
+        	list_replace(listaElementos,i,elementoIterante);
         }
-        free(elementoIterante);
+        //free(elementoIterante);
     }
 
 }
@@ -644,7 +644,7 @@ void actualizarTablaDeFrames(int paginaEliminada,int PID){
         elementoIterante = list_get(tablaDeFrames->elements,i);
         if((elementoIterante->nroPagina > paginaEliminada) && (elementoIterante->PID == PID)){
         	elementoIterante->nroPagina -= 1;
-        	list_replace_and_destroy_element(tablaDeFrames->elements,i,elementoIterante,free);
+        	list_replace(tablaDeFrames->elements,i,elementoIterante);
         }
 
     }
@@ -657,9 +657,9 @@ void actualizarListaGlobalDeSegmentos(int paginaEliminada,int PID){
         		segmentoIterante = list_get(listaGlobalDeSegmentos,i);
         if((segmentoIterante->segmentoEnLocal > paginaEliminada) && (segmentoIterante->idPatota == PID)){
             segmentoIterante->segmentoEnLocal -= 1;
-            list_replace_and_destroy_element(listaGlobalDeSegmentos,i,segmentoIterante,free);
+            list_replace(listaGlobalDeSegmentos,i,segmentoIterante);
         }
-        free(segmentoIterante);
+        //free(segmentoIterante);
     }
 }
 
@@ -680,7 +680,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
 
         }
     }
-    free(elementoEvaluado);
+    //free(elementoEvaluado);
     espacioLibre += tamanioPayload;
     tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
     t_list *tablaDePaginas;
@@ -691,7 +691,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
             break;
         }
     }
-    free(tablaBuscada);
+    //free(tablaBuscada);
     int payloadBorrado=0;
     paginaEnTabla_struct* paginaABorrarEnPrimerCaso = malloc(sizeof(paginaEnTabla_struct));
     paginaABorrarEnPrimerCaso = list_get(tablaDePaginas, paginaInicial);
@@ -702,7 +702,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		bitarraySwap[paginaABorrarEnPrimerCaso->frame] = 0;
     	}
 
-    	list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    	list_remove(tablaDePaginas,paginaInicial);
         actualizarTablaDeFrames(paginaInicial,idPatota);
         borroPagina=true;
         actualizarListaElementos(paginaInicial,idPatota);
@@ -710,16 +710,16 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         	paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
         	paginaABorrar = list_get(tablaDeFrames->elements,i);
         	if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-        		list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+        		list_remove(tablaDeFrames->elements,i);
         		//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
         		loggearTablaDeFrames();
         	}
         }
-        list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
+        list_remove(listaElementos,posicionElementoEvaluado);
         actualizarListaElementos(paginaInicial,idPatota);
         payloadBorrado += tamPagina;
         actualizarListaElementos(paginaInicial,idPatota);
-        free(paginaABorrarEnPrimerCaso);
+        //free(paginaABorrarEnPrimerCaso);
     }else if(offset == 0 && tamanioPayload < tamPagina){
     	paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
     	paginaAActualizar =	list_get(tablaDePaginas,paginaInicial);
@@ -730,7 +730,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		}else{
     		   bitarraySwap[paginaAActualizar->frame] = 0;
     		}
-    		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    		list_remove(tablaDePaginas,paginaInicial);
     		actualizarTablaDeFrames(paginaInicial,idPatota);
     		borroPagina=true;
     		actualizarListaElementos(paginaInicial,idPatota);
@@ -739,16 +739,16 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     			paginaABorrar = list_get(tablaDeFrames->elements,i);
 
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-    				list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+    				list_remove(tablaDeFrames->elements,i);
     				//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
     				loggearTablaDeFrames();
 
     			}
     		}
     	}else{
-    	    list_replace_and_destroy_element(tablaDePaginas,paginaInicial,paginaAActualizar,free);
+    	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
-    	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
+    	list_remove(listaElementos,posicionElementoEvaluado);
     	payloadBorrado += tamanioPayload;
     }
     else if(offset!=0 && tamanioPayload >= tamPagina-offset){
@@ -762,7 +762,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         	}else{
         		bitarraySwap[paginaAActualizar->frame] = 0;
         	}
-        	list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        	list_remove(tablaDePaginas,paginaInicial);
         	actualizarTablaDeFrames(paginaInicial,idPatota);
         	borroPagina=true;
         	actualizarListaElementos(paginaInicial,idPatota);
@@ -771,16 +771,16 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         		paginaABorrar = list_get(tablaDeFrames->elements,i);
 
         		if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-        			list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+        			list_remove(tablaDeFrames->elements,i);
         			//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
         			loggearTablaDeFrames();
         		}
         	}
         }else{
-        	list_replace_and_destroy_element(tablaDePaginas,paginaInicial,paginaAActualizar,free);
+        	list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         }
 
-        list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
+        list_remove(listaElementos,posicionElementoEvaluado);
         payloadBorrado += (tamPagina-offset);
     }else if(offset!=0 && tamanioPayload < tamPagina-offset){
     	paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
@@ -792,7 +792,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		}else{
     		   bitarraySwap[paginaAActualizar->frame] = 0;
     		}
-    		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    		list_remove(tablaDePaginas,paginaInicial);
     		actualizarTablaDeFrames(paginaInicial,idPatota);
     		borroPagina=true;
     		actualizarListaElementos(paginaInicial,idPatota);
@@ -800,17 +800,17 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
     			paginaABorrar = list_get(tablaDeFrames->elements,i);
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-    				list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+    				list_remove(tablaDeFrames->elements,i);
     				//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
     				loggearTablaDeFrames();
     			}
     		}
 
     	}else{
-    		list_replace_and_destroy_element(tablaDePaginas,paginaInicial,paginaAActualizar,free);
+    		list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
     	}
     	payloadBorrado += tamanioPayload;
-    	list_remove_and_destroy_element(listaElementos,posicionElementoEvaluado,free);
+    	list_remove(listaElementos,posicionElementoEvaluado);
     }
     while(payloadBorrado < tamanioPayload){
     	if(!borroPagina){
@@ -828,13 +828,13 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     			bitarraySwap[paginaABorrarCasoUnoUno->frame] = 0;
     		}
 
-    		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+    		list_remove(tablaDePaginas,paginaInicial);
     		actualizarTablaDeFrames(paginaInicial,idPatota);
     		for(int i=0;i<list_size(tablaDeFrames->elements);i++){
     			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
     			paginaABorrar = list_get(tablaDeFrames->elements,i);
     			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-    				list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+    				list_remove(tablaDeFrames->elements,i);
     				//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
     				loggearTablaDeFrames();
     			}
@@ -842,7 +842,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
     		borroPagina=true;
     		payloadBorrado += tamPagina;
     		actualizarListaElementos(paginaInicial,idPatota);
-    		free(paginaABorrarCasoUnoUno);
+    		//free(paginaABorrarCasoUnoUno);
     	}else if(tamanioPayload -  payloadBorrado < tamPagina){
     		paginaEnTabla_struct *paginaAActualizar = malloc(sizeof(paginaEnTabla_struct));
         	paginaAActualizar =	list_get(tablaDePaginas,paginaInicial);
@@ -854,7 +854,7 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         		}else{
         		   bitarraySwap[paginaAActualizar->frame] = 0;
         		}
-        		list_remove_and_destroy_element(tablaDePaginas,paginaInicial,free);
+        		list_remove(tablaDePaginas,paginaInicial);
         		actualizarTablaDeFrames(paginaInicial,idPatota);
         		borroPagina=true;
         		actualizarListaElementos(paginaInicial,idPatota);
@@ -862,13 +862,13 @@ void *borrar_de_memoria_paginacion(int idElemento, int idPatota, char tipo){
         			paginaParaReemplazar_struct* paginaABorrar = malloc(sizeof(paginaParaReemplazar_struct));
         			paginaABorrar = list_get(tablaDeFrames->elements,i);
         			if(paginaABorrar->PID==idPatota && paginaABorrar->nroPagina==paginaInicial){
-        				list_remove_and_destroy_element(tablaDeFrames->elements,i,free);
+        				list_remove(tablaDeFrames->elements,i);
         				//log_info(logger2,"Borro la pagina %d del proceso %d",paginaABorrar->nroPagina,paginaABorrar->PID);
         				loggearTablaDeFrames();
         			}
         		}
         	}else{
-        	    list_replace_and_destroy_element(tablaDePaginas,paginaInicial,paginaAActualizar,free);
+        	    list_replace(tablaDePaginas,paginaInicial,paginaAActualizar);
         	}
         	payloadBorrado += (tamanioPayload -  payloadBorrado);
         }
@@ -886,7 +886,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
         if (tablaIterante->idPatota == pid){
             listaSegmentos=tablaIterante->tablaDePaginas;
         }
-        free(tablaIterante);
+        //free(tablaIterante);
     }
 
 
@@ -918,7 +918,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
         		for (int i = 0; i < list_size(listaHuecosLibres); ++i) {
         			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
         			if(huecoIterante->inicio == mejorEspacio->inicio){
-        				list_remove_and_destroy_element(listaHuecosLibres,i,free);
+        				list_remove(listaHuecosLibres,i);
         				break;
         			}
         		}
@@ -929,7 +929,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
         			if(huecoIterante->inicio == mejorEspacio->inicio){
         				mejorEspacio->inicio = (int) mejorEspacio->inicio + tamPayload;
         				mejorEspacio->tamanio -= tamPayload;
-        				list_replace_and_destroy_element(listaHuecosLibres,i,mejorEspacio,free);
+        				list_replace(listaHuecosLibres,i,mejorEspacio);
         			}
         		}
         	}
@@ -1004,7 +1004,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
                         list_add(listaElementos,elementoNuevo);
                         break;
                     }
-                    free(segmentoIterante);
+                    //free(segmentoIterante);
 
                 }
                 break;
@@ -1028,7 +1028,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
             			huecoLibreEnLista_struct *huecoIterante = list_get(listaHuecosLibres,i);
             			if(huecoIterante->inicio == mejorEspacio->inicio){
             				//log_info(logger,"Tamanio del mejor lugar: %d y posicion: %d",mejorEspacio->tamanio,mejorEspacio->inicio);
-            				list_remove_and_destroy_element(listaHuecosLibres,i,free);
+            				list_remove(listaHuecosLibres,i);
             				break;
             			}
 					}
@@ -1039,7 +1039,7 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
             			if(huecoIterante->inicio == mejorEspacio->inicio){
             				mejorEspacio->inicio = (int) mejorEspacio->inicio + tamPayload;
             				mejorEspacio->tamanio -= tamPayload;
-            				list_replace_and_destroy_element(listaHuecosLibres,i,mejorEspacio,free);
+            				list_replace(listaHuecosLibres,i,mejorEspacio);
             			}
             		}
 				}
@@ -1114,7 +1114,6 @@ void guardar_en_memoria_segmentacion(void* payload,int idElemento,int tamPayload
 
 void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char tipoDeElemento){
 
-    tipoUniversal = tipoDeElemento;
     t_list *listaSegmentos;
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
         tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
@@ -1122,7 +1121,7 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
         if (tablaIterante->idPatota == idPatota){
             listaSegmentos=tablaIterante->tablaDePaginas;
         }
-        free(tablaIterante);
+        //free(tablaIterante);
     }
     for (int i=0;i< list_size(listaElementos);i++){
         elementoEnLista_struct *elementoEvaluado = list_get(listaElementos,i);
@@ -1138,15 +1137,15 @@ void borrar_de_memoria_segmentacion(int idElementoABorrar, int idPatota, char ti
                     	nuevoHuecoLibre->tamanio = segmentoGlobalIterante->tamanio;
                     	list_add(listaHuecosLibres,nuevoHuecoLibre);
                     	//log_info(logger,"Tamanio de la lista sin filtrar: %d",list_size(listaHuecosLibres));
-                    	list_remove_and_destroy_element(listaGlobalDeSegmentos,j,free);
+                    	list_remove(listaGlobalDeSegmentos,j);
                         actualizarListaElementos(elementoEvaluado->segmentoOPagina,idPatota);
                         actualizarListaGlobalDeSegmentos(elementoEvaluado->segmentoOPagina,idPatota);
                         break;
                     }
                 }
-                list_remove_and_destroy_element(listaSegmentos,elementoEvaluado->segmentoOPagina,free);
+                list_remove(listaSegmentos,elementoEvaluado->segmentoOPagina);
                 espacioLibre += elementoEvaluado->tamanio;
-                list_remove_and_destroy_element(listaElementos,i,free);
+                list_remove(listaElementos,i);
                 break;
             }
 
@@ -1166,7 +1165,7 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
             listaSegmentos=tablaIterante->tablaDePaginas;
             break;
         }
-        free(tablaIterante);
+        //free(tablaIterante);
     }
     for (int s=0;s< list_size(listaFiltrada);s++){
         elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
@@ -1195,8 +1194,8 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
                 return elementoABuscar;
             }
         }
-        free(elementoEvaluado);
-        free(segmentoEvaluado);
+        //free(elementoEvaluado);
+        //free(segmentoEvaluado);
     }
 }
 
@@ -1211,7 +1210,7 @@ void compactacion(){
 				if(primerSegmento->inicio != memoria){
 					memcpy(memoria,primerSegmento->inicio,primerSegmento->tamanio);
 					primerSegmento->inicio = memoria;
-					list_replace_and_destroy_element(listaGlobalDeSegmentos,0,primerSegmento,free);
+					list_replace(listaGlobalDeSegmentos,0,primerSegmento);
 					t_list *listaSegmentosLocal = malloc(sizeof(tablaEnLista_struct));
 					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
 						tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
@@ -1220,20 +1219,20 @@ void compactacion(){
 							listaSegmentosLocal=tablaIterante->tablaDePaginas;
 							break;
 						}
-						free(tablaIterante);
+						//free(tablaIterante);
 					}
 					segmentoEnTabla_struct *primerSegmentoLocal = list_get(listaSegmentosLocal,0);
 					primerSegmentoLocal->inicio=memoria;
-					list_replace_and_destroy_element(listaSegmentosLocal,0,primerSegmentoLocal,free);
+					list_replace(listaSegmentosLocal,0,primerSegmentoLocal);
 				}
-				free(primerSegmento);
+				//free(primerSegmento);
 			}else{
 				segmentoEnTablaGlobal_struct *segmentoActual = list_get(listaGlobalDeSegmentos,i);
 				segmentoEnTablaGlobal_struct *segmentoAnterior = list_get(listaGlobalDeSegmentos,i-1);
 				if ((int)segmentoActual->inicio != ((int)segmentoAnterior->inicio + segmentoAnterior->tamanio)){
 					memcpy((int)segmentoAnterior->inicio+segmentoAnterior->tamanio,segmentoActual->inicio,segmentoActual->tamanio);
 					segmentoActual->inicio = (int)segmentoAnterior->inicio+segmentoAnterior->tamanio;
-					list_replace_and_destroy_element(listaGlobalDeSegmentos,i,segmentoActual,free);
+					list_replace(listaGlobalDeSegmentos,i,segmentoActual);
 					t_list *listaSegmentosLocalActual = malloc(sizeof(tablaEnLista_struct));
 					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
 						tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
@@ -1242,7 +1241,7 @@ void compactacion(){
 							listaSegmentosLocalActual=tablaIterante->tablaDePaginas;
 							break;
 						}
-						free(tablaIterante);
+						//free(tablaIterante);
 					}
 					t_list *listaSegmentosLocalAnterior = malloc(sizeof(tablaEnLista_struct));
 					for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
@@ -1252,11 +1251,11 @@ void compactacion(){
 							listaSegmentosLocalAnterior=tablaIterante->tablaDePaginas;
 							break;
 						}
-						free(tablaIterante);
+						//free(tablaIterante);
 					}
 					segmentoEnTabla_struct *segmentoLocalActual = list_get(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal);
 					segmentoLocalActual->inicio=segmentoActual->inicio;
-					list_replace_and_destroy_element(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal,segmentoLocalActual,free);
+					list_replace(listaSegmentosLocalActual,segmentoActual->segmentoEnLocal,segmentoLocalActual);
 				}
 			}
 		}
@@ -1393,7 +1392,7 @@ void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char
 		if(elementoAReemplazar->ID == idElemento){
 			break;
 		}
-		free(elementoAReemplazar);
+		//free(elementoAReemplazar);
 	}
 
 	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
@@ -1404,19 +1403,15 @@ void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char
 	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
 	        break;
 	    }
-	    free(tablaBuscada);
+	    //free(tablaBuscada);
 	}
 
 	segmentoEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
-	int inicioSegmento = paginaInicial->inicio;
+	int *inicioSegmento = paginaInicial->inicio;
 	tcb* tcbAModificar = malloc(sizeof(tcb));
+	log_info(logger,"Antes de la busqueda");
 	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
 	tcbAModificar->estado = nuevoEstado;
-	void* payload = tcbAModificar;
-	int* direccionFisica;
-	int payloadYaGuardado=0;
-	int tamPayload = 21;
-
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
 }
 
@@ -1442,7 +1437,7 @@ void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, ui
 	    	tablaDePaginas = tablaBuscada->tablaDePaginas;
 	        break;
 	    }
-	    free(tablaBuscada);
+	    //free(tablaBuscada);
 	}
 
 	segmentoEnTabla_struct *paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
@@ -1452,11 +1447,6 @@ void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, ui
 	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
 	tcbAModificar->posX = nuevaPosX;
 	tcbAModificar->posY = nuevaPosY;
-	void* payload = tcbAModificar;
-
-	int* direccionFisica;
-	int payloadYaGuardado=0;
-	int tamPayload = 21;
 
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
 }
@@ -1470,7 +1460,7 @@ void actualizar_indice_segmentacion(uint32_t idElemento, uint32_t idPatota){
         if(elementoAReemplazar->ID == idElemento){
             break;
         }
-        free(elementoAReemplazar);
+        //free(elementoAReemplazar);
     }
 
     tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
@@ -1481,7 +1471,7 @@ void actualizar_indice_segmentacion(uint32_t idElemento, uint32_t idPatota){
             tablaDePaginas = tablaBuscada->tablaDePaginas;
             break;
         }
-        free(tablaBuscada);
+        //free(tablaBuscada);
     }
 
     segmentoEnTabla_struct* paginaInicial=list_get(tablaDePaginas,elementoAReemplazar->segmentoOPagina);
@@ -1560,7 +1550,7 @@ void actualizar_lista_elementos_segmentacion(int segmentoAgregado,int PID){
 		elementoIterante = list_get(listaElementos,i);
 		if ((elementoIterante->segmentoOPagina >= segmentoAgregado) && (elementoIterante->PID == PID)){
 			elementoIterante->segmentoOPagina++;
-			list_replace_and_destroy_element(listaElementos,i,elementoIterante,free);
+			list_replace(listaElementos,i,elementoIterante);
 		}
 	}
 }
@@ -1582,14 +1572,14 @@ int sacarPaginaDeMemoria(){
 			paginaAReemplazar = list_get(tablaDeFrames->elements, punteroReemplazo);
 			if (paginaAReemplazar->uso==1){
 				paginaAReemplazar->uso = 0;
-				list_replace_and_destroy_element(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar,free);
+				list_replace(tablaDeFrames->elements,punteroReemplazo,paginaAReemplazar);
 				if (punteroReemplazo+1 == queue_size(tablaDeFrames)){
 					punteroReemplazo = 0;
 				}else{
 					punteroReemplazo++;
 				}
 			} else{
-				list_remove_and_destroy_element(tablaDeFrames->elements,punteroReemplazo,free);
+				list_remove(tablaDeFrames->elements,punteroReemplazo);
 				if(punteroReemplazo == queue_size(tablaDeFrames)){
 					punteroReemplazo = 0;
 				}else{
@@ -1619,7 +1609,7 @@ int sacarPaginaDeMemoria(){
 	paginaAActualizar =list_get(tablaDePaginasBuscada,paginaAReemplazar->nroPagina);
 	paginaAActualizar->presencia = 0;
 	paginaAActualizar->frame = frameEnSwap;
-	list_replace_and_destroy_element(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar,free);
+	list_replace(tablaDePaginasBuscada,paginaAReemplazar->nroPagina,paginaAActualizar);
 	return paginaAReemplazar->nroFrame;
 }
 
