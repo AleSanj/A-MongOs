@@ -238,9 +238,9 @@ void administrar_cliente(int socketCliente){
 				tripulanteATraer = buscar_en_memoria_general(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota,'T');
 				int totalDeTareas=0;
 					if(strcmp(esquemaMemoria,"PAGINACION")==0){
-						log_info(logger,"Entre al if de la busqueda en la paginacion");
+						//log_info(logger,"Entre al if de la busqueda en la paginacion");
 						totalDeTareas = contarTareas(tripulante_solicitud->id_patota);
-						log_info(logger,"Cantidad de tareas: %d",totalDeTareas);
+						//log_info(logger,"Cantidad de tareas: %d",totalDeTareas);
 						if(tripulanteATraer->proxTarea==totalDeTareas){
 							char* fault = strdup("fault");
 							uint32_t tamanio_fault = strlen(fault)+1;
@@ -342,6 +342,7 @@ void administrar_cliente(int socketCliente){
 				//imprimir_paquete_cambio_estado(tripulante_a_actualizar);
 				if(strcmp(esquemaMemoria,"PAGINACION")==0){
 					pthread_mutex_lock(&mutexMemoria);
+					actualizar_estado_paginacion(tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota,tripulante_a_actualizar->estado);
 					pthread_mutex_unlock(&mutexMemoria);
 					//printf("CAMBIO ESTADO: %c\n",tcbDePrueba->estado);
 				}else{
@@ -436,6 +437,8 @@ void dumpDeMemoria(){
 	string_append(&nombreArchivo,"Dump_");
 	string_append(&nombreArchivo,timestamp);
 	string_append(&nombreArchivo,".dmp");
+	tablaEnLista_struct *tablaAEvaluar = malloc(sizeof(tablaEnLista_struct));
+	paginaEnTabla_struct* paginaBuscada = malloc(sizeof(paginaEnTabla_struct));
 	FILE* dmp = fopen (nombreArchivo, "w+");
 	//FILE* dmp = fopen ("Dump_", "w+");
 	free(nombreArchivo);
@@ -443,15 +446,12 @@ void dumpDeMemoria(){
 	fprintf(dmp,"Dump: %s \n",timestamp);
 	if(strcmp(esquemaMemoria,"PAGINACION")==0){
 		for(int i =0;i<(tamMemoria/tamPagina);i++){
-
 			if(bitarrayMemoria[i] == 0){
 				fprintf(dmp,"Marco: %d  Estado:Libre  Proceso:-  Pagina:- \n",i);
 			}else{
 				for(int j=0;j<list_size(listaDeTablasDePaginas);j++){
-					tablaEnLista_struct *tablaAEvaluar = malloc(sizeof(tablaEnLista_struct));
 					tablaAEvaluar = list_get(listaDeTablasDePaginas,j);
 					for(int k = 0; k<list_size(tablaAEvaluar->tablaDePaginas);k++){
-						paginaEnTabla_struct* paginaBuscada = malloc(sizeof(paginaEnTabla_struct));
 						paginaBuscada = list_get(tablaAEvaluar->tablaDePaginas,k);
 						if(paginaBuscada->frame == i && paginaBuscada->presencia==1){
 							fprintf(dmp,"Marco:%d  Estado:Ocupado  Proceso:%d  Pagina:%d espacio ocupado: %d\n",i,tablaAEvaluar->idPatota,k,paginaBuscada->espacioOcupado);
@@ -462,11 +462,11 @@ void dumpDeMemoria(){
 			}
 		}
 	}else{
+		tablaEnLista_struct *tablaDePaginas = malloc(sizeof(tablaEnLista_struct));
+		segmentoEnTabla_struct* segmentoIterante = malloc(sizeof(segmentoEnTabla_struct));
 		for(int i=0; i < list_size(listaDeTablasDePaginas);i++){
-			tablaEnLista_struct *tablaDePaginas = malloc(sizeof(tablaEnLista_struct));
 			tablaDePaginas = list_get(listaDeTablasDePaginas,i);
 			for(int k=0; k<list_size(tablaDePaginas->tablaDePaginas);k++){
-				segmentoEnTabla_struct* segmentoIterante = malloc(sizeof(segmentoEnTabla_struct));
 				segmentoIterante = list_get(tablaDePaginas->tablaDePaginas,k);
 				fprintf(dmp,"Proceso:%d  Segmento:%d  Inicio:%d  Tamanio:%dB \n",tablaDePaginas->idPatota,k,segmentoIterante->inicio,segmentoIterante->tamanio);
 			}
@@ -518,6 +518,7 @@ terminar_programa(){
 		free(memoriaSwap);
 	}else{
 		list_destroy_and_destroy_elements(listaGlobalDeSegmentos,free);
+		list_destroy_and_destroy_elements(listaHuecosLibres,free);
 
 	}
 	free(memoria);
@@ -525,4 +526,5 @@ terminar_programa(){
 	nivel_gui_terminar();
 	log_info(logger,"EJECUCION FINALIZADA, GRACIAS POR TODO!");
 	log_destroy(logger);
+	log_destroy(logger2);
 }

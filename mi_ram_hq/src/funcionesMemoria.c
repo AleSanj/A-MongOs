@@ -1158,8 +1158,8 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
     tipoUniversal = tipoDeElemento;
     t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
     t_list *listaSegmentos;
+    tablaEnLista_struct *tablaIterante;
     for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
-        tablaEnLista_struct *tablaIterante = malloc(sizeof(tablaEnLista_struct));
         tablaIterante = list_get(listaDeTablasDePaginas,i);
         if (tablaIterante->idPatota == idPatota){
             listaSegmentos=tablaIterante->tablaDePaginas;
@@ -1167,23 +1167,27 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
         }
         //free(tablaIterante);
     }
+    elementoEnLista_struct *elementoEvaluado;
+    segmentoEnTabla_struct *segmentoEvaluado;
     for (int s=0;s< list_size(listaFiltrada);s++){
-        elementoEnLista_struct *elementoEvaluado = malloc(sizeof(elementoEnLista_struct));
         elementoEvaluado= list_get(listaFiltrada,s);
-        segmentoEnTabla_struct *segmentoEvaluado = malloc(sizeof(segmentoEnTabla_struct));
         segmentoEvaluado = list_get(listaSegmentos,elementoEvaluado->segmentoOPagina);
         if (tipoDeElemento == 'T'){
             tcb* elementoABuscar = malloc(sizeof(tcb));
             //elementoABuscar = (tripulante_struct*)segmentoEvaluado->inicio;
             memcpy(elementoABuscar,segmentoEvaluado->inicio, sizeof(tcb));
             if (elementoABuscar->id == idElementoABuscar && elementoEvaluado->tipo=='T'){
-                return elementoABuscar;
+            	list_destroy(listaFiltrada);
+            	//free(elementoABuscar);
+            	return elementoABuscar;
             }
         }else if(tipoDeElemento == 'A'){
             char *elementoABuscar = malloc(elementoEvaluado->tamanio);
             if (elementoEvaluado->ID == idElementoABuscar && elementoEvaluado->tipo == 'A'){
                 memcpy(elementoABuscar,segmentoEvaluado->inicio, elementoEvaluado->tamanio);
                 //log_info(logger,"Direccion donde encontro las tareas: %d",segmentoEvaluado->inicio);
+                list_destroy(listaFiltrada);
+                //free(elementoABuscar);
                 return elementoABuscar;
 
             }
@@ -1191,6 +1195,8 @@ void *buscar_de_memoria_segmentacion(int idElementoABuscar,int idPatota, char ti
             pcb *elementoABuscar = malloc(sizeof(pcb));
             if (elementoEvaluado->ID == idElementoABuscar && elementoEvaluado->tipo == 'P'){
                 memcpy(elementoABuscar,segmentoEvaluado->inicio, elementoEvaluado->tamanio);
+                list_destroy(listaFiltrada);
+                //free(elementoABuscar);
                 return elementoABuscar;
             }
         }
@@ -1384,19 +1390,18 @@ void actualizar_posicion_paginacion(uint32_t idElemento, uint32_t idPatota, uint
 
 
 void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char nuevoEstado){
-	tipoUniversal = 'T';
-	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
-	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
-	for(int i=0;i<list_size(listaFiltrada);i++){
-		elementoAReemplazar = list_get(listaFiltrada,i);
-		if(elementoAReemplazar->ID == idElemento){
+
+	elementoEnLista_struct *elementoAReemplazar;
+	for(int i=0;i<list_size(listaElementos);i++){
+		elementoAReemplazar = list_get(listaElementos,i);
+		if(elementoAReemplazar->ID == idElemento && elementoAReemplazar->tipo == 'T'){
 			break;
 		}
 		//free(elementoAReemplazar);
 	}
 
-	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
 	t_list *tablaDePaginas;
+	tablaEnLista_struct *tablaBuscada;
 	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
 		tablaBuscada = list_get(listaDeTablasDePaginas,i);
 	    if (tablaBuscada->idPatota == idPatota){
@@ -1419,17 +1424,16 @@ void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char
 
 
 void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, uint32_t nuevaPosX,uint32_t nuevaPosY){
-	tipoUniversal = 'T';
-	t_list* listaFiltrada = list_filter(listaElementos,filtrarPorTipo);
-	elementoEnLista_struct *elementoAReemplazar = malloc(sizeof(elementoEnLista_struct));
-	for(int i=0;i<list_size(listaFiltrada);i++){
-		elementoAReemplazar = list_get(listaFiltrada,i);
-		if(elementoAReemplazar->ID == idElemento){
+
+	elementoEnLista_struct *elementoAReemplazar;
+	for(int i=0;i<list_size(listaElementos);i++){
+		elementoAReemplazar = list_get(listaElementos,i);
+		if(elementoAReemplazar->ID == idElemento && elementoAReemplazar->tipo == 'T'){
 			break;
 		}
 	}
 
-	tablaEnLista_struct *tablaBuscada = malloc(sizeof(tablaEnLista_struct));
+	tablaEnLista_struct *tablaBuscada;
 	t_list *tablaDePaginas;
 	for (int i = 0; i < list_size(listaDeTablasDePaginas); ++i) {
 		tablaBuscada = list_get(listaDeTablasDePaginas,i);
@@ -1447,8 +1451,8 @@ void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, ui
 	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
 	tcbAModificar->posX = nuevaPosX;
 	tcbAModificar->posY = nuevaPosY;
-
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
+	free(tcbAModificar);
 }
 
 void actualizar_indice_segmentacion(uint32_t idElemento, uint32_t idPatota){
