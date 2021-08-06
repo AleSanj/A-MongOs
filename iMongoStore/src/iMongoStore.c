@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-//#define PATH_CONFIG "../config/mongoStore.config"
-//#define PATH_LOG_G "../config/log_general.log"
-//#define PATH_LOG_B "../config/log_bitacoras.log"
-//#define PATH_LOG_SE "../config/log_server.log"
-//#define PATH_LOG_SA "../config/log_sabotaje.log"
+#define PATH_CONFIG "../config/mongoStore.config"
+#define PATH_LOG_G "../config/log_general.log"
+#define PATH_LOG_B "../config/log_bitacoras.log"
+#define PATH_LOG_SE "../config/log_server.log"
+#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-#define PATH_CONFIG "config/mongoStore.config"
-#define PATH_LOG_G "config/log_general.log"
-#define PATH_LOG_B "config/log_bitacoras.log"
-#define PATH_LOG_SE "config/log_server.log"
-#define PATH_LOG_SA "config/log_sabotaje.log"
+//#define PATH_CONFIG "config/mongoStore.config"
+//#define PATH_LOG_G "config/log_general.log"
+//#define PATH_LOG_B "config/log_bitacoras.log"
+//#define PATH_LOG_SE "config/log_server.log"
+//#define PATH_LOG_SA "config/log_sabotaje.log"
 ////-------------------------------------
 
 
@@ -113,14 +113,6 @@ int main(void) {
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
-
-	agregarCaracter(230,'O');
-	agregarCaracter(230,'C');
-	eliminarCaracter(230,'O');
-	escribir_en_bitacora(2,"hola gil");
-	char* recv =obtener_bitacora(2);
-	printf("\n %s",recv);
-
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
 	int server_fs=crear_server("6667");//PUERTO HARCODEADO OJO !!!!!!!!!!!!!!!!!!!!!!

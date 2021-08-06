@@ -425,12 +425,12 @@ tarea_tripulante* convertir_tarea(char* tarea){
 void mover_a_finalizado(Tripulante* tripulante){
 	t_list* lista_ready = ready->elements;
 	t_list* lista_block = bloqueados->elements;
-	pthread_mutex_lock(&trip_comparar);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a EXIT ",tripulante->id,tripulante->estado);
-	trip_cmp = tripulante;
 	if (string_contains(tripulante->estado,"READY")){
 		pthread_mutex_lock(&sem_cola_ready);
 		pthread_mutex_lock(&sem_cola_exit);
+		pthread_mutex_lock(&trip_comparar);
+		trip_cmp = tripulante;
 		list_add(finalizado,list_remove_by_condition(lista_ready,(void*)esElMismoTripulante));
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exit);
@@ -441,6 +441,8 @@ void mover_a_finalizado(Tripulante* tripulante){
 	if (string_contains(tripulante->estado,"BLOCKED")){
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exit);
+		pthread_mutex_lock(&trip_comparar);
+		trip_cmp = tripulante;
 		list_add(finalizado,list_remove_by_condition(lista_block,(void*)esElMismoTripulante));
 		pthread_mutex_unlock(&sem_cola_bloqIO);
 		pthread_mutex_unlock(&sem_cola_exit);
@@ -451,6 +453,8 @@ void mover_a_finalizado(Tripulante* tripulante){
 	if (string_contains(tripulante->estado,"EXEC")){
 		pthread_mutex_lock(&sem_cola_exec);
 		pthread_mutex_lock(&sem_cola_exit);
+		pthread_mutex_lock(&trip_comparar);
+		trip_cmp = tripulante;
 		list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
 		pthread_mutex_unlock(&sem_cola_exec);
 		pthread_mutex_unlock(&sem_cola_exit);
