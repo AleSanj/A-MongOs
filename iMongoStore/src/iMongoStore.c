@@ -51,7 +51,7 @@ int blocks_sabot;
 #define PATH_LOG_B "config/log_bitacoras.log"
 #define PATH_LOG_SE "config/log_server.log"
 #define PATH_LOG_SA "config/log_sabotaje.log"
-//-------------------------------------
+////-------------------------------------
 
 
 int main(void) {
@@ -113,6 +113,13 @@ int main(void) {
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
+
+	agregarCaracter(230,'O');
+	agregarCaracter(230,'C');
+	eliminarCaracter(230,'O');
+	escribir_en_bitacora(2,"hola gil");
+	char* recv =obtener_bitacora(2);
+	printf("\n %s",recv);
 
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
@@ -222,11 +229,6 @@ char* obtener_bitacora(int id_trip)
 	string_append(&ruta_bita,string_itoa(id_trip));
 	string_append(&ruta_bita,".ims");
 	t_config* bita= config_create(ruta_bita);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
 	int zise=config_get_int_value(bita,"SIZE");
 	char** bloquecitos=config_get_array_value(bita, "BLOCKS");
 	int count_block_bita=config_get_int_value(bita,"BLOCK_COUNT");
@@ -262,7 +264,7 @@ char* obtener_bitacora(int id_trip)
 
 
 	}
-
+	config_destroy(bita);
 	return bitacora;
 }
 void* sincronizar_blocks()
@@ -961,7 +963,6 @@ void eliminarCaracter(int cantidad, char caracter){
 			break;
 	}
 	pthread_mutex_unlock(&mutexBitacoras);
-	free(rutita);
 }
 
 
@@ -973,11 +974,7 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:
 	t_config* config_o2 = config_create(rutita);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
+
 	int cantidadDeCaracteresRestantes = config_get_int_value(config_o2, "SIZE");
 
 	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
@@ -985,7 +982,8 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
 
 	char* caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
-	config_destroy(config_o2);
+	dictionary_destroy(config_o2->properties);
+	free(config_o2);
 //	//El bloque donde vas a escribir
 //	int bloqueAUsar;
 
@@ -1027,7 +1025,6 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 		cantidad_a_borrar-=cantidadDeCaracteresRestantes%tamanio_bloque;
 		while(cantidad_a_borrar >= 0 && cantBloques>0)
 		{
-			printf("%s",bloquesUsados[cantBloques-1]);
 			int bloque_a_eliminar=atoi(bloquesUsados[cantBloques-1]);
 			bitarray_clean_bit(bitmap,bloque_a_eliminar);
 			msync(bitmap -> bitarray, tamanioBitmap, MS_SYNC);
@@ -1120,11 +1117,6 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:s
 	t_config* config_o2 = config_create(rutita);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
 	int cantidadDeCaracteresEscritas = config_get_int_value(config_o2, "SIZE");
 
 	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
@@ -1135,7 +1127,8 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	if(esMetadataRecurso(rutita)){
 		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
 	}
-	config_destroy(config_o2);
+	dictionary_destroy(config_o2->properties);
+	free(config_o2);
 
 
 	//Cantidad de caracteres escritos
@@ -1287,18 +1280,15 @@ void generar_bitacora(int idTripulante){
 	}
 
 //	metadata_fd = fopen(ruta_metadata, "w");
-	t_config* bitacora_config = config_create(ruta_bitacora);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
+	t_config* bitacora_config = malloc(sizeof(t_config));
+	bitacora_config->properties=dictionary_create();
+	bitacora_config->path=ruta_bitacora;
 	dictionary_put(bitacora_config->properties, "SIZE", "0");
 	dictionary_put(bitacora_config->properties, "BLOCK_COUNT","0");
 	dictionary_put(bitacora_config->properties, "BLOCKS", "[]");
 
 	config_save(bitacora_config);
-	config_destroy(bitacora_config);
+	dictionary_destroy(bitacora_config->properties);
 	free(ruta_bitacora);
 
 }
@@ -1329,8 +1319,8 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		}
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
-		pthread_mutex_unlock(&mutexBitacoras);
 		free(ruta_bitacora);
+		pthread_mutex_unlock(&mutexBitacoras);
 }
 
 
@@ -1367,11 +1357,7 @@ void crear_metadata(char* archivo, char* valor){
 	char* mfive=malloc(33);
 	mfive=fgets(mfive,33,metadata_fd);
 	t_config* metadata_config = config_create(ruta_metadata);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
+
 	dictionary_put(metadata_config->properties, "SIZE", "0");
 	dictionary_put(metadata_config->properties, "BLOCK_COUNT", "0");
 	dictionary_put(metadata_config->properties, "BLOCKS", "[]");
@@ -1390,14 +1376,8 @@ void crear_metadata(char* archivo, char* valor){
 }
 
 void actualizar_metadata(char* valorBlocks, char* valorSize, char* valorBlockCount, char* ruta, char* caracter){
-	t_config* metadata_config = config_create(ruta);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
-
-
+	t_config* metadata_config=malloc(sizeof(t_config));
+	metadata_config->properties=dictionary_create();
 	dictionary_put(metadata_config->properties, "SIZE", valorSize);
 	dictionary_put(metadata_config->properties, "BLOCK_COUNT", valorBlockCount);
 	dictionary_put(metadata_config->properties, "BLOCKS", valorBlocks);
@@ -1418,11 +1398,14 @@ void actualizar_metadata(char* valorBlocks, char* valorSize, char* valorBlockCou
 	system(md);
 	char* mfive=malloc(33);
 	mfive=fgets(mfive,33,metadata_fd);
+	fclose(metadata_fd);
 	dictionary_put(metadata_config->properties, "MD5",mfive );
+	metadata_config->path=ruta;
 	config_save(metadata_config);
 	free(mfive);
-	fclose(metadata_fd);
-	config_destroy(metadata_config);
+	dictionary_destroy(metadata_config->properties);
+	free(metadata_config->path);
+	free(metadata_config);
 	free(calculo_md);
 	free(valor_md);
 	free(md);
@@ -1431,19 +1414,18 @@ void actualizar_metadata(char* valorBlocks, char* valorSize, char* valorBlockCou
 
 void actualizar_bitacora(char* valorBlocks, char* valorSize, char* valorBlockCount, char* ruta){
 //	FILE* bita=fopen(ruta,"w");
-	t_config* bitacora_config = config_create(ruta);
-	if(metadata_config == NULL){
-		puts("NO SE CREO");
-	}else {
-		puts("SI SE CREO");
-	}
+	t_config* bitacora_config = malloc(sizeof(t_config));
+	bitacora_config->path=ruta;
+	bitacora_config->properties=dictionary_create();
 	dictionary_put(bitacora_config->properties, "SIZE", valorSize);
 	dictionary_put(bitacora_config->properties, "BLOCK_COUNT", valorBlockCount);
 	dictionary_put(bitacora_config->properties, "BLOCKS", valorBlocks);
 
 	config_save(bitacora_config);
 //	fclose(bita);
-	config_destroy(ruta);
+	//free(bitacora_config->path);
+	dictionary_destroy(bitacora_config->properties);
+	free(bitacora_config);
 
 }
 
@@ -1508,8 +1490,6 @@ void agregarCaracter(int cantidad, char caracter){
 			break;
 	}
 	pthread_mutex_unlock(&mutexBitacoras);
-
-	free(rutita);
 }
 
 t_log* iniciar_logger(char* logger_path){
