@@ -1065,6 +1065,11 @@ void* atender_sabotaje(char* posiciones)
 			esta_haciendo_IO->estado = strdup("BLOQUEADO_SABOTAJE");
 			int tiempo_sabota=tiempo_sabotaje;
 
+//----------------------------------------
+			sem_t testear;
+			sem_init(&testear,0,0);
+			sem_wait(&testear);
+//----------------------------------------
 
 		if(calcular_distancia(mas_cerca, posx, posy)<calcular_distancia(auxiliar,posx,posy))
 		{
@@ -1645,7 +1650,7 @@ int main(int argc, char* argv[]) {
 
 
 		pthread_create(&hilo_sabotaje,NULL,(void*) atender_sabotaje,posiciciones_sabotaje->mensaje);
-		pthread_join(&hilo_sabotaje,NULL);
+		pthread_join(hilo_sabotaje,NULL);
 		liberar_t_pedido_mongo(posiciciones_sabotaje);
 	}
 

@@ -56,6 +56,7 @@ char* logger_path_mongostore;
 char* punto_montaje;
 char* puertoDicordiador;
 char* ipDiscordiador;
+char* puerto_mongostore;
 int bloques;
 int tamanio_bloque;
 int tiempoSincro;

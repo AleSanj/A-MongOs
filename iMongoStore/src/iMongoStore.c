@@ -77,7 +77,7 @@ int main(void) {
 	//Generamos la conexion Mongo => Discordiador
 	ipDiscordiador=config_get_string_value(mongoStore_config,"IP_DISCORDIADOR");
 	puertoDicordiador=config_get_string_value(mongoStore_config,"PUERTO_DISCORDIADOR");
-	//int puerto_mongostore = config_get_int_value(conexion_config, "PUERTO_MONGOSTORE");
+	puerto_mongostore = config_get_string_value(mongoStore_config, "PUERTO_MONGOSTORE");
 	//int server_FS = iniciar_servidor(IP, puerto_mongostore);
 
 	bloques = config_get_int_value(mongoStore_config, "BLOCKS");
@@ -115,7 +115,7 @@ int main(void) {
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
-	int server_fs=crear_server("6667");//PUERTO HARCODEADO OJO !!!!!!!!!!!!!!!!!!!!!!
+	int server_fs=crear_server(puerto_mongostore);
 
 	while(correr_programa)
 	{
@@ -759,11 +759,14 @@ void interrupt_handler(int signal)
 	char** pocicion_sabotaje=config_get_array_value(mongoStore_config,"POSICIONES_SABOTAJE");
 	//char* a mandar al discordaidor
 	char* posicion_mandar=pocicion_sabotaje[sabotaje_actual];
+	log_info(log_sabotaje,"mando posicion de sabotaje: %s",posicion_mandar);
 
 	int socketCliente = crear_conexion(ipDiscordiador,puertoDicordiador);
 	t_pedido_mongo* posSabo=malloc(sizeof(t_pedido_mongo));
+	posSabo->id_tripulante = 0;
 	posSabo->mensaje=posicion_mandar;
 	posSabo->tamanio_mensaje=strlen(posicion_mandar)+1;
+
 
 	t_paquete* paquete_enviar= crear_paquete(SABOTAJE);
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
@@ -786,7 +789,7 @@ void interrupt_handler(int signal)
 
 	sabotaje_actual++;
 	free(pocicion_sabotaje);
-
+	liberar_conexion(socketCliente);
 
 }
 
@@ -1206,7 +1209,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 					}
 				}
 			}
-		pthread_mutex_lock(&mutexEscrituraBloques);
+			pthread_mutex_lock(&mutexEscrituraBloques);
 			memcpy(copiaBlock + (bloqueAUsar * tamanio_bloque) + (cantidadDeCaracteresEscritas % tamanio_bloque), &caracter, sizeof(char));
 			pthread_mutex_unlock(&mutexEscrituraBloques);
 			cantidadDeCaracteresEscritas++;
