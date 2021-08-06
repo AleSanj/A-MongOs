@@ -216,7 +216,7 @@ void administrar_cliente(int socketCliente){
 				borrar_de_memoria_general(tripulante_a_eliminar->id_tripulante, tripulante_a_eliminar->id_patota, 'T');
 				for(int i =0; i<94;i++){
 					if (vectorIdTripulantes[i]==tripulante_a_eliminar->id_tripulante){
-						vectorIdTripulantes[i] = 0;
+						vectorIdTripulantes[i] = -1;
 						pthread_mutex_lock(&mutexMapa);
 						borrarTripulante((i+33));
 						pthread_mutex_unlock(&mutexMapa);
@@ -363,6 +363,7 @@ void administrar_cliente(int socketCliente){
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
+			log_info(logger,"Se va a borrar la patota: %d", patota_a_eliminar->id_patota);
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			if(strcmp(esquemaMemoria,"PAGINACION")==0){
 				int cantTareas = contarTareas(patota_a_eliminar->id_patota);
@@ -372,7 +373,7 @@ void administrar_cliente(int socketCliente){
 			}else{
 				borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'A');
 			}
-
+			log_info(logger,"Se borro de memoria la patota: %d", patota_a_eliminar->id_patota);
 			liberar_conexion(socketCliente);
 			liberar_t_tripulante(patota_a_eliminar);
 			break;
