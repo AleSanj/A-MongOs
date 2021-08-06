@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "../config/mongoStore.config"
-#define PATH_LOG_G "../config/log_general.log"
-#define PATH_LOG_B "../config/log_bitacoras.log"
-#define PATH_LOG_SE "../config/log_server.log"
-#define PATH_LOG_SA "../config/log_sabotaje.log"
+//#define PATH_CONFIG "../config/mongoStore.config"
+//#define PATH_LOG_G "../config/log_general.log"
+//#define PATH_LOG_B "../config/log_bitacoras.log"
+//#define PATH_LOG_SE "../config/log_server.log"
+//#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-//#define PATH_CONFIG "config/mongoStore.config"
-//#define PATH_LOG_G "config/log_general.log"
-//#define PATH_LOG_B "config/log_bitacoras.log"
-//#define PATH_LOG_SE "config/log_server.log"
-//#define PATH_LOG_SA "config/log_sabotaje.log"
+#define PATH_CONFIG "config/mongoStore.config"
+#define PATH_LOG_G "config/log_general.log"
+#define PATH_LOG_B "config/log_bitacoras.log"
+#define PATH_LOG_SE "config/log_server.log"
+#define PATH_LOG_SA "config/log_sabotaje.log"
 ////-------------------------------------
 
 
@@ -77,7 +77,7 @@ int main(void) {
 	//Generamos la conexion Mongo => Discordiador
 	ipDiscordiador=config_get_string_value(mongoStore_config,"IP_DISCORDIADOR");
 	puertoDicordiador=config_get_string_value(mongoStore_config,"PUERTO_DISCORDIADOR");
-	puerto_mongostore = config_get_string_value(mongoStore_config, "PUERTO_MONGOSTORE");
+	//int puerto_mongostore = config_get_int_value(conexion_config, "PUERTO_MONGOSTORE");
 	//int server_FS = iniciar_servidor(IP, puerto_mongostore);
 
 	bloques = config_get_int_value(mongoStore_config, "BLOCKS");
@@ -114,8 +114,10 @@ int main(void) {
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
+
+
 //LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
-	int server_fs=crear_server(puerto_mongostore);
+	int server_fs=crear_server("6667");//PUERTO HARCODEADO OJO !!!!!!!!!!!!!!!!!!!!!!
 
 	while(correr_programa)
 	{
@@ -256,6 +258,7 @@ char* obtener_bitacora(int id_trip)
 
 
 	}
+	free(bloquecitos);
 	config_destroy(bita);
 	return bitacora;
 }
@@ -359,15 +362,19 @@ void* atender_mensaje (int socketTripulante){
 		log_info(log_mensaje,"Se se movio el tripulante %d", mov->id_tripulante);
 		char* tiempo= temporal_get_string_time("%H:%M:%S:%MS");
 		char* bitacorear=string_new();
+		char* posxo=string_itoa((int)mov->origen_x);
+		char* posyo=string_itoa((int)mov->origen_y);
+		char* posxd=string_itoa((int)mov->destino_x);
+		char* posyd=string_itoa((int)mov->destino_y);
 		string_append(&bitacorear,tiempo);
 		string_append(&bitacorear," Se mueve de ");
-		string_append(&bitacorear,string_itoa((int)mov->origen_x));
+		string_append(&bitacorear,posxo);
 		string_append(&bitacorear,"|");
-		string_append(&bitacorear,string_itoa((int)mov->origen_y));
+		string_append(&bitacorear,posyo);
 		string_append(&bitacorear," a ");
-		string_append(&bitacorear,string_itoa((int)mov->destino_x));
+		string_append(&bitacorear,posxd);
 		string_append(&bitacorear,"|");
-		string_append(&bitacorear,string_itoa((int)mov->destino_y));
+		string_append(&bitacorear,posyd);
 
 		//sprintf(bitacorear,"%s Se mueve de %d|%d a %d|%d",tiempo , mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
 		//string_append(&tiempo,bitacorear);
@@ -378,6 +385,10 @@ void* atender_mensaje (int socketTripulante){
 		log_info(log_bitacoras,"se escribio bien la bitacora %d", mov->id_tripulante);
 		free(bitacorear);
 		free(tiempo);
+		free(posxo);
+		free(posxd);
+		free(posyo);
+		free(posyd);
 		//free(tiempo);
 		liberar_t_movimiento_mongo(mov);
 		liberar_conexion(socketTripulante);
@@ -759,14 +770,11 @@ void interrupt_handler(int signal)
 	char** pocicion_sabotaje=config_get_array_value(mongoStore_config,"POSICIONES_SABOTAJE");
 	//char* a mandar al discordaidor
 	char* posicion_mandar=pocicion_sabotaje[sabotaje_actual];
-	log_info(log_sabotaje,"mando posicion de sabotaje: %s",posicion_mandar);
 
 	int socketCliente = crear_conexion(ipDiscordiador,puertoDicordiador);
 	t_pedido_mongo* posSabo=malloc(sizeof(t_pedido_mongo));
-	posSabo->id_tripulante = 0;
 	posSabo->mensaje=posicion_mandar;
 	posSabo->tamanio_mensaje=strlen(posicion_mandar)+1;
-
 
 	t_paquete* paquete_enviar= crear_paquete(SABOTAJE);
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
@@ -789,7 +797,7 @@ void interrupt_handler(int signal)
 
 	sabotaje_actual++;
 	free(pocicion_sabotaje);
-	liberar_conexion(socketCliente);
+
 
 }
 
@@ -979,14 +987,6 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	char* caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
 	dictionary_destroy(config_o2->properties);
 	free(config_o2);
-//	//El bloque donde vas a escribir
-//	int bloqueAUsar;
-
-	//La cantidad de bloques nuevos asociados al caracter
-	//int cantBloquesActualizacion = cantBloques;
-
-	//Un contador con la cantidad de bloques que se desocuparon
-	//int contadorBloquesDesocupados = 0;
 
 	char* bloquesNuevosPostBorrado = string_new();
 	string_append(&bloquesNuevosPostBorrado, "[");
@@ -1073,8 +1073,12 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	//Actualizas el metadata
 	if(cantidadDeCaracteresRestantes>0)
 	{
-		string_append(&actualizarCantidad,string_itoa(cantBloques));
-		string_append(&actualizarSize,string_itoa(cantidadDeCaracteresRestantes));
+		char* cantdBloques=string_itoa(cantBloques);
+		char* cantidaddecaracteres=string_itoa(cantidadDeCaracteresRestantes);
+		string_append(&actualizarCantidad,cantdBloques);
+		string_append(&actualizarSize,cantidaddecaracteres);
+		free(cantdBloques);
+		free(cantidaddecaracteres);
 
 	}
 	else
@@ -1209,7 +1213,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 					}
 				}
 			}
-			pthread_mutex_lock(&mutexEscrituraBloques);
+		pthread_mutex_lock(&mutexEscrituraBloques);
 			memcpy(copiaBlock + (bloqueAUsar * tamanio_bloque) + (cantidadDeCaracteresEscritas % tamanio_bloque), &caracter, sizeof(char));
 			pthread_mutex_unlock(&mutexEscrituraBloques);
 			cantidadDeCaracteresEscritas++;
@@ -1283,6 +1287,7 @@ void generar_bitacora(int idTripulante){
 	dictionary_put(bitacora_config->properties, "BLOCKS", "[]");
 
 	config_save(bitacora_config);
+	free(id_trip);
 	dictionary_destroy(bitacora_config->properties);
 	free(ruta_bitacora);
 
@@ -1314,6 +1319,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		}
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
+		free(id_trip);
 		free(ruta_bitacora);
 		pthread_mutex_unlock(&mutexBitacoras);
 }
