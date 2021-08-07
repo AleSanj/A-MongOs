@@ -372,57 +372,7 @@ void obtener_parametros_tarea(Tripulante* t, int posX, int posY)
 	}
 }
 
-tarea_tripulante* convertir_tarea(char* tarea){
-	 tarea_tripulante* tarea_convertida = malloc(sizeof(tarea_tripulante));
-	 char** id_dividido;
-	 char** parametros_divididos;
-	 if (!strcmp(tarea,"fault")){
-		 tarea_convertida->nombre = strdup(tarea);
-		 return tarea_convertida;
-	 }
 
-
-	 if (es_tarea_IO(tarea)){
-		 id_dividido = string_n_split(tarea,2 ," ");
-		 parametros_divididos = string_n_split(id_dividido[1],4,";");
-
-//		 GENERAR_OXIGENO 10;4;4;15
-		 tarea_convertida->nombre = strdup(id_dividido[0]);
-		 tarea_convertida->es_io = 1;
-		 tarea_convertida->parametro = strtol(parametros_divididos[0],NULL,10);
-		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
-		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
-		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
-
-		 free(id_dividido[0]);
-		 free(id_dividido[1]);
-		 free(id_dividido);
-
-		 free(parametros_divididos[0]);
-		 free(parametros_divididos[1]);
-		 free(parametros_divididos[2]);
-		 free(parametros_divididos[3]);
-		 free(parametros_divididos);
-
-	 } else {
-		 parametros_divididos= string_n_split(tarea,4,";");
- //		 DESCARGAR_ITINERARIO;4;4;15
-		 tarea_convertida->nombre = strdup(parametros_divididos[0]);
-		 tarea_convertida->es_io = 0;
-		 tarea_convertida->parametro = 0;
-		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
-		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
-		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
-
-		 free(parametros_divididos[0]);
-		 free(parametros_divididos[1]);
-		 free(parametros_divididos[2]);
-		 free(parametros_divididos[3]);
-		 free(parametros_divididos);
-	 }
-
-	 return tarea_convertida;
-}
 
 void mover_a_finalizado(Tripulante* tripulante){
 	bool _es_el_mismo_tripulante(Tripulante* tripu_en_cola){
@@ -570,19 +520,25 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exec);
 		queue_push(bloqueados,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante));
-		pthread_mutex_unlock(&sem_cola_bloqIO);
+
 		pthread_mutex_unlock(&sem_cola_exec);
+		pthread_mutex_unlock(&sem_cola_bloqIO);
 		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO_IO ",trp->id, trp->estado);
 		cambiar_estado(trp,"BLOQUEADO_IO");
 }
 
 void bloqueado_a_ready(Tripulante* bloq)
 {
+
+			bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
+				return (tripu_exec->id == bloq->id);
+		}
 	pthread_mutex_lock(&sem_cola_ready);
 	pthread_mutex_lock(&sem_cola_bloqIO);
-	queue_push(ready,queue_pop(bloqueados));
+	queue_push(ready,list_remove_by_condition(bloqueados->elements,(void*)_es_el_mismo_tripulante));
 	pthread_mutex_unlock(&sem_cola_ready);
 	pthread_mutex_unlock(&sem_cola_bloqIO);
+
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
 	sem_post(&sem_tripulante_en_ready);
@@ -821,11 +777,12 @@ void hacerTareaIO(Tripulante* io) {
 	ejecutando_a_bloqueado(io);
 	sem_post(&multiProcesamiento);
 	//libero el recurso de multiprocesamiento porque me voy a io
-	t_list* cola_bloq = bloqueados->elements;
+
 
 	pthread_mutex_lock(&mutexIO);
-	enviarMongoStore(list_get(cola_bloq,0));
+	enviarMongoStore(io);
 	pthread_mutex_unlock(&mutexIO);
+
 
 }
 void hacerFifo(Tripulante* tripu) {
@@ -1002,6 +959,87 @@ void hacerTarea(Tripulante* trip)
 	} else {
 		hacerRoundRobin(trip);
 	}
+
+}
+
+char* enviar_solicitud_tarea(Tripulante* tripulante){
+	int socket_miram = conectarse_Mi_Ram();
+
+	t_paquete* paquete = crear_paquete(PEDIR_TAREA);
+	t_tripulante* estructura = malloc(sizeof(t_tripulante));
+	estructura->id_tripulante = tripulante->id;
+	estructura->id_patota = tripulante->idPatota;
+
+	agregar_paquete_tripulante(paquete,estructura);
+	log_info(logger_conexiones,"Se el tripulante %d envio un mensaje PEDIR_TAREA a MI-RAM",tripulante->id);
+	char* tarea = enviar_paquete_respuesta_string(paquete,socket_miram);
+	log_info(logger_conexiones,"El tripulante %d recibio la tarea: %s",estructura->id_tripulante,tarea);
+	liberar_conexion(socket_miram);
+	liberar_t_tripulante(estructura);
+	return tarea;
+}
+
+tarea_tripulante* convertir_tarea(char* tarea){
+	 tarea_tripulante* tarea_convertida = malloc(sizeof(tarea_tripulante));
+	 char** id_dividido;
+	 char** parametros_divididos;
+	 if (!strcmp(tarea,"fault")){
+		 tarea_convertida->nombre = strdup(tarea);
+		 return tarea_convertida;
+	 }
+
+
+	 if (es_tarea_IO(tarea)){
+		 id_dividido = string_n_split(tarea,2 ," ");
+		 parametros_divididos = string_n_split(id_dividido[1],4,";");
+
+//		 GENERAR_OXIGENO 10;4;4;15
+		 tarea_convertida->nombre = strdup(id_dividido[0]);
+		 tarea_convertida->es_io = 1;
+		 tarea_convertida->parametro = strtol(parametros_divididos[0],NULL,10);
+		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
+		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
+		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
+
+		 free(id_dividido[0]);
+		 free(id_dividido[1]);
+		 free(id_dividido);
+
+		 free(parametros_divididos[0]);
+		 free(parametros_divididos[1]);
+		 free(parametros_divididos[2]);
+		 free(parametros_divididos[3]);
+		 free(parametros_divididos);
+
+	 } else {
+		 parametros_divididos= string_n_split(tarea,4,";");
+ //		 DESCARGAR_ITINERARIO;4;4;15
+		 tarea_convertida->nombre = strdup(parametros_divididos[0]);
+		 tarea_convertida->es_io = 0;
+		 tarea_convertida->parametro = 0;
+		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
+		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
+		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
+
+		 free(parametros_divididos[0]);
+		 free(parametros_divididos[1]);
+		 free(parametros_divididos[2]);
+		 free(parametros_divididos[3]);
+		 free(parametros_divididos);
+	 }
+
+	 return tarea_convertida;
+}
+
+void pedir_tarea(Tripulante* tripulante){
+	char* tarea = enviar_solicitud_tarea(tripulante);
+	if (tarea == NULL){
+		puts("No se pudo recibir correctamente la tarea");
+		return;
+	}
+	tarea_tripulante* tarea_convertida = convertir_tarea(tarea);
+	tripulante->Tarea = tarea_convertida;
+	free(tarea);
 
 }
 // LARGA VIDA TRIPULANTE ESPEREMOS CADA TRIPULANTE VIVA UNA VIDA FELIZ Y PLENA
@@ -1391,34 +1429,7 @@ void imprimir_estado_nave() {
 
 
 
-char* enviar_solicitud_tarea(Tripulante* tripulante){
-	int socket_miram = conectarse_Mi_Ram();
 
-	t_paquete* paquete = crear_paquete(PEDIR_TAREA);
-	t_tripulante* estructura = malloc(sizeof(t_tripulante));
-	estructura->id_tripulante = tripulante->id;
-	estructura->id_patota = tripulante->idPatota;
-
-	agregar_paquete_tripulante(paquete,estructura);
-	log_info(logger_conexiones,"Se el tripulante %d envio un mensaje PEDIR_TAREA a MI-RAM",tripulante->id);
-	char* tarea = enviar_paquete_respuesta_string(paquete,socket_miram);
-	log_info(logger_conexiones,"El tripulante %d recibio la tarea: %s",estructura->id_tripulante,tarea);
-	liberar_conexion(socket_miram);
-	liberar_t_tripulante(estructura);
-	return tarea;
-}
-
-void pedir_tarea(Tripulante* tripulante){
-	char* tarea = enviar_solicitud_tarea(tripulante);
-	if (tarea == NULL){
-		puts("No se pudo recibir correctamente la tarea");
-		return;
-	}
-	tarea_tripulante* tarea_convertida = convertir_tarea(tarea);
-	tripulante->Tarea = tarea_convertida;
-	free(tarea);
-
-}
 
 
 
@@ -1684,6 +1695,8 @@ int main(int argc, char* argv[]) {
 	sem_init(&pararIo, 0, 0);
 	sem_init(&(pararPlanificacion[0]),0,0);
 	sem_init(&sem_tripulante_en_ready,0,0);
+
+	pthread_mutex_init(&mutexIO,NULL);
 
 
 	new = queue_create();
