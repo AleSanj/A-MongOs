@@ -981,10 +981,10 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	char** bloquesUsados;
 	char* caracterLlenado = string_new();
 	int cantBloques;
-	for(int sep=0; sep<6; sep++)
+	for(int sep=0; sep<5; sep++)
 	{
-		char* var=malloc(50);
-		fgets(var,50,config);
+		char* var=malloc(250);
+		fgets(var,250,config);
 		if(string_contains(var,"SIZE"))
 		{
 			char**size=string_split(var,"=");
@@ -1164,10 +1164,13 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 	char** bloquesUsados;
 	char* caracterLlenado = string_new();
 	int cantBloques;
-	for(int sep=0; sep<6; sep++)
+	int iterar=3;
+	if(esMetadataRecurso(rutita))
+		iterar=5;
+	for(int sep=0; sep<iterar; sep++)
 	{
-		char* var=malloc(50);
-		fgets(var,50,config);
+		char* var=malloc(250);
+		fgets(var,250,config);
 		if(string_contains(var,"SIZE"))
 		{
 			char**size=string_split(var,"=");
@@ -1447,7 +1450,9 @@ void crear_metadata(char* archivo, char* valor){
 	system(md);
 	char* mfive=malloc(33);
 	mfive=fgets(mfive,33,metadata_fd);
-	t_config* metadata_config = config_create(ruta_metadata);
+	t_config* metadata_config = malloc(sizeof(t_config));
+	metadata_config->properties=dictionary_create();
+	metadata_config->path=ruta_metadata;
 
 	dictionary_put(metadata_config->properties, "SIZE", "0");
 	dictionary_put(metadata_config->properties, "BLOCK_COUNT", "0");
@@ -1460,8 +1465,8 @@ void crear_metadata(char* archivo, char* valor){
 	fclose(metadata_fd);
 	free(mfive);
 //	config_destroy(metadata_config);
-//	dictionary_destroy(metadata_config->properties);
-//	free(metadata_config);
+	dictionary_destroy(metadata_config->properties);
+	free(metadata_config);
 	free(ruta_metadata);
 	free(md);
 }
