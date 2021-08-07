@@ -1,5 +1,5 @@
 # Include libraries here
-LIBRARIES=readline commons shared pthread
+LIBRARIES=readline commons shared pthread m
 # Include custom library paths here
 LIBRARY_PATHS=../shared
 

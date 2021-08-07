@@ -188,11 +188,13 @@ bool esElMismoTripulante(Tripulante* ra)
 	return (trip_cmp->id == ra->id);
 }
 
-int calcular_distancia(Tripulante* tripulante, int x, int y)
+double calcular_distancia(Tripulante* tripulante, int x, int y)
 {
-	int retornar=((x-tripulante->posicionX)^2)+((y-tripulante->posicionY)^2);
+	double resultado = sqrt( (double) (pow(x-tripulante->posicionX,2) + pow(y-tripulante->posicionY,2)) );
+	return resultado;
 
-	return retornar;
+
+
 }
 
 bool es_tarea_IO(char* tarea)
@@ -631,15 +633,15 @@ void* moverTripulante(Tripulante* tripu)
 	void* ret = "0";
 	int socket_miram = conectarse_Mi_Ram();
 	int socket_mongo = conectarse_mongo();
-	if(tripu->esta_sabotaje)
-		liberar_conexion(socket_mongo);
+//	if(tripu->esta_sabotaje)
+//		liberar_conexion(socket_mongo);
 	int posicion_actual_x = tripu->posicionX;
 	int posicion_actual_y = tripu->posicionY;
 
 	if (tripu->Tarea->posicion_x > tripu->posicionX) {
 		tripu->posicionX++;
 		enviar_posicion(tripu,socket_miram);
-		if(!(tripu->esta_sabotaje))
+//		if(!(tripu->esta_sabotaje))
 			enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
 		return ret;
 
@@ -648,7 +650,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posicion_x < tripu->posicionX) {
 		tripu->posicionX--;
 		enviar_posicion(tripu,socket_miram);
-		if(!(tripu->esta_sabotaje))
+//		if(!(tripu->esta_sabotaje))
 			enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
 
 		return ret;
@@ -657,7 +659,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posiciion_y < tripu->posicionY) {
 		tripu->posicionY--;
 		enviar_posicion(tripu,socket_miram);
-		if(!(tripu->esta_sabotaje))
+//		if(!(tripu->esta_sabotaje))
 			enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
 
 		return ret;
@@ -666,7 +668,7 @@ void* moverTripulante(Tripulante* tripu)
 	if (tripu->Tarea->posiciion_y > tripu->posicionY) {
 		tripu->posicionY++;
 		enviar_posicion(tripu,socket_miram);
-		if(!(tripu->esta_sabotaje))
+//		if(!(tripu->esta_sabotaje))
 			enviar_posicion_mongo(posicion_actual_x,posicion_actual_y,tripu,socket_mongo);
 
 		return ret;
@@ -809,6 +811,15 @@ void enviarMongoStore(Tripulante* enviar) {
 	bloqueado_a_ready(enviar);
 
 }
+void desalojo_exec_a_ready(Tripulante* tripulante){
+	bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
+		return (tripu_exec->id == tripulante->id);
+	}
+
+	queue_push(ready,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante ));
+
+}
+
 void hacerTareaIO(Tripulante* io) {
 	//ACA ME PASE UN POQUITO CON LOS SEMAFOROS REVISARRRR
 	ejecutando_a_bloqueado(io);
@@ -941,7 +952,7 @@ void hacerRoundRobin(Tripulante* tripulant) {
 		ciclos_totales++;
 		printf("%d ciclo actual %d\n",tripulant->id,ciclos_totales);
 		if (tripulant->posicionX == tripulant->Tarea->posicion_x && tripulant->posicionY == tripulant->Tarea->posiciion_y){
-		tripulant->espera--;
+			tripulant->espera--;
 		} else {
 			moverTripulante(tripulant);
 		}
@@ -971,26 +982,24 @@ void hacerRoundRobin(Tripulante* tripulant) {
 
 		pthread_mutex_lock(&sem_cola_ready);
 		pthread_mutex_lock(&sem_cola_exec);
-		pthread_mutex_lock(&trip_comparar);
 
-		trip_cmp=tripulant;
-		queue_push(ready,list_remove_by_condition(execute,esElMismoTripulante));
+		desalojo_exec_a_ready(tripulant);
 
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exec);
-		pthread_mutex_unlock(&trip_comparar);
 		cambiar_estado(tripulant,"READY");
 		log_info(logger_discordiador,"Se mueve al tripulante %d de EXEC a %s",tripulant->id,tripulant->estado);
 	//le aviso al semaforo que libere un recurso para que mande otro tripulante
 		sem_post(&sem_tripulante_en_ready);
-		log_info(log_roto,"le tire un post a sem_tripulante_en_ready");
 		sem_post(&multiProcesamiento);
+		log_info(log_roto,"le tire un post a sem_tripulante_en_ready");
 		log_info(log_roto,"le tire un post a multiprocesamiento");
 		log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
 	}
 }
 
 //CLASIFICA LA TAREA DEL TRIPULANTE
+
 void hacerTarea(Tripulante* trip)
 {
 	if (string_contains(algoritmo,"FIFO"))
@@ -1139,7 +1148,7 @@ void* atender_sabotaje(int cliente_sabotaje)
 			log_info(logger_discordiador,"SE PASARON TODOS LOS BLOQUEADO DE READY A BLOQ_IO");
 			int tiempo_sabota=tiempo_sabotaje;
 
-		if(calcular_distancia(mas_cerca, posx, posy)<calcular_distancia(auxiliar,posx,posy))
+		if(calcular_distancia(mas_cerca, posx, posy)<=calcular_distancia(auxiliar,posx,posy))
 		{
 			log_info(logger_discordiador,"EL tripulante mas cercano es: %d",mas_cerca->id);
 			mas_cerca->esta_sabotaje = 1;
@@ -1147,12 +1156,12 @@ void* atender_sabotaje(int cliente_sabotaje)
 			{
 			sleep(retardoCpu);
 			moverSabotaje(mas_cerca,posx,posy);
-			log_info(logger_discordiador,"EL tripulante %d se mueve:",mas_cerca->id);
+			log_info(logger_discordiador,"EL tripulante %d se mueve",mas_cerca->id);
 			}
 			log_info(logger_discordiador,"EL tripulante %d Empieza el sabotaje:",mas_cerca->id);
 			inicio_sabotaje = strdup("INICIO_DE_SABOTAJE");
-			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
-			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
+			uint32_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint32_t),0);
 			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
 			send(cliente_sabotaje,&(mas_cerca->id),sizeof(uint8_t),0);
 			log_info(logger_conexiones,"%d manda el mensaje: %s:",mas_cerca->id,inicio_sabotaje);
@@ -1166,8 +1175,8 @@ void* atender_sabotaje(int cliente_sabotaje)
 			}
 			log_info(logger_discordiador,"EL tripulante %d finaliza el sabotaje:",mas_cerca->id);
 			fin_sabotaje = strdup("FINALIZAR_SABOTAJE");
-			uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+			uint32_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint32_t),0);
 			send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
 			log_info(logger_conexiones,"%d manda el mensaje: %s:",mas_cerca->id,fin_sabotaje);
 			free(fin_sabotaje);
@@ -1182,12 +1191,12 @@ void* atender_sabotaje(int cliente_sabotaje)
 			{
 			sleep(retardoCpu);
 			moverSabotaje(auxiliar,posx,posy);
-			log_info(logger_discordiador,"EL tripulante %d se mueve:",auxiliar->id);
+			log_info(logger_discordiador,"EL tripulante %d se mueve",auxiliar->id);
 			}
 			log_info(logger_discordiador,"EL tripulante %d Empieza el sabotaje:",auxiliar->id);
 			inicio_sabotaje = strdup("INICIO_DE_SABOTAJE");
-			uint8_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
-			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint8_t),0);
+			uint32_t tamanio_inicio_sabotaje = strlen(inicio_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_inicio_sabotaje,sizeof(uint32_t),0);
 			send(cliente_sabotaje,inicio_sabotaje,tamanio_inicio_sabotaje,0);
 			send(cliente_sabotaje,&(auxiliar->id),sizeof(uint8_t),0);
 			log_info(logger_conexiones,"%d manda el mensaje: %s:",auxiliar->id,inicio_sabotaje);
@@ -1201,8 +1210,8 @@ void* atender_sabotaje(int cliente_sabotaje)
 			}
 			log_info(logger_discordiador,"EL tripulante %d finaliza el sabotaje:",auxiliar->id);
 			fin_sabotaje = strdup("FIN_DE_SABOTAJE");
-			uint8_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
-			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+			uint32_t tamanio_fin_sabotaje= strlen(fin_sabotaje)+1;
+			send(cliente_sabotaje,&tamanio_fin_sabotaje,sizeof(uint32_t),0);
 			send(cliente_sabotaje,fin_sabotaje,tamanio_fin_sabotaje,0);
 			log_info(logger_conexiones,"%d manda el mensaje: %s:",auxiliar->id,fin_sabotaje);
 			free(fin_sabotaje);

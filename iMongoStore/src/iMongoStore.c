@@ -776,9 +776,9 @@ void interrupt_handler(int signal)
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
+	recv(socketCliente,&id,sizeof(uint8_t),0);
 	log_info(log_mensaje,"recibi un %s",bitacorear_sabo);
 	log_info(log_mensaje,"recibi un id %d",id);
-	recv(socketCliente,&id,sizeof(uint8_t),0);
 	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
 	escribir_en_bitacora(id,bitacorear_sabo);
 	free(bitacorear_sabo);
@@ -789,16 +789,15 @@ void interrupt_handler(int signal)
 
 	// aca tendria que mandar discordiador que se arreglo
 	int tamanio_fin_sabotaje;
-	recv(socketCliente,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+	recv(socketCliente,&tamanio_fin_sabotaje,sizeof(uint32_t),0);
 	char* finalizar_sabotaje = malloc(tamanio_fin_sabotaje);
 	recv(socketCliente,finalizar_sabotaje,tamanio_fin_sabotaje,0);
+	log_info(log_mensaje,"recibi un %s",finalizar_sabotaje);
 	escribir_en_bitacora(id,finalizar_sabotaje);
 	free(finalizar_sabotaje);
-	free(bitacorear_sabo);
 
 	sabotaje_actual++;
 	free(pocicion_sabotaje);
-
 
 }
 
