@@ -337,7 +337,7 @@ void* atender_mensaje (int socketTripulante){
 		eliminar_paquete(paquete_recibido);
 	}
 
-	printf("PAQUETE DE TIPO %d RECIBIDO\n",paquete_recibido->codigo_operacion);
+//	printf("PAQUETE DE TIPO %d RECIBIDO\n",paquete_recibido->codigo_operacion);
 
 	switch(paquete_recibido->codigo_operacion) {
 	case OBTENER_BITACORA:;
@@ -412,7 +412,7 @@ void* atender_mensaje (int socketTripulante){
 		string_append(&guardar,agregar);
 		string_append(&guardar,"SE_INICIO_LA_TAREA_");
 		string_append(&guardar,inico->mensaje);
-		imprimir_pedido_mongo(inico);
+//		imprimir_pedido_mongo(inico);
 		escribir_en_bitacora((int) inico->id_tripulante,guardar);
 		free(guardar);
 		free(agregar);
