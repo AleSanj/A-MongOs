@@ -1418,8 +1418,6 @@ void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char
 	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
 	tcbAModificar->estado = nuevoEstado;
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
-	free(tcbAModificar->estado);
-	free(tcbAModificar);
 }
 
 
@@ -1454,7 +1452,7 @@ void actualizar_posicion_segmentacion(uint32_t idElemento, uint32_t idPatota, ui
 	tcbAModificar->posX = nuevaPosX;
 	tcbAModificar->posY = nuevaPosY;
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
-	free(tcbAModificar);
+	//free(tcbAModificar);
 }
 
 void actualizar_indice_segmentacion(uint32_t idElemento, uint32_t idPatota){
@@ -1488,9 +1486,6 @@ void actualizar_indice_segmentacion(uint32_t idElemento, uint32_t idPatota){
     tcbAModificar->proxTarea++;
     void* payload = tcbAModificar;
 
-    int* direccionFisica;
-    int payloadYaGuardado=0;
-    int tamPayload = 21;
 
     memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
 }

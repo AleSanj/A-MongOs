@@ -11,10 +11,10 @@
 // =============== PAHTS =================
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-#define PATH_CONFIG "src/mi_ram_hq.config"
+//#define PATH_CONFIG "src/mi_ram_hq.config"
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-//#define PATH_CONFIG "../src/mi_ram_hq.config"
+#define PATH_CONFIG "../src/mi_ram_hq.config"
 //-------------------------------------
 
 #include "mi_ram_hq.h"
@@ -48,14 +48,14 @@ int main(void) {
 	}else{
 		tipoDeGuardado = BESTFIT;
 	}
-	if((logger = log_create("log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger = log_create("../log_memoria.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 	{
 		printf(" No pude leer el logger\n");
 		exit(1);
 	}
 
 
-	if((logger2 = log_create("log_tablaDeFrames.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
+	if((logger2 = log_create("../log_tablaDeFrames.log", "Memoria", 0, LOG_LEVEL_INFO)) == NULL)
 	{
 		printf(" No pude leer el logger\n");
 		exit(1);
@@ -287,6 +287,7 @@ void administrar_cliente(int socketCliente){
 							int tamanio_tarea = strlen(arrayTareas[tripulanteATraer->proxTarea])+1;
 							send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 							send(socketCliente, arrayTareas[tripulanteATraer->proxTarea],tamanio_tarea,0);
+							log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",arrayTareas[tripulanteATraer->proxTarea],tripulanteATraer->proxTarea,tripulanteATraer->id);
 							for (int j=0;j<totalDeTareas;j++){
 								free(arrayTareas[j]);
 							}
@@ -295,11 +296,10 @@ void administrar_cliente(int socketCliente){
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_segmentacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
 						pthread_mutex_unlock(&mutexMemoria);
-						log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",arrayTareas[tripulanteATraer->proxTarea],tripulanteATraer->proxTarea,tripulanteATraer->id);
 
 					}
-					free(tripulanteATraer->estado);
-					free(tripulanteATraer);
+					//free(tripulanteATraer->estado);
+					//free(tripulanteATraer);
 					liberar_conexion(socketCliente);
 					liberar_t_tripulante(tripulante_solicitud);
 					break;
