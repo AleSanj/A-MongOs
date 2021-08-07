@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-#define PATH_CONFIG "../config/mongoStore.config"
-#define PATH_LOG_G "../config/log_general.log"
-#define PATH_LOG_B "../config/log_bitacoras.log"
-#define PATH_LOG_SE "../config/log_server.log"
-#define PATH_LOG_SA "../config/log_sabotaje.log"
+//#define PATH_CONFIG "../config/mongoStore.config"
+//#define PATH_LOG_G "../config/log_general.log"
+//#define PATH_LOG_B "../config/log_bitacoras.log"
+//#define PATH_LOG_SE "../config/log_server.log"
+//#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-//#define PATH_CONFIG "config/mongoStore.config"
-//#define PATH_LOG_G "config/log_general.log"
-//#define PATH_LOG_B "config/log_bitacoras.log"
-//#define PATH_LOG_SE "config/log_server.log"
-//#define PATH_LOG_SA "config/log_sabotaje.log"
+#define PATH_CONFIG "config/mongoStore.config"
+#define PATH_LOG_G "config/log_general.log"
+#define PATH_LOG_B "config/log_bitacoras.log"
+#define PATH_LOG_SE "config/log_server.log"
+#define PATH_LOG_SA "config/log_sabotaje.log"
 ////-------------------------------------
 
 
@@ -58,19 +58,18 @@ int main(void) {
 
 	mongoStore_config = leer_config(PATH_CONFIG);
 
-	printf("Checkpoint 1");
+
 
 	//IP = config_get_string_value(conexion_config, "IP_MONGOSTORE");
 //	logger_path_mongostore = config_get_string_value(mongoStore_config, "ARCHIVO_LOG");
 
-	printf("Checkpoint 2");
+
 
 	logger = iniciar_logger(PATH_LOG_G);
 	log_bitacoras = iniciar_logger(PATH_LOG_B);
 	log_mensaje = iniciar_logger(PATH_LOG_SE);
 	log_sabotaje = iniciar_logger(PATH_LOG_SA);
 
-	printf("Checkpoint 3");
 
 	punto_montaje = config_get_string_value(mongoStore_config, "PUNTO_MONTAJE");
 
@@ -115,10 +114,11 @@ int main(void) {
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
+
 	int server_fs=crear_server(puerto_mongostore);
 	while(correr_programa)
 	{
-		int socketTripulante= esperar_cliente(server_fs, 10);
+		int socketTripulante= esperar_cliente(server_fs, 200);
 		if (socketTripulante == -1)
 			continue;
 
@@ -355,14 +355,12 @@ void* atender_mensaje (int socketTripulante){
 		break;
 	case MOVIMIENTO_MONGO:;
 		t_movimiento_mongo* mov= deserializar_movimiento_mongo(paquete_recibido);
-		log_info(log_mensaje,"Se se movio el tripulante %d", mov->id_tripulante);
-		char* tiempo= temporal_get_string_time("%H:%M:%S:%MS");
+		log_info(log_mensaje,"Se se movio el tripulante %d", mov->id_tripulante);;
 		char* bitacorear=string_new();
 		char* posxo=string_itoa((int)mov->origen_x);
 		char* posyo=string_itoa((int)mov->origen_y);
 		char* posxd=string_itoa((int)mov->destino_x);
 		char* posyd=string_itoa((int)mov->destino_y);
-		string_append(&bitacorear,tiempo);
 		string_append(&bitacorear," Se mueve de ");
 		string_append(&bitacorear,posxo);
 		string_append(&bitacorear,"|");
@@ -376,11 +374,9 @@ void* atender_mensaje (int socketTripulante){
 		//string_append(&tiempo,bitacorear);
 		printf("%s\n",bitacorear);
 		//imprimir_movimiento_mongo(mov);
-		log_info(log_bitacoras,"voy a escribir rn bitacora %d", mov->id_tripulante);
+		log_info(log_bitacoras,"voy a escribir en bitacora %d", mov->id_tripulante);
 		escribir_en_bitacora((int) mov->id_tripulante,bitacorear);
-		log_info(log_bitacoras,"se escribio bien la bitacora %d", mov->id_tripulante);
 		free(bitacorear);
-		free(tiempo);
 		free(posxo);
 		free(posxd);
 		free(posyo);
@@ -408,14 +404,11 @@ void* atender_mensaje (int socketTripulante){
 		t_pedido_mongo* inico = deserializar_pedido_mongo(paquete_recibido);
 		log_info(logger,"INICIO de tarea del tripulante %d", inico->id_tripulante);
 		char* guardar=string_new();
-		char* agregar= temporal_get_string_time("%H:%M:%S:%MS");
-		string_append(&guardar,agregar);
 		string_append(&guardar,"SE_INICIO_LA_TAREA_");
 		string_append(&guardar,inico->mensaje);
 		imprimir_pedido_mongo(inico);
 		escribir_en_bitacora((int) inico->id_tripulante,guardar);
 		free(guardar);
-		free(agregar);
 		liberar_t_pedido_mongo(inico);
 
 		liberar_conexion(socketTripulante);
@@ -423,7 +416,7 @@ void* atender_mensaje (int socketTripulante){
 	case FIN_TAREA:;
 		t_pedido_mongo* inicio = deserializar_pedido_mongo(paquete_recibido);
 		log_info(logger,"FIN de tarea del tripulante %d", inicio->id_tripulante);
-		char* agregare = temporal_get_string_time("%H:%M:%S:%MS");
+		char* agregare = string_new();
 		string_append(&agregare,"SE_FINALIZA_LA_TAREA_");
 		string_append(&agregare,inicio->mensaje);
 		escribir_en_bitacora((int) inicio->id_tripulante,agregare);
@@ -633,7 +626,7 @@ void agregar_blocks_bitacoras(t_list* blocks_used)
 	string_append(&ruta_bita,string_itoa(tripulante));
 	string_append(&ruta_bita,".ims");
 
-	while(tripulante <= 10)
+	while(tripulante <= 20)
 	{
 		if(verificar_existencia(ruta_bita)== 1)
 		{
@@ -777,6 +770,10 @@ void interrupt_handler(int signal)
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
 	recv(socketCliente,&id,sizeof(uint8_t),0);
+	char* bita="EL_TRIPULANTE_CORRE_PANICO_A_SOLUCIONAR_SABOTAJE_HACIA";
+	string_append(&bita,posicion_mandar);
+	escribir_en_bitacora(id,bita);
+	free(bita);
 	log_info(log_mensaje,"recibi un %s",bitacorear_sabo);
 	log_info(log_mensaje,"recibi un id %d",id);
 	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
@@ -797,6 +794,7 @@ void interrupt_handler(int signal)
 	free(finalizar_sabotaje);
 
 	sabotaje_actual++;
+	free(posicion_mandar);
 	free(pocicion_sabotaje);
 
 }
@@ -1394,7 +1392,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 	string_append(&ruta_bitacora, "/Files/Bitacoras/Tripulante");
 	string_append(&ruta_bitacora, id_trip);
 	string_append(&ruta_bitacora, ".ims");
-	log_info(log_bitacoras, "se qiere bitacorear %s en la bitiacora del tripulante %d", texto,idTripulante);
+	log_info(log_bitacoras, "se quiere bitacorear %s en la bitiacora del tripulante %d", texto,idTripulante);
 	pthread_mutex_lock(&mutexBitacoras);
 	if(verificar_existencia(ruta_bitacora) != 1)
 	{
@@ -1545,11 +1543,19 @@ void agregarCaracter(int cantidad, char caracter){
 	switch (caracter){
 		case 'O':
 			string_append(&rutita, "/Files/Oxigeno.ims");
+			if(verificar_existencia(rutita)!=1)
+					{
+						crear_metadata("Oxigeno", "B");
+					}
 			escribirEnBloque(cantidad, caracter, rutita);
 			break;
 
 		case 'o':
 			string_append(&rutita, "/Files/Oxigeno.ims");
+			if(verificar_existencia(rutita)!=1)
+					{
+						crear_metadata("Oxigeno", "B");
+					}
 			escribirEnBloque(cantidad, 'O', rutita);
 			break;
 
@@ -1573,11 +1579,19 @@ void agregarCaracter(int cantidad, char caracter){
 
 		case 'C':
 			string_append(&rutita, "/Files/Comida.ims");
+			if(verificar_existencia(rutita)!=1)
+					{
+						crear_metadata("Comida", "B");
+					}
 			escribirEnBloque(cantidad, caracter, rutita);
 			break;
 
 		case 'c':
 			string_append(&rutita, "/Files/Comida.ims");
+			if(verificar_existencia(rutita)!=1)
+					{
+						crear_metadata("Comida", "B");
+					}
 			escribirEnBloque(cantidad, 'C', rutita);
 			break;
 
