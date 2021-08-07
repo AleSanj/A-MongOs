@@ -544,7 +544,7 @@ void* buscar_en_memoria_paginacion(int idElementoABuscar,int PID, char tipo){
             paginaInicial = elementoEvaluado->segmentoOPagina;
             offset = elementoEvaluado->offsetEnPagina;
             tamanioPayload = elementoEvaluado->tamanio;
-            ////log_info(logger,"Tamanio del payload que va a buscar: %d",tamanioPayload);
+            log_info(logger,"Tamanio del payload que va a buscar: %d",tamanioPayload);
             break;
         }
     }

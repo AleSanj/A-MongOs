@@ -175,7 +175,7 @@ void administrar_cliente(int socketCliente){
 					int i =0;
 					while(arrayTareas[i]!=NULL){
 						guardar_en_memoria_general(arrayTareas[i],i,strlen(arrayTareas[i]),estructura_iniciar_patota->idPatota,'A');
-						log_info(logger,"Guarde la tarea %s",arrayTareas[i]);
+						log_info(logger,"Guarde la tarea %s de tamanio %d",arrayTareas[i],strlen(arrayTareas[i]));
 						i++;
 					}
 				}
@@ -252,7 +252,7 @@ void administrar_cliente(int socketCliente){
 							//log_info(logger, "Voy a buscar la tarea %d",tripulanteATraer->proxTarea);
 							char *tarea = string_new();
 							tarea = buscar_en_memoria_general(tripulanteATraer->proxTarea,tripulante_solicitud->id_patota,'A');
-							//log_info(logger,"Tarea que voy a mandar: %s",tarea);
+							log_info(logger,"Tarea que voy a mandar: %s",tarea);
 							int tamanio_tarea = strlen(tarea)+1;
 							send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 							send(socketCliente, tarea,tamanio_tarea,0);
