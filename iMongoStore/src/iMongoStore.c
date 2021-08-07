@@ -114,7 +114,6 @@ int main(void) {
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
-//LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
 	int server_fs=crear_server(puerto_mongostore);
 
 	while(correr_programa)
@@ -772,19 +771,24 @@ void interrupt_handler(int signal)
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
-	printf("recibi un %s",bitacorear_sabo);
-	printf("recibi un id %d\n",id);
+	log_info(log_mensaje,"recibi un %s",bitacorear_sabo);
+	log_info(log_mensaje,"recibi un id %d",id);
 	recv(socketCliente,&id,sizeof(uint8_t),0);
 	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
 	escribir_en_bitacora(id,bitacorear_sabo);
+	free(bitacorear_sabo);
 	// aca arregla el sabotaje
 	log_info(log_sabotaje,"Procedo a arreglar el FileSystem");
 	arreglar_sabotaje();
 	log_info(log_sabotaje,"Se arreglo exitosamente el Sabotaje");
 
 	// aca tendria que mandar discordiador que se arreglo
-	recv(socketCliente,bitacorear_sabo,strlen("FINALIZAR_SABOTAJE")+1,0);
-	escribir_en_bitacora(id,bitacorear_sabo);
+	int tamanio_fin_sabotaje;
+	recv(socketCliente,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+	char* finalizar_sabotaje = malloc(tamanio_fin_sabotaje);
+	recv(socketCliente,finalizar_sabotaje,tamanio_fin_sabotaje,0);
+	escribir_en_bitacora(id,finalizar_sabotaje);
+	free(finalizar_sabotaje);
 	free(bitacorear_sabo);
 
 	sabotaje_actual++;

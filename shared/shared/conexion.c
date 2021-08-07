@@ -14,6 +14,7 @@ int crear_server(char* puerto){
 	  mi_info.ai_family = AF_INET;
 	  mi_info.ai_socktype = SOCK_STREAM;
 	  mi_info.ai_protocol = IPPROTO_TCP;
+	  mi_info.ai_flags = AI_PASSIVE;
 
 	  struct addrinfo *resultado;
 
@@ -40,7 +41,7 @@ int crear_server(char* puerto){
 	    }
 	  }
 	  if (aux_resultado == NULL) {
-	//    printf("No se pudo crear el socket\n");
+//	    printf("No se pudo crear el socket\n");
 	    exit(EXIT_FAILURE);
 	  }
 
@@ -62,7 +63,7 @@ int esperar_cliente(int socket_server, int backlog){
 //	puts("Esperando nuevo cliente...");
 	socket_cliente = accept(socket_server, (struct sockaddr *)&direccion_cliente, &tamanio_direccion_cliente);
 	if (socket_cliente == -1) {
-		puts("El cliente no se pudo conectar");
+//		puts("El cliente no se pudo conectar");
 		return (-1);
 }
 
@@ -83,14 +84,15 @@ int crear_conexion(char* ip, char* puerto)
 	  mi_info->ai_family = AF_INET;
 	  mi_info->ai_socktype = SOCK_STREAM;
 	  mi_info->ai_protocol = IPPROTO_TCP;
+	  mi_info->ai_flags = AI_PASSIVE;
 
 	  struct addrinfo* resultado;
 
 	  if (getaddrinfo(ip, puerto, mi_info, &resultado) != 0) {
-	   //printf("Error al parsear la direccion del socket\n");
+//	   printf("Error al parsear la direccion del socket\n");
 	    return (-1);
 	  }
-	  //printf("Direccion parseada correctamente\n");
+//	  printf("Direccion parseada correctamente\n");
 
 	  struct addrinfo* aux_resultado;
 
@@ -98,11 +100,11 @@ int crear_conexion(char* ip, char* puerto)
 	    socket_cliente = socket(aux_resultado->ai_family, aux_resultado->ai_socktype, aux_resultado->ai_protocol);
 
 	    if (socket_cliente != -1) {
-	      //printf("Socket creado correctamente\n");
+//	      printf("Socket creado correctamente\n");
 	      if (connect(socket_cliente, aux_resultado->ai_addr, aux_resultado->ai_addrlen) != -1) {
 	        break;
 	      } else {
-	        //printf("No se pudo crear la conexion al socket\n");
+//	        printf("No se pudo crear la conexion al socket\n");
 	        close(socket_cliente);
 			freeaddrinfo(mi_info);
 			freeaddrinfo(resultado);
@@ -113,7 +115,7 @@ int crear_conexion(char* ip, char* puerto)
 	  if (aux_resultado == NULL) {
 		freeaddrinfo(mi_info);
 		freeaddrinfo(resultado);
-	    //printf("No se pudo crear el socket\n");
+//	    printf("No se pudo crear el socket\n");
 	    return (-1);
 	  }
 	  freeaddrinfo(mi_info);
@@ -186,10 +188,10 @@ int enviar_paquete(t_paquete* paquete, int socket_cliente) {
 		if (respuesta) {
 //			puts("Respuesta recibida\n");
 		} else {
-			puts("No recibimos respuesta del servidor\n");
+			printf("No recibimos respuesta del servidor %d \n",paquete->codigo_operacion);
 		}
 	} else {
-		puts("No se pudo enviar el paquete\n");
+		printf("No se pudo enviar el paquete %d \n",paquete->codigo_operacion);
 	}
 		free(a_enviar);
 		liberar_conexion(socket_cliente);
