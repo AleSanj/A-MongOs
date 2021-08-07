@@ -425,42 +425,37 @@ tarea_tripulante* convertir_tarea(char* tarea){
 }
 
 void mover_a_finalizado(Tripulante* tripulante){
+	bool _es_el_mismo_tripulante(Tripulante* tripu_en_cola){
+		return (tripu_en_cola->id == tripulante->id);
+		}
+
 	t_list* lista_ready = ready->elements;
 	t_list* lista_block = bloqueados->elements;
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a EXIT ",tripulante->id,tripulante->estado);
 	if (string_contains(tripulante->estado,"READY")){
 		pthread_mutex_lock(&sem_cola_ready);
 		pthread_mutex_lock(&sem_cola_exit);
-		pthread_mutex_lock(&trip_comparar);
-		trip_cmp = tripulante;
-		list_add(finalizado,list_remove_by_condition(lista_ready,(void*)esElMismoTripulante));
+		list_add(finalizado,list_remove_by_condition(lista_ready,(void*)_es_el_mismo_tripulante ));
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exit);
-		pthread_mutex_unlock(&trip_comparar);
 		return;
 	}
 
 	if (string_contains(tripulante->estado,"BLOCKED")){
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exit);
-		pthread_mutex_lock(&trip_comparar);
-		trip_cmp = tripulante;
-		list_add(finalizado,list_remove_by_condition(lista_block,(void*)esElMismoTripulante));
+		list_add(finalizado,list_remove_by_condition(lista_block,(void*)_es_el_mismo_tripulante));
 		pthread_mutex_unlock(&sem_cola_bloqIO);
 		pthread_mutex_unlock(&sem_cola_exit);
-		pthread_mutex_unlock(&trip_comparar);
 		return;
 		}
 
 	if (string_contains(tripulante->estado,"EXEC")){
 		pthread_mutex_lock(&sem_cola_exec);
 		pthread_mutex_lock(&sem_cola_exit);
-		pthread_mutex_lock(&trip_comparar);
-		trip_cmp = tripulante;
-		list_add(finalizado,list_remove_by_condition(execute,(void*)esElMismoTripulante));
+		list_add(finalizado,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante));
 		pthread_mutex_unlock(&sem_cola_exec);
 		pthread_mutex_unlock(&sem_cola_exit);
-		pthread_mutex_unlock(&trip_comparar);
 		return;
 		}
 
@@ -568,14 +563,15 @@ void* iniciar_Planificacion()
 
 void ejecutando_a_bloqueado(Tripulante* trp )
 {
+		bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
+			return (tripu_exec->id == trp->id);
+	}
+
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exec);
-		pthread_mutex_lock(&trip_comparar);
-		trip_cmp=trp;
-		queue_push(bloqueados,list_remove_by_condition(execute,esElMismoTripulante));
+		queue_push(bloqueados,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante));
 		pthread_mutex_unlock(&sem_cola_bloqIO);
 		pthread_mutex_unlock(&sem_cola_exec);
-		pthread_mutex_unlock(&trip_comparar);
 		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO_IO ",trp->id, trp->estado);
 		cambiar_estado(trp,"BLOQUEADO_IO");
 }
@@ -585,8 +581,8 @@ void bloqueado_a_ready(Tripulante* bloq)
 	pthread_mutex_lock(&sem_cola_ready);
 	pthread_mutex_lock(&sem_cola_bloqIO);
 	queue_push(ready,queue_pop(bloqueados));
-	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&sem_cola_ready);
+	pthread_mutex_unlock(&sem_cola_bloqIO);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
 	sem_post(&sem_tripulante_en_ready);
@@ -823,9 +819,9 @@ void desalojo_exec_a_ready(Tripulante* tripulante){
 void hacerTareaIO(Tripulante* io) {
 	//ACA ME PASE UN POQUITO CON LOS SEMAFOROS REVISARRRR
 	ejecutando_a_bloqueado(io);
+	sem_post(&multiProcesamiento);
 	//libero el recurso de multiprocesamiento porque me voy a io
 	t_list* cola_bloq = bloqueados->elements;
-	sem_post(&multiProcesamiento);
 
 	pthread_mutex_lock(&mutexIO);
 	enviarMongoStore(list_get(cola_bloq,0));
@@ -854,8 +850,8 @@ void hacerFifo(Tripulante* tripu) {
 		log_info(logger_tripulante,"El tripulante %d finaliza su tarea %s",tripu->id,tripu->Tarea->nombre);
 		free(tripu->Tarea->nombre);
 		free(tripu->Tarea);
-//		tripu->Tarea->nombre = NULL;
 		tripu->Tarea = NULL;
+//		tripu->Tarea->nombre = NULL;
 		return;
 	}
 	if(!tripu->vida)
@@ -982,16 +978,14 @@ void hacerRoundRobin(Tripulante* tripulant) {
 
 		pthread_mutex_lock(&sem_cola_ready);
 		pthread_mutex_lock(&sem_cola_exec);
-
 		desalojo_exec_a_ready(tripulant);
-
 		pthread_mutex_unlock(&sem_cola_ready);
 		pthread_mutex_unlock(&sem_cola_exec);
 		cambiar_estado(tripulant,"READY");
 		log_info(logger_discordiador,"Se mueve al tripulante %d de EXEC a %s",tripulant->id,tripulant->estado);
 	//le aviso al semaforo que libere un recurso para que mande otro tripulante
-		sem_post(&sem_tripulante_en_ready);
 		sem_post(&multiProcesamiento);
+		sem_post(&sem_tripulante_en_ready);
 		log_info(log_roto,"le tire un post a sem_tripulante_en_ready");
 		log_info(log_roto,"le tire un post a multiprocesamiento");
 		log_info(logger_discordiador,"Se hace signal para avisar que hay elementos en READY");
@@ -1498,8 +1492,8 @@ int hacerConsola() {
 				pthread_mutex_lock(&sem_cola_ready);
 				pthread_mutex_lock(&sem_cola_new);
 				queue_push(ready,queue_pop(new));
-				pthread_mutex_unlock(&sem_cola_ready);
 				pthread_mutex_unlock(&sem_cola_new);
+				pthread_mutex_unlock(&sem_cola_ready);
 				log_info(logger_discordiador,"Se mueve al tripulante %d NEW a READY ",nuevo_tripulante->id);
 				nuevo_tripulante->estado = strdup("READY");
 				log_info(logger_discordiador,"Se le cambia el estado al tripulante %d a %s ",nuevo_tripulante->id,nuevo_tripulante->estado);
