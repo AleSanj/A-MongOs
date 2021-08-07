@@ -166,7 +166,7 @@ void administrar_cliente(int socketCliente){
 				if (strcmp(esquemaMemoria,"SEGMENTACION")==0){
 					//log_info(logger, "Tareas: %s\n",estructura_iniciar_patota->Tareas);
 					//log_info(logger, "TAMANIO DE TAREAS:  %d",estructura_iniciar_patota->tamanio_tareas);
-					log_info(logger,"Tareas: %s",estructura_iniciar_patota->Tareas);
+					//log_info(logger,"Tareas: %s",estructura_iniciar_patota->Tareas);
 					guardar_en_memoria_general(estructura_iniciar_patota->Tareas,estructura_iniciar_patota->idPatota,estructura_iniciar_patota->tamanio_tareas,estructura_iniciar_patota->idPatota,'A');
 					log_info(logger, "Guarde las tareas de la patota %d\n",estructura_iniciar_patota->idPatota);
 				}else{
@@ -251,12 +251,14 @@ void administrar_cliente(int socketCliente){
 						}else{
 							//log_info(logger, "Voy a buscar la tarea %d",tripulanteATraer->proxTarea);
 							char *tarea = string_new();
+
 							tarea = buscar_en_memoria_general(tripulanteATraer->proxTarea,tripulante_solicitud->id_patota,'A');
 							log_info(logger,"Tarea que voy a mandar: %s",tarea);
 							int tamanio_tarea = strlen(tarea)+1;
 							send(socketCliente, &tamanio_tarea,sizeof(uint32_t),0);
 							send(socketCliente, tarea,tamanio_tarea,0);
 							log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d",tarea,tripulanteATraer->proxTarea,tripulanteATraer->id);
+
 						}
 						pthread_mutex_lock(&mutexMemoria);
 						actualizar_indice_paginacion(tripulante_solicitud->id_tripulante,tripulante_solicitud->id_patota);
@@ -342,6 +344,7 @@ void administrar_cliente(int socketCliente){
 		case ACTUALIZAR_ESTADO:;
 			//printf("ACTUALIZAR_ESTADO /n");
 				t_cambio_estado* tripulante_a_actualizar = deserializar_cambio_estado(paquete_recibido);
+				log_info(logger2,"Voy a actualizar el estado del tripulante: %d, de la patota: %d",tripulante_a_actualizar->id_tripulante,tripulante_a_actualizar->id_patota);
 				//imprimir_paquete_cambio_estado(tripulante_a_actualizar);
 				if(strcmp(esquemaMemoria,"PAGINACION")==0){
 					pthread_mutex_lock(&mutexMemoria);
@@ -365,7 +368,7 @@ void administrar_cliente(int socketCliente){
 			break;
 		case FIN_PATOTA:;
 			t_tripulante* patota_a_eliminar = deserializar_tripulante(paquete_recibido);
-			log_info(logger,"Se va a borrar la patota: %d", patota_a_eliminar->id_patota);
+			//log_info(logger,"Se va a borrar la patota: %d", patota_a_eliminar->id_patota);
 			borrar_de_memoria_general(patota_a_eliminar->id_patota, patota_a_eliminar->id_patota,'P');
 			if(strcmp(esquemaMemoria,"PAGINACION")==0){
 				int cantTareas = contarTareas(patota_a_eliminar->id_patota);
@@ -480,19 +483,11 @@ void dumpDeMemoria(){
 }
 
 void loggearTablaDeFrames(){
+	log_info(logger2, "El puntero de reemplazo  esta en el frame : %d" ,punteroReemplazo);
 	for (int i = 0;i<list_size(tablaDeFrames->elements);i++){
 		paginaParaReemplazar_struct *framePrinteable = malloc(sizeof(paginaParaReemplazar_struct));
 		framePrinteable = list_get(tablaDeFrames->elements,i);
 		log_info(logger2,"PID: %d, Nro frame: %d, Nro Pagina: %d, Uso: %d",framePrinteable->PID,framePrinteable->nroFrame,framePrinteable->nroPagina,framePrinteable->uso);
-	}
-	log_info(logger2,"\n");
-}
-
-void loggearHuecosLibres(){
-	for (int i=0;i<list_size(listaHuecosLibres);i++){
-		huecoLibreEnLista_struct* huecoLibreAPrintear = malloc(sizeof(huecoLibreEnLista_struct));
-		huecoLibreAPrintear = list_get(listaHuecosLibres,i);
-		log_info(logger2,"Inicio del espacio libre; %d / Inicio del espacio libre: %d",huecoLibreAPrintear->inicio,huecoLibreAPrintear->tamanio);
 	}
 	log_info(logger2,"\n");
 }

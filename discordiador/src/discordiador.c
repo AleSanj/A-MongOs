@@ -234,7 +234,7 @@ int conectarse_Mi_Ram()
 			pthread_mutex_lock(&socketMiRam);
 			socket = crear_conexion(ipMiRam,puertoMiRam);
 			pthread_mutex_unlock(&socketMiRam);
-			sleep(3);
+			sleep(10);
 		}
 	log_info(logger_conexiones,"Se creo una conexionn con MI-RAM Socket: %d",socket);
 	return socket;
@@ -372,57 +372,7 @@ void obtener_parametros_tarea(Tripulante* t, int posX, int posY)
 	}
 }
 
-tarea_tripulante* convertir_tarea(char* tarea){
-	 tarea_tripulante* tarea_convertida = malloc(sizeof(tarea_tripulante));
-	 char** id_dividido;
-	 char** parametros_divididos;
-	 if (!strcmp(tarea,"fault")){
-		 tarea_convertida->nombre = strdup(tarea);
-		 return tarea_convertida;
-	 }
 
-
-	 if (es_tarea_IO(tarea)){
-		 id_dividido = string_n_split(tarea,2 ," ");
-		 parametros_divididos = string_n_split(id_dividido[1],4,";");
-
-//		 GENERAR_OXIGENO 10;4;4;15
-		 tarea_convertida->nombre = strdup(id_dividido[0]);
-		 tarea_convertida->es_io = 1;
-		 tarea_convertida->parametro = strtol(parametros_divididos[0],NULL,10);
-		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
-		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
-		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
-
-		 free(id_dividido[0]);
-		 free(id_dividido[1]);
-		 free(id_dividido);
-
-		 free(parametros_divididos[0]);
-		 free(parametros_divididos[1]);
-		 free(parametros_divididos[2]);
-		 free(parametros_divididos[3]);
-		 free(parametros_divididos);
-
-	 } else {
-		 parametros_divididos= string_n_split(tarea,4,";");
- //		 DESCARGAR_ITINERARIO;4;4;15
-		 tarea_convertida->nombre = strdup(parametros_divididos[0]);
-		 tarea_convertida->es_io = 0;
-		 tarea_convertida->parametro = 0;
-		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
-		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
-		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
-
-		 free(parametros_divididos[0]);
-		 free(parametros_divididos[1]);
-		 free(parametros_divididos[2]);
-		 free(parametros_divididos[3]);
-		 free(parametros_divididos);
-	 }
-
-	 return tarea_convertida;
-}
 
 void mover_a_finalizado(Tripulante* tripulante){
 	bool _es_el_mismo_tripulante(Tripulante* tripu_en_cola){
@@ -570,22 +520,23 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exec);
 		queue_push(bloqueados,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante));
-		pthread_mutex_unlock(&sem_cola_bloqIO);
 		pthread_mutex_unlock(&sem_cola_exec);
+		pthread_mutex_unlock(&sem_cola_bloqIO);
 		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO_IO ",trp->id, trp->estado);
 		cambiar_estado(trp,"BLOQUEADO_IO");
 }
 
 void bloqueado_a_ready(Tripulante* bloq)
 {
-	bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
-			return (tripu_exec->id == bloq->id);
-	}
-
-	t_list* lista_bloq = bloqueados->elements;
+			bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
+				return (tripu_exec->id == bloq->id);
+		}
 	pthread_mutex_lock(&sem_cola_ready);
-	queue_push(ready,list_remove_by_condition(bloqueados,(void*)_es_el_mismo_tripulante));
+	pthread_mutex_lock(&sem_cola_bloqIO);
+	queue_push(ready,list_remove_by_condition(bloqueados->elements,(void*)_es_el_mismo_tripulante));
 	pthread_mutex_unlock(&sem_cola_ready);
+	pthread_mutex_unlock(&sem_cola_bloqIO);
+
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
 	sem_post(&sem_tripulante_en_ready);
@@ -825,10 +776,9 @@ void hacerTareaIO(Tripulante* io) {
 	sem_post(&multiProcesamiento);
 	//libero el recurso de multiprocesamiento porque me voy a io
 	pthread_mutex_lock(&mutexIO);
-	pthread_mutex_lock(&sem_cola_bloqIO);
 	enviarMongoStore(io);
-	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&mutexIO);
+
 
 }
 void hacerFifo(Tripulante* tripu) {
@@ -1007,6 +957,87 @@ void hacerTarea(Tripulante* trip)
 	}
 
 }
+
+char* enviar_solicitud_tarea(Tripulante* tripulante){
+	int socket_miram = conectarse_Mi_Ram();
+
+	t_paquete* paquete = crear_paquete(PEDIR_TAREA);
+	t_tripulante* estructura = malloc(sizeof(t_tripulante));
+	estructura->id_tripulante = tripulante->id;
+	estructura->id_patota = tripulante->idPatota;
+
+	agregar_paquete_tripulante(paquete,estructura);
+	log_info(logger_conexiones,"Se el tripulante %d envio un mensaje PEDIR_TAREA a MI-RAM",tripulante->id);
+	char* tarea = enviar_paquete_respuesta_string(paquete,socket_miram);
+	log_info(logger_conexiones,"El tripulante %d recibio la tarea: %s",estructura->id_tripulante,tarea);
+	liberar_conexion(socket_miram);
+	liberar_t_tripulante(estructura);
+	return tarea;
+}
+
+tarea_tripulante* convertir_tarea(char* tarea){
+	 tarea_tripulante* tarea_convertida = malloc(sizeof(tarea_tripulante));
+	 char** id_dividido;
+	 char** parametros_divididos;
+	 if (!strcmp(tarea,"fault")){
+		 tarea_convertida->nombre = strdup(tarea);
+		 return tarea_convertida;
+	 }
+
+
+	 if (es_tarea_IO(tarea)){
+		 id_dividido = string_n_split(tarea,2 ," ");
+		 parametros_divididos = string_n_split(id_dividido[1],4,";");
+
+//		 GENERAR_OXIGENO 10;4;4;15
+		 tarea_convertida->nombre = strdup(id_dividido[0]);
+		 tarea_convertida->es_io = 1;
+		 tarea_convertida->parametro = strtol(parametros_divididos[0],NULL,10);
+		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
+		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
+		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
+
+		 free(id_dividido[0]);
+		 free(id_dividido[1]);
+		 free(id_dividido);
+
+		 free(parametros_divididos[0]);
+		 free(parametros_divididos[1]);
+		 free(parametros_divididos[2]);
+		 free(parametros_divididos[3]);
+		 free(parametros_divididos);
+
+	 } else {
+		 parametros_divididos= string_n_split(tarea,4,";");
+ //		 DESCARGAR_ITINERARIO;4;4;15
+		 tarea_convertida->nombre = strdup(parametros_divididos[0]);
+		 tarea_convertida->es_io = 0;
+		 tarea_convertida->parametro = 0;
+		 tarea_convertida->posicion_x = strtol(parametros_divididos[1],NULL,10);
+		 tarea_convertida->posiciion_y = strtol(parametros_divididos[2],NULL,10);
+		 tarea_convertida->duracion = strtol(parametros_divididos[3],NULL,10);
+
+		 free(parametros_divididos[0]);
+		 free(parametros_divididos[1]);
+		 free(parametros_divididos[2]);
+		 free(parametros_divididos[3]);
+		 free(parametros_divididos);
+	 }
+
+	 return tarea_convertida;
+}
+
+void pedir_tarea(Tripulante* tripulante){
+	char* tarea = enviar_solicitud_tarea(tripulante);
+	if (tarea == NULL){
+		puts("No se pudo recibir correctamente la tarea");
+		return;
+	}
+	tarea_tripulante* tarea_convertida = convertir_tarea(tarea);
+	tripulante->Tarea = tarea_convertida;
+	free(tarea);
+
+}
 // LARGA VIDA TRIPULANTE ESPEREMOS CADA TRIPULANTE VIVA UNA VIDA FELIZ Y PLENA
 void* vivirTripulante(Tripulante* tripulante) {
 	log_info(logger_tripulante,"El tripulante %d inicializo su hilo",tripulante->id);
@@ -1086,9 +1117,9 @@ void* atender_sabotaje(int cliente_sabotaje)
 //	log_info(logger_discordiador,"Se recibe un sabotaje en la posicion %d|%d",posx,posy);
 	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
-	puts("estoy por pasar el sem_exec");
+//	puts("estoy por pasar el sem_exec");
 	pthread_mutex_lock(&sem_cola_exec);
-	puts("pase el semafoto cola_exec");
+//	puts("pase el semafoto cola_exec");
 	for(int i=0;i<list_size(execute);i++)
 	{
 		Tripulante* iterado = (Tripulante*) list_get(execute,i);
@@ -1270,7 +1301,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	estructura->cantTripulantes = cantidad_tripulantes;
 	estructura->tamanio_tareas = strlen(pato->tareas)+1;
 	estructura->Tareas = strdup(pato->tareas);
-	printf("TAMAÑO TAREAS: %d",estructura->tamanio_tareas);
+//	printf("TAMAÑO TAREAS: %d",estructura->tamanio_tareas);
 //Cuando tenemos la estructura la metemos al paquete vacio que teniamos--------------------
 	agregar_paquete_iniciar_patota(paquete,estructura);
 
@@ -1282,7 +1313,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	char* respuesta = enviar_paquete_respuesta_string(paquete,socket_iniciar_patota);
 	liberar_conexion(socket_iniciar_patota);
 	log_info(logger_conexiones,"Se recibie la respuesta: %s",respuesta);
-	liberar_t_iniciar_patota(estructura);
+//	liberar_t_iniciar_patota(estructura);
 	return respuesta;
 }
 
@@ -1394,34 +1425,7 @@ void imprimir_estado_nave() {
 
 
 
-char* enviar_solicitud_tarea(Tripulante* tripulante){
-	int socket_miram = conectarse_Mi_Ram();
 
-	t_paquete* paquete = crear_paquete(PEDIR_TAREA);
-	t_tripulante* estructura = malloc(sizeof(t_tripulante));
-	estructura->id_tripulante = tripulante->id;
-	estructura->id_patota = tripulante->idPatota;
-
-	agregar_paquete_tripulante(paquete,estructura);
-	log_info(logger_conexiones,"Se el tripulante %d envio un mensaje PEDIR_TAREA a MI-RAM",tripulante->id);
-	char* tarea = enviar_paquete_respuesta_string(paquete,socket_miram);
-	log_info(logger_conexiones,"El tripulante %d recibio la tarea: %s",estructura->id_tripulante,tarea);
-	liberar_conexion(socket_miram);
-	liberar_t_tripulante(estructura);
-	return tarea;
-}
-
-void pedir_tarea(Tripulante* tripulante){
-	char* tarea = enviar_solicitud_tarea(tripulante);
-	if (tarea == NULL){
-		puts("No se pudo recibir correctamente la tarea");
-		return;
-	}
-	tarea_tripulante* tarea_convertida = convertir_tarea(tarea);
-	tripulante->Tarea = tarea_convertida;
-	free(tarea);
-
-}
 
 
 
@@ -1458,6 +1462,7 @@ int hacerConsola() {
 			char* respuesta = enviar_iniciar_patota(pato,cantidad_tripulantes);
 			if(!strcmp(respuesta,"fault")){
 				free(respuesta);
+				log_info(logger_discordiador,"No hay espacio en ram");
 				puts("no hay espacio en ram");
 				log_info(logger_discordiador,"NO HAY ESPACIO PARA LA NUEVA PATOTA");
 				free(parametros_divididos[0]);
@@ -1482,9 +1487,9 @@ int hacerConsola() {
 			for(int i=0 ; i< cantidad_tripulantes;i++){
 				uint8_t posicionX = obtener_pos(posiciones_iniciales);
 				uint8_t posicionY = obtener_pos(posiciones_iniciales);
-				printf("EStoy por crear al tripulante: %d en %d|%d\n",t_totales,posicionX,posicionY);
+//				printf("EStoy por crear al tripulante: %d en %d|%d\n",t_totales,posicionX,posicionY);
 				nuevo_tripulante = crear_tripulante(t_totales, p_totales, posicionX, posicionY);
-				puts("en teoria se pudo crear\n");
+//				puts("en teoria se pudo crear\n");
 				pthread_mutex_lock(&sem_cola_new);
 				queue_push(new,nuevo_tripulante);
 				pthread_mutex_unlock(&sem_cola_new);
@@ -1688,6 +1693,7 @@ int main(int argc, char* argv[]) {
 	sem_init(&(pararPlanificacion[0]),0,0);
 	sem_init(&sem_tripulante_en_ready,0,0);
 	pthread_mutex_init(&mutexIO,NULL);
+
 
 	new = queue_create();
 	pthread_mutex_init(&sem_cola_new, NULL);
