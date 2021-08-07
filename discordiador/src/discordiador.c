@@ -234,7 +234,7 @@ int conectarse_Mi_Ram()
 			pthread_mutex_lock(&socketMiRam);
 			socket = crear_conexion(ipMiRam,puertoMiRam);
 			pthread_mutex_unlock(&socketMiRam);
-			sleep(10);
+			sleep(3);
 		}
 	log_info(logger_conexiones,"Se creo una conexionn con MI-RAM Socket: %d",socket);
 	return socket;
@@ -520,6 +520,7 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 		pthread_mutex_lock(&sem_cola_bloqIO);
 		pthread_mutex_lock(&sem_cola_exec);
 		queue_push(bloqueados,list_remove_by_condition(execute,(void*)_es_el_mismo_tripulante));
+
 		pthread_mutex_unlock(&sem_cola_exec);
 		pthread_mutex_unlock(&sem_cola_bloqIO);
 		log_info(logger_discordiador,"Se mueve al tripulante %d de %s a BLOQUEADO_IO ",trp->id, trp->estado);
@@ -528,6 +529,7 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 
 void bloqueado_a_ready(Tripulante* bloq)
 {
+
 			bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
 				return (tripu_exec->id == bloq->id);
 		}
@@ -718,7 +720,7 @@ void enviar_inicio_fin_mongo(Tripulante* enviar, char c){
 void enviar_consumir_recurso(Tripulante* tripulante){
 	int socket_mongostore = conectarse_mongo();
 	t_paquete* paquete = crear_paquete(CONSUMIR_RECURSO);
-	t_consumir_recurso* consumir = malloc(sizeof(t_consumir_recurso));
+	t_consumir_recurso* consumir = malloc(sizeof(consumir));
 	consumir->cantidad = tripulante->Tarea->parametro;
 	char** tarea_dividida = string_split(tripulante->Tarea->nombre,"_");
 
@@ -775,6 +777,8 @@ void hacerTareaIO(Tripulante* io) {
 	ejecutando_a_bloqueado(io);
 	sem_post(&multiProcesamiento);
 	//libero el recurso de multiprocesamiento porque me voy a io
+
+
 	pthread_mutex_lock(&mutexIO);
 	enviarMongoStore(io);
 	pthread_mutex_unlock(&mutexIO);
@@ -1117,9 +1121,9 @@ void* atender_sabotaje(int cliente_sabotaje)
 //	log_info(logger_discordiador,"Se recibe un sabotaje en la posicion %d|%d",posx,posy);
 	Tripulante* mas_cerca;
 	//busco el tripulante mas cerca
-//	puts("estoy por pasar el sem_exec");
+	puts("estoy por pasar el sem_exec");
 	pthread_mutex_lock(&sem_cola_exec);
-//	puts("pase el semafoto cola_exec");
+	puts("pase el semafoto cola_exec");
 	for(int i=0;i<list_size(execute);i++)
 	{
 		Tripulante* iterado = (Tripulante*) list_get(execute,i);
@@ -1301,7 +1305,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	estructura->cantTripulantes = cantidad_tripulantes;
 	estructura->tamanio_tareas = strlen(pato->tareas)+1;
 	estructura->Tareas = strdup(pato->tareas);
-//	printf("TAMAÑO TAREAS: %d",estructura->tamanio_tareas);
+	printf("TAMAÑO TAREAS: %d",estructura->tamanio_tareas);
 //Cuando tenemos la estructura la metemos al paquete vacio que teniamos--------------------
 	agregar_paquete_iniciar_patota(paquete,estructura);
 
@@ -1313,7 +1317,7 @@ char* enviar_iniciar_patota(Patota* pato,int cantidad_tripulantes){
 	char* respuesta = enviar_paquete_respuesta_string(paquete,socket_iniciar_patota);
 	liberar_conexion(socket_iniciar_patota);
 	log_info(logger_conexiones,"Se recibie la respuesta: %s",respuesta);
-//	liberar_t_iniciar_patota(estructura);
+	liberar_t_iniciar_patota(estructura);
 	return respuesta;
 }
 
@@ -1462,7 +1466,6 @@ int hacerConsola() {
 			char* respuesta = enviar_iniciar_patota(pato,cantidad_tripulantes);
 			if(!strcmp(respuesta,"fault")){
 				free(respuesta);
-				log_info(logger_discordiador,"No hay espacio en ram");
 				puts("no hay espacio en ram");
 				log_info(logger_discordiador,"NO HAY ESPACIO PARA LA NUEVA PATOTA");
 				free(parametros_divididos[0]);
@@ -1487,9 +1490,9 @@ int hacerConsola() {
 			for(int i=0 ; i< cantidad_tripulantes;i++){
 				uint8_t posicionX = obtener_pos(posiciones_iniciales);
 				uint8_t posicionY = obtener_pos(posiciones_iniciales);
-//				printf("EStoy por crear al tripulante: %d en %d|%d\n",t_totales,posicionX,posicionY);
+				printf("EStoy por crear al tripulante: %d en %d|%d\n",t_totales,posicionX,posicionY);
 				nuevo_tripulante = crear_tripulante(t_totales, p_totales, posicionX, posicionY);
-//				puts("en teoria se pudo crear\n");
+				puts("en teoria se pudo crear\n");
 				pthread_mutex_lock(&sem_cola_new);
 				queue_push(new,nuevo_tripulante);
 				pthread_mutex_unlock(&sem_cola_new);
@@ -1692,6 +1695,7 @@ int main(int argc, char* argv[]) {
 	sem_init(&pararIo, 0, 0);
 	sem_init(&(pararPlanificacion[0]),0,0);
 	sem_init(&sem_tripulante_en_ready,0,0);
+
 	pthread_mutex_init(&mutexIO,NULL);
 
 
