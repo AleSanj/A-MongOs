@@ -578,11 +578,14 @@ void ejecutando_a_bloqueado(Tripulante* trp )
 
 void bloqueado_a_ready(Tripulante* bloq)
 {
+	bool _es_el_mismo_tripulante(Tripulante* tripu_exec){
+			return (tripu_exec->id == bloq->id);
+	}
+
+	t_list* lista_bloq = bloqueados->elements;
 	pthread_mutex_lock(&sem_cola_ready);
-	pthread_mutex_lock(&sem_cola_bloqIO);
-	queue_push(ready,queue_pop(bloqueados));
+	queue_push(ready,list_remove_by_condition(bloqueados,(void*)_es_el_mismo_tripulante));
 	pthread_mutex_unlock(&sem_cola_ready);
-	pthread_mutex_unlock(&sem_cola_bloqIO);
 	log_info(logger_discordiador,"Se mueve al tripulante %d de %s a READY",bloq->id, bloq->estado);
 	cambiar_estado(bloq,"READY");
 	sem_post(&sem_tripulante_en_ready);
@@ -764,7 +767,7 @@ void enviar_inicio_fin_mongo(Tripulante* enviar, char c){
 void enviar_consumir_recurso(Tripulante* tripulante){
 	int socket_mongostore = conectarse_mongo();
 	t_paquete* paquete = crear_paquete(CONSUMIR_RECURSO);
-	t_consumir_recurso* consumir = malloc(sizeof(consumir));
+	t_consumir_recurso* consumir = malloc(sizeof(t_consumir_recurso));
 	consumir->cantidad = tripulante->Tarea->parametro;
 	char** tarea_dividida = string_split(tripulante->Tarea->nombre,"_");
 
@@ -821,10 +824,10 @@ void hacerTareaIO(Tripulante* io) {
 	ejecutando_a_bloqueado(io);
 	sem_post(&multiProcesamiento);
 	//libero el recurso de multiprocesamiento porque me voy a io
-	t_list* cola_bloq = bloqueados->elements;
-
 	pthread_mutex_lock(&mutexIO);
-	enviarMongoStore(list_get(cola_bloq,0));
+	pthread_mutex_lock(&sem_cola_bloqIO);
+	enviarMongoStore(io);
+	pthread_mutex_unlock(&sem_cola_bloqIO);
 	pthread_mutex_unlock(&mutexIO);
 
 }
@@ -1684,7 +1687,7 @@ int main(int argc, char* argv[]) {
 	sem_init(&pararIo, 0, 0);
 	sem_init(&(pararPlanificacion[0]),0,0);
 	sem_init(&sem_tripulante_en_ready,0,0);
-
+	pthread_mutex_init(&mutexIO,NULL);
 
 	new = queue_create();
 	pthread_mutex_init(&sem_cola_new, NULL);
