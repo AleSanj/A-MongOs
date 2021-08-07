@@ -1418,6 +1418,8 @@ void actualizar_estado_segmentacion(uint32_t idElemento, uint32_t idPatota, char
 	tcbAModificar = buscar_de_memoria_segmentacion(idElemento, idPatota, 'T');
 	tcbAModificar->estado = nuevoEstado;
 	memcpy(inicioSegmento,tcbAModificar,paginaInicial->tamanio);
+	free(tcbAModificar->estado);
+	free(tcbAModificar);
 }
 
 
