@@ -374,7 +374,7 @@ void* atender_mensaje (int socketTripulante){
 
 		//sprintf(bitacorear,"%s Se mueve de %d|%d a %d|%d",tiempo , mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
 		//string_append(&tiempo,bitacorear);
-		printf("%s\n",bitacorear);
+		//printf("%s\n",bitacorear);
 		//imprimir_movimiento_mongo(mov);
 		log_info(log_bitacoras,"voy a escribir rn bitacora %d", mov->id_tripulante);
 		escribir_en_bitacora((int) mov->id_tripulante,bitacorear);
