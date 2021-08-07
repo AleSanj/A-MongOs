@@ -39,18 +39,18 @@ int blocks_sabot;
 
 //-------------------------------------
 //PARA EJECUTAR DESDE CONSOLA USAR:
-//#define PATH_CONFIG "../config/mongoStore.config"
-//#define PATH_LOG_G "../config/log_general.log"
-//#define PATH_LOG_B "../config/log_bitacoras.log"
-//#define PATH_LOG_SE "../config/log_server.log"
-//#define PATH_LOG_SA "../config/log_sabotaje.log"
+#define PATH_CONFIG "../config/mongoStore.config"
+#define PATH_LOG_G "../config/log_general.log"
+#define PATH_LOG_B "../config/log_bitacoras.log"
+#define PATH_LOG_SE "../config/log_server.log"
+#define PATH_LOG_SA "../config/log_sabotaje.log"
 //-------------------------------------
 //PARA EJECUTAR DESDE ECLIPSE USAR:
-#define PATH_CONFIG "config/mongoStore.config"
-#define PATH_LOG_G "config/log_general.log"
-#define PATH_LOG_B "config/log_bitacoras.log"
-#define PATH_LOG_SE "config/log_server.log"
-#define PATH_LOG_SA "config/log_sabotaje.log"
+//#define PATH_CONFIG "config/mongoStore.config"
+//#define PATH_LOG_G "config/log_general.log"
+//#define PATH_LOG_B "config/log_bitacoras.log"
+//#define PATH_LOG_SE "config/log_server.log"
+//#define PATH_LOG_SA "config/log_sabotaje.log"
 ////-------------------------------------
 
 
@@ -77,7 +77,7 @@ int main(void) {
 	//Generamos la conexion Mongo => Discordiador
 	ipDiscordiador=config_get_string_value(mongoStore_config,"IP_DISCORDIADOR");
 	puertoDicordiador=config_get_string_value(mongoStore_config,"PUERTO_DISCORDIADOR");
-	//int puerto_mongostore = config_get_int_value(conexion_config, "PUERTO_MONGOSTORE");
+	puerto_mongostore = config_get_string_value(mongoStore_config, "PUERTO_MONGOSTORE");
 	//int server_FS = iniciar_servidor(IP, puerto_mongostore);
 
 	bloques = config_get_int_value(mongoStore_config, "BLOCKS");
@@ -108,17 +108,14 @@ int main(void) {
 	}
 	pthread_mutex_init(&mutexEscrituraBloques,NULL);
 	pthread_mutex_init(&mutexBitacoras,NULL);
+
 	// LEVANTAMOS LA SINCRO DE LOS BLOQUES
 
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
 
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
-
-
-//LEVANTAMOS SERVER Y ATENDEMOS TRIPULANTES
-	int server_fs=crear_server("6667");//PUERTO HARCODEADO OJO !!!!!!!!!!!!!!!!!!!!!!
-
+	int server_fs=crear_server(puerto_mongostore);
 	while(correr_programa)
 	{
 		int socketTripulante= esperar_cliente(server_fs, 10);
@@ -128,7 +125,6 @@ int main(void) {
 			pthread_t hiloTripulante;
 			pthread_create(&hiloTripulante,NULL,(void*)atender_mensaje,(void*)socketTripulante);
 			pthread_detach(hiloTripulante);
-
 
 	}
 
@@ -780,19 +776,24 @@ void interrupt_handler(int signal)
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
 	char* bitacorear_sabo= enviar_paquete_respuesta_string(paquete_enviar,socketCliente);
 	int id;
-	printf("recibi un %s",bitacorear_sabo);
-	printf("recibi un id %d\n",id);
+	log_info(log_mensaje,"recibi un %s",bitacorear_sabo);
+	log_info(log_mensaje,"recibi un id %d",id);
 	recv(socketCliente,&id,sizeof(uint8_t),0);
 	log_info(log_sabotaje,"tipulante ejecuta protocolo fsck %d", id);
 	escribir_en_bitacora(id,bitacorear_sabo);
+	free(bitacorear_sabo);
 	// aca arregla el sabotaje
 	log_info(log_sabotaje,"Procedo a arreglar el FileSystem");
 	arreglar_sabotaje();
 	log_info(log_sabotaje,"Se arreglo exitosamente el Sabotaje");
 
 	// aca tendria que mandar discordiador que se arreglo
-	recv(socketCliente,bitacorear_sabo,strlen("FINALIZAR_SABOTAJE")+1,0);
-	escribir_en_bitacora(id,bitacorear_sabo);
+	int tamanio_fin_sabotaje;
+	recv(socketCliente,&tamanio_fin_sabotaje,sizeof(uint8_t),0);
+	char* finalizar_sabotaje = malloc(tamanio_fin_sabotaje);
+	recv(socketCliente,finalizar_sabotaje,tamanio_fin_sabotaje,0);
+	escribir_en_bitacora(id,finalizar_sabotaje);
+	free(finalizar_sabotaje);
 	free(bitacorear_sabo);
 
 	sabotaje_actual++;
@@ -976,17 +977,61 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:
-	t_config* config_o2 = config_create(rutita);
+	FILE* config=fopen(rutita,"r");
+	int cantidadDeCaracteresRestantes;
+	char** bloquesUsados;
+	char* caracterLlenado = string_new();
+	int cantBloques;
+	for(int sep=0; sep<6; sep++)
+	{
+		char* var=malloc(50);
+		fgets(var,50,config);
+		if(string_contains(var,"SIZE"))
+		{
+			char**size=string_split(var,"=");
+			char* correc=string_substring_until(size[1],strlen(size[1])-1);
+			cantidadDeCaracteresRestantes=atoi(correc);
+			free(size[0]);
+			free(size[1]);
+			free(size);
+			free(correc);
 
-	int cantidadDeCaracteresRestantes = config_get_int_value(config_o2, "SIZE");
+		}
+		if(string_contains(var,"BLOCKS"))
+		{
+			char** blocks=string_split(var,"=");
+			char* correc=string_substring_until(blocks[1],strlen(blocks[1])-1);
+			bloquesUsados=string_get_string_as_array(correc);
+			free(blocks[0]);
+			free(blocks[1]);
+			free(blocks);
+			free(correc);
 
-	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
-	char** bloquesUsados = config_get_array_value(config_o2, "BLOCKS");
-	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
+		}
+		if(string_contains(var,"BLOCK_COUNT"))
+		{
+			char** contadorb=string_split(var,"=");
+			char* correc=string_substring_until(contadorb[1],strlen(contadorb[1])-1);
+			cantBloques=atoi(correc);
+			free(contadorb[0]);
+			free(contadorb[1]);
+			free(contadorb);
+			free(correc);
+		}
+		if(string_contains(var,"CARACTER_LLENADO"))
+		{
+			char** character=string_split(var,"=");
+			char* correc=string_substring_until(character[1],strlen(character[1])-1);
+			caracterLlenado=strdup(correc);
+			free(character[0]);
+			free(character[1]);
+			free(character);
+			free(correc);
 
-	char* caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
-	dictionary_destroy(config_o2->properties);
-	free(config_o2);
+		}
+		free(var);
+	}
+	fclose(config);
 
 	char* bloquesNuevosPostBorrado = string_new();
 	string_append(&bloquesNuevosPostBorrado, "[");
@@ -1115,19 +1160,65 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:s
-	t_config* config_o2 = config_create(rutita);
-	int cantidadDeCaracteresEscritas = config_get_int_value(config_o2, "SIZE");
-
-	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
-	 char** bloquesUsados = config_get_array_value(config_o2, "BLOCKS");
-	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
-
+	FILE* config=fopen(rutita,"r");
+	int cantidadDeCaracteresEscritas;
+	char** bloquesUsados;
 	char* caracterLlenado = string_new();
-	if(esMetadataRecurso(rutita)){
-		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
+	int cantBloques;
+	for(int sep=0; sep<6; sep++)
+	{
+		char* var=malloc(50);
+		fgets(var,50,config);
+		if(string_contains(var,"SIZE"))
+		{
+			char**size=string_split(var,"=");
+			char* correc=string_substring_until(size[1],strlen(size[1])-1);
+			cantidadDeCaracteresEscritas=atoi(correc);
+			free(size[0]);
+			free(size[1]);
+			free(size);
+			free(correc);
+
+		}
+		if(string_contains(var,"BLOCKS"))
+		{
+			char** blocks=string_split(var,"=");
+			char* correc=string_substring_until(blocks[1],strlen(blocks[1])-1);
+			bloquesUsados=string_get_string_as_array(correc);
+			free(blocks[0]);
+			free(blocks[1]);
+			free(blocks);
+			free(correc);
+
+		}
+		if(string_contains(var,"BLOCK_COUNT"))
+		{
+			char** contadorb=string_split(var,"=");
+			char* correc=string_substring_until(contadorb[1],strlen(contadorb[1])-1);
+			cantBloques=atoi(correc);
+			free(contadorb[0]);
+			free(contadorb[1]);
+			free(contadorb);
+			free(correc);
+		}
+		if(string_contains(var,"CARACTER_LLENADO"))
+		{
+			char** character=string_split(var,"=");
+			char* correc=string_substring_until(character[1],strlen(character[1])-1);
+			caracterLlenado=strdup(correc);
+			free(character[0]);
+			free(character[1]);
+			free(character);
+			free(correc);
+
+		}
+		free(var);
 	}
-	dictionary_destroy(config_o2->properties);
-	free(config_o2);
+	fclose(config);
+
+
+
+
 
 
 	//Cantidad de caracteres escritos

@@ -49,6 +49,7 @@ typedef struct {
 	sem_t sem_pasaje_a_exec;
 	sem_t hilosEnEjecucion;
 	bool primer_inicio;
+	bool esta_sabotaje;
 } Tripulante;
 
 typedef struct {

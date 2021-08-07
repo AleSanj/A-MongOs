@@ -188,10 +188,10 @@ int enviar_paquete(t_paquete* paquete, int socket_cliente) {
 		if (respuesta) {
 //			puts("Respuesta recibida\n");
 		} else {
-			puts("No recibimos respuesta del servidor\n");
+			printf("No recibimos respuesta del servidor %d \n",paquete->codigo_operacion);
 		}
 	} else {
-		puts("No se pudo enviar el paquete\n");
+		printf("No se pudo enviar el paquete %d \n",paquete->codigo_operacion);
 	}
 		free(a_enviar);
 		liberar_conexion(socket_cliente);
