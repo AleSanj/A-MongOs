@@ -108,6 +108,7 @@ int main(void) {
 	}
 	pthread_mutex_init(&mutexEscrituraBloques,NULL);
 	pthread_mutex_init(&mutexBitacoras,NULL);
+
 	// LEVANTAMOS LA SINCRO DE LOS BLOQUES
 
 	pthread_create(&sincro,NULL,sincronizar_blocks,NULL);
@@ -115,7 +116,6 @@ int main(void) {
 	pthread_create(&sabo,NULL,atender_signal,NULL);
 
 	int server_fs=crear_server(puerto_mongostore);
-
 	while(correr_programa)
 	{
 		int socketTripulante= esperar_cliente(server_fs, 10);
@@ -125,7 +125,6 @@ int main(void) {
 			pthread_t hiloTripulante;
 			pthread_create(&hiloTripulante,NULL,(void*)atender_mensaje,(void*)socketTripulante);
 			pthread_detach(hiloTripulante);
-
 
 	}
 
@@ -255,6 +254,7 @@ char* obtener_bitacora(int id_trip)
 
 
 	}
+	free(bloquecitos);
 	config_destroy(bita);
 	return bitacora;
 }
@@ -358,15 +358,19 @@ void* atender_mensaje (int socketTripulante){
 		log_info(log_mensaje,"Se se movio el tripulante %d", mov->id_tripulante);
 		char* tiempo= temporal_get_string_time("%H:%M:%S:%MS");
 		char* bitacorear=string_new();
+		char* posxo=string_itoa((int)mov->origen_x);
+		char* posyo=string_itoa((int)mov->origen_y);
+		char* posxd=string_itoa((int)mov->destino_x);
+		char* posyd=string_itoa((int)mov->destino_y);
 		string_append(&bitacorear,tiempo);
 		string_append(&bitacorear," Se mueve de ");
-		string_append(&bitacorear,string_itoa((int)mov->origen_x));
+		string_append(&bitacorear,posxo);
 		string_append(&bitacorear,"|");
-		string_append(&bitacorear,string_itoa((int)mov->origen_y));
+		string_append(&bitacorear,posyo);
 		string_append(&bitacorear," a ");
-		string_append(&bitacorear,string_itoa((int)mov->destino_x));
+		string_append(&bitacorear,posxd);
 		string_append(&bitacorear,"|");
-		string_append(&bitacorear,string_itoa((int)mov->destino_y));
+		string_append(&bitacorear,posyd);
 
 		//sprintf(bitacorear,"%s Se mueve de %d|%d a %d|%d",tiempo , mov->origen_x,mov->origen_y,mov->destino_x,mov->destino_y);
 		//string_append(&tiempo,bitacorear);
@@ -377,6 +381,10 @@ void* atender_mensaje (int socketTripulante){
 		log_info(log_bitacoras,"se escribio bien la bitacora %d", mov->id_tripulante);
 		free(bitacorear);
 		free(tiempo);
+		free(posxo);
+		free(posxd);
+		free(posyo);
+		free(posyd);
 		//free(tiempo);
 		liberar_t_movimiento_mongo(mov);
 		liberar_conexion(socketTripulante);
@@ -758,14 +766,11 @@ void interrupt_handler(int signal)
 	char** pocicion_sabotaje=config_get_array_value(mongoStore_config,"POSICIONES_SABOTAJE");
 	//char* a mandar al discordaidor
 	char* posicion_mandar=pocicion_sabotaje[sabotaje_actual];
-	log_info(log_sabotaje,"mando posicion de sabotaje: %s",posicion_mandar);
 
 	int socketCliente = crear_conexion(ipDiscordiador,puertoDicordiador);
 	t_pedido_mongo* posSabo=malloc(sizeof(t_pedido_mongo));
-	posSabo->id_tripulante = 0;
 	posSabo->mensaje=posicion_mandar;
 	posSabo->tamanio_mensaje=strlen(posicion_mandar)+1;
-
 
 	t_paquete* paquete_enviar= crear_paquete(SABOTAJE);
 	agregar_paquete_pedido_mongo(paquete_enviar,posSabo);
@@ -793,7 +798,7 @@ void interrupt_handler(int signal)
 
 	sabotaje_actual++;
 	free(pocicion_sabotaje);
-	liberar_conexion(socketCliente);
+
 
 }
 
@@ -972,25 +977,61 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:
-	t_config* config_o2 = config_create(rutita);
+	FILE* config=fopen(rutita,"r");
+	int cantidadDeCaracteresRestantes;
+	char** bloquesUsados;
+	char* caracterLlenado = string_new();
+	int cantBloques;
+	for(int sep=0; sep<6; sep++)
+	{
+		char* var=malloc(50);
+		fgets(var,50,config);
+		if(string_contains(var,"SIZE"))
+		{
+			char**size=string_split(var,"=");
+			char* correc=string_substring_until(size[1],strlen(size[1])-1);
+			cantidadDeCaracteresRestantes=atoi(correc);
+			free(size[0]);
+			free(size[1]);
+			free(size);
+			free(correc);
 
-	int cantidadDeCaracteresRestantes = config_get_int_value(config_o2, "SIZE");
+		}
+		if(string_contains(var,"BLOCKS"))
+		{
+			char** blocks=string_split(var,"=");
+			char* correc=string_substring_until(blocks[1],strlen(blocks[1])-1);
+			bloquesUsados=string_get_string_as_array(correc);
+			free(blocks[0]);
+			free(blocks[1]);
+			free(blocks);
+			free(correc);
 
-	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
-	char** bloquesUsados = config_get_array_value(config_o2, "BLOCKS");
-	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
+		}
+		if(string_contains(var,"BLOCK_COUNT"))
+		{
+			char** contadorb=string_split(var,"=");
+			char* correc=string_substring_until(contadorb[1],strlen(contadorb[1])-1);
+			cantBloques=atoi(correc);
+			free(contadorb[0]);
+			free(contadorb[1]);
+			free(contadorb);
+			free(correc);
+		}
+		if(string_contains(var,"CARACTER_LLENADO"))
+		{
+			char** character=string_split(var,"=");
+			char* correc=string_substring_until(character[1],strlen(character[1])-1);
+			caracterLlenado=strdup(correc);
+			free(character[0]);
+			free(character[1]);
+			free(character);
+			free(correc);
 
-	char* caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
-	dictionary_destroy(config_o2->properties);
-	free(config_o2);
-//	//El bloque donde vas a escribir
-//	int bloqueAUsar;
-
-	//La cantidad de bloques nuevos asociados al caracter
-	//int cantBloquesActualizacion = cantBloques;
-
-	//Un contador con la cantidad de bloques que se desocuparon
-	//int contadorBloquesDesocupados = 0;
+		}
+		free(var);
+	}
+	fclose(config);
 
 	char* bloquesNuevosPostBorrado = string_new();
 	string_append(&bloquesNuevosPostBorrado, "[");
@@ -1077,8 +1118,12 @@ void eliminarEnBloque(int cantidad, char caracter, char* rutita){
 	//Actualizas el metadata
 	if(cantidadDeCaracteresRestantes>0)
 	{
-		string_append(&actualizarCantidad,string_itoa(cantBloques));
-		string_append(&actualizarSize,string_itoa(cantidadDeCaracteresRestantes));
+		char* cantdBloques=string_itoa(cantBloques);
+		char* cantidaddecaracteres=string_itoa(cantidadDeCaracteresRestantes);
+		string_append(&actualizarCantidad,cantdBloques);
+		string_append(&actualizarSize,cantidaddecaracteres);
+		free(cantdBloques);
+		free(cantidaddecaracteres);
 
 	}
 	else
@@ -1115,19 +1160,65 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 
 	//Se llama config_o2 porque originalmente estaba para Oxigeno.ims, pero ahora es global (el nombre no importa)
 	//Para obtener la data directamente del metadata, hacemos:s
-	t_config* config_o2 = config_create(rutita);
-	int cantidadDeCaracteresEscritas = config_get_int_value(config_o2, "SIZE");
-
-	//La info sobre los bloques llenados con ese caracter la averiguas con bloquesUsados
-	 char** bloquesUsados = config_get_array_value(config_o2, "BLOCKS");
-	int cantBloques = config_get_int_value(config_o2, "BLOCK_COUNT");
-
+	FILE* config=fopen(rutita,"r");
+	int cantidadDeCaracteresEscritas;
+	char** bloquesUsados;
 	char* caracterLlenado = string_new();
-	if(esMetadataRecurso(rutita)){
-		caracterLlenado = config_get_string_value(config_o2, "CARACTER_LLENADO");
+	int cantBloques;
+	for(int sep=0; sep<6; sep++)
+	{
+		char* var=malloc(50);
+		fgets(var,50,config);
+		if(string_contains(var,"SIZE"))
+		{
+			char**size=string_split(var,"=");
+			char* correc=string_substring_until(size[1],strlen(size[1])-1);
+			cantidadDeCaracteresEscritas=atoi(correc);
+			free(size[0]);
+			free(size[1]);
+			free(size);
+			free(correc);
+
+		}
+		if(string_contains(var,"BLOCKS"))
+		{
+			char** blocks=string_split(var,"=");
+			char* correc=string_substring_until(blocks[1],strlen(blocks[1])-1);
+			bloquesUsados=string_get_string_as_array(correc);
+			free(blocks[0]);
+			free(blocks[1]);
+			free(blocks);
+			free(correc);
+
+		}
+		if(string_contains(var,"BLOCK_COUNT"))
+		{
+			char** contadorb=string_split(var,"=");
+			char* correc=string_substring_until(contadorb[1],strlen(contadorb[1])-1);
+			cantBloques=atoi(correc);
+			free(contadorb[0]);
+			free(contadorb[1]);
+			free(contadorb);
+			free(correc);
+		}
+		if(string_contains(var,"CARACTER_LLENADO"))
+		{
+			char** character=string_split(var,"=");
+			char* correc=string_substring_until(character[1],strlen(character[1])-1);
+			caracterLlenado=strdup(correc);
+			free(character[0]);
+			free(character[1]);
+			free(character);
+			free(correc);
+
+		}
+		free(var);
 	}
-	dictionary_destroy(config_o2->properties);
-	free(config_o2);
+	fclose(config);
+
+
+
+
 
 
 	//Cantidad de caracteres escritos
@@ -1213,7 +1304,7 @@ void escribirEnBloque(int cantidad, char caracter, char* rutita){
 					}
 				}
 			}
-			pthread_mutex_lock(&mutexEscrituraBloques);
+		pthread_mutex_lock(&mutexEscrituraBloques);
 			memcpy(copiaBlock + (bloqueAUsar * tamanio_bloque) + (cantidadDeCaracteresEscritas % tamanio_bloque), &caracter, sizeof(char));
 			pthread_mutex_unlock(&mutexEscrituraBloques);
 			cantidadDeCaracteresEscritas++;
@@ -1287,6 +1378,7 @@ void generar_bitacora(int idTripulante){
 	dictionary_put(bitacora_config->properties, "BLOCKS", "[]");
 
 	config_save(bitacora_config);
+	free(id_trip);
 	dictionary_destroy(bitacora_config->properties);
 	free(ruta_bitacora);
 
@@ -1318,6 +1410,7 @@ void escribir_en_bitacora(int idTripulante, char* texto){
 		}
 
 		escribirEnBloque(1, '\n', ruta_bitacora);
+		free(id_trip);
 		free(ruta_bitacora);
 		pthread_mutex_unlock(&mutexBitacoras);
 }
