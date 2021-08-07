@@ -298,8 +298,8 @@ void administrar_cliente(int socketCliente){
 						log_info(logger, "Mande la tarea %s (Numero %d) al tripulante %d\n",arrayTareas[tripulanteATraer->proxTarea],tripulanteATraer->proxTarea,tripulanteATraer->id);
 
 					}
-					free(tripulanteATraer->estado);
-					free(tripulanteATraer);
+					//free(tripulanteATraer->estado);
+					//free(tripulanteATraer);
 					liberar_conexion(socketCliente);
 					liberar_t_tripulante(tripulante_solicitud);
 					break;
