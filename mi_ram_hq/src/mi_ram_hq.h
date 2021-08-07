@@ -72,6 +72,7 @@ bool funcionando;
 pthread_mutex_t mutexMemoria;
 pthread_mutex_t mutexMapa;
 pthread_mutex_t mutexEstado;
+pthread_mutex_t mutexEnviarTarea;
 
 
 
